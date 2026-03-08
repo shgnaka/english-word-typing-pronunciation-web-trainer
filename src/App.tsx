@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { keyboardRows } from "./domain/keyboard";
 import { FingerGuideButtons } from "./components/FingerGuideButtons";
 import { useTrainer } from "./features/trainer/useTrainer";
+import { displayLanguageOptions, getFingerLabel, t } from "./i18n";
 
 function isInteractiveElement(target: EventTarget | null): boolean {
   if (!(target instanceof HTMLElement)) {
@@ -13,6 +14,7 @@ function isInteractiveElement(target: EventTarget | null): boolean {
 
 function App() {
   const trainer = useTrainer();
+  const language = trainer.displayLanguage;
 
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
@@ -44,10 +46,8 @@ function App() {
       <header className="hero">
         <div>
           <p className="eyebrow">WordBeat Trainer</p>
-          <h1>English typing with pronunciation and finger guidance.</h1>
-          <p className="hero-copy">
-            Practice one word at a time, hear the pronunciation, and follow the next-key hint on a US QWERTY layout.
-          </p>
+          <h1>{t(language, "hero.title")}</h1>
+          <p className="hero-copy">{t(language, "hero.copy")}</p>
         </div>
         <nav className="tabs" aria-label="Primary">
           <button
@@ -55,20 +55,20 @@ function App() {
             data-testid="tab-practice"
             onClick={() => trainer.setScreen("practice")}
           >
-            Practice
+            {t(language, "tabs.practice")}
           </button>
           <button className={trainer.screen === "words" ? "active" : ""} data-testid="tab-words" onClick={() => trainer.setScreen("words")}>
-            Words
+            {t(language, "tabs.words")}
           </button>
           <button
             className={trainer.screen === "settings" ? "active" : ""}
             data-testid="tab-settings"
             onClick={() => trainer.setScreen("settings")}
           >
-            Settings
+            {t(language, "tabs.settings")}
           </button>
           <button className={trainer.screen === "results" ? "active" : ""} data-testid="tab-results" onClick={() => trainer.setScreen("results")}>
-            Results
+            {t(language, "tabs.results")}
           </button>
         </nav>
       </header>
@@ -79,20 +79,20 @@ function App() {
             <>
               <div className="session-summary">
                 <article className="metric">
-                  <span className="label">Progress</span>
+                  <span className="label">{t(language, "practice.progress")}</span>
                   <strong data-testid="progress-count">
                     {trainer.completedWordsCount} / {trainer.totalWords || 0} words
                   </strong>
                 </article>
                 <article className="metric">
-                  <span className="label">Remaining</span>
+                  <span className="label">{t(language, "practice.remaining")}</span>
                   <strong data-testid="remaining-words">{trainer.remainingWords}</strong>
                 </article>
               </div>
 
               <div className="progress-block">
                 <div className="progress-copy">
-                  <span className="label">Session progress</span>
+                  <span className="label">{t(language, "practice.sessionProgress")}</span>
                   <strong data-testid="progress-percent">{trainer.progressPercent}%</strong>
                 </div>
                 <div className="progress-track" aria-hidden="true">
@@ -102,8 +102,8 @@ function App() {
 
               <div className="panel-header">
                 <div>
-                  <p className="label">Current word</p>
-                  <h2 data-testid="current-word">{currentWord || "No words available"}</h2>
+                  <p className="label">{t(language, "practice.currentWord")}</p>
+                  <h2 data-testid="current-word">{currentWord || t(language, "practice.noWords")}</h2>
                 </div>
                 <button
                   className="secondary"
@@ -111,7 +111,7 @@ function App() {
                   onClick={trainer.speakCurrentWord}
                   disabled={!currentWord || !trainer.config.speechEnabled}
                 >
-                  Pronounce
+                  {t(language, "practice.pronounce")}
                 </button>
               </div>
 
@@ -129,27 +129,33 @@ function App() {
 
               {trainer.isCountdownActive ? (
                 <div className="countdown-banner" data-testid="countdown-banner" aria-live="polite">
-                  <span>Start in {trainer.countdown}</span>
+                  <span>{t(language, "practice.countdown")} {trainer.countdown}</span>
                   <button className="secondary inline-action" data-testid="skip-countdown-button" onClick={trainer.skipCountdown}>
-                    Start now
+                    {t(language, "practice.startNow")}
                   </button>
                 </div>
               ) : null}
 
               <div className="status-row">
                 <article className="metric">
-                  <span className="label">Next key</span>
+                  <span className="label">{t(language, "practice.nextKey")}</span>
                   <strong data-testid="next-key">{trainer.currentTarget || "-"}</strong>
                 </article>
                 <article className="metric">
-                  <span className="label">Key position</span>
+                  <span className="label">{t(language, "practice.keyPosition")}</span>
                   <strong data-testid="key-position">
                     {trainer.config.showKeyboardHint ? trainer.currentGuide?.keyPosition ?? "-" : "Hidden"}
                   </strong>
                 </article>
                 <article className="metric">
-                  <span className="label">Finger</span>
-                  <strong data-testid="finger-guide">{trainer.config.showFingerGuide ? trainer.currentGuide?.finger ?? "-" : "Hidden"}</strong>
+                  <span className="label">{t(language, "practice.finger")}</span>
+                  <strong data-testid="finger-guide">
+                    {trainer.config.showFingerGuide
+                      ? trainer.currentGuide
+                        ? getFingerLabel(language, trainer.currentGuide.fingerId, trainer.currentGuide.finger)
+                        : "-"
+                      : "Hidden"}
+                  </strong>
                 </article>
               </div>
 
@@ -158,8 +164,8 @@ function App() {
                   {trainer.config.showKeyboardHint ? (
                     <section className="guide-card" data-testid="keyboard-visual">
                       <div className="guide-card-header">
-                        <span className="label">Keyboard map</span>
-                        <strong>{trainer.currentTarget ? `Key ${trainer.currentTarget.toUpperCase()}` : "No key"}</strong>
+                        <span className="label">{t(language, "practice.keyboardMap")}</span>
+                        <strong>{trainer.currentTarget ? `Key ${trainer.currentTarget.toUpperCase()}` : t(language, "practice.noKey")}</strong>
                       </div>
                       <div className="keyboard-map" aria-label="Keyboard guide">
                         {keyboardRows.map((row, rowIndex) => (
@@ -180,23 +186,31 @@ function App() {
                   ) : null}
 
                   {trainer.config.showFingerGuide ? (
-                    <FingerGuideButtons activeFingerId={trainer.currentGuide?.fingerId ?? null} label={trainer.currentGuide?.finger ?? "No finger"} />
+                    <FingerGuideButtons
+                      activeFingerId={trainer.currentGuide?.fingerId ?? null}
+                      label={
+                        trainer.currentGuide
+                          ? getFingerLabel(language, trainer.currentGuide.fingerId, trainer.currentGuide.finger)
+                          : t(language, "practice.noFinger")
+                      }
+                      language={language}
+                    />
                   ) : null}
                 </div>
               ) : null}
 
               <div className={`feedback ${trainer.session.lastInputCorrect === false ? "error" : ""}`} data-testid="feedback">
                 {trainer.isCountdownActive
-                  ? "Get ready. Press Enter or Start now to begin immediately."
+                  ? t(language, "practice.feedback.ready")
                   : trainer.session.lastInputCorrect === false
-                  ? "Incorrect key. Stay on the highlighted character."
-                  : "Type on your keyboard to progress."}
+                  ? t(language, "practice.feedback.incorrect")
+                  : t(language, "practice.feedback.default")}
               </div>
 
               <div className="cta-row">
-                <button onClick={() => trainer.restartSession()}>Restart session</button>
+                <button onClick={() => trainer.restartSession()}>{t(language, "practice.restart")}</button>
                 <button className="secondary" onClick={() => trainer.setScreen("results")}>
-                  View results
+                  {t(language, "practice.viewResults")}
                 </button>
               </div>
             </>
@@ -206,8 +220,8 @@ function App() {
             <>
               <div className="panel-header">
                 <div>
-                  <p className="label">Custom vocabulary</p>
-                  <h2>Add your own practice words</h2>
+                  <p className="label">{t(language, "words.title")}</p>
+                  <h2>{t(language, "words.subtitle")}</h2>
                 </div>
               </div>
 
@@ -222,22 +236,22 @@ function App() {
                       trainer.handleAddWord();
                     }
                   }}
-                  placeholder="Enter an English word"
-                  aria-label="New word"
+                  placeholder={t(language, "words.placeholder")}
+                  aria-label={t(language, "words.newWord")}
                 />
                 <button data-testid="add-word-button" onClick={trainer.handleAddWord}>
-                  Add word
+                  {t(language, "words.add")}
                 </button>
               </div>
               {trainer.addWordError ? (
                 <p className="inline-error" data-testid="add-word-error">
-                  {trainer.addWordError}
+                  {t(language, trainer.addWordError as "words.error.invalid" | "words.error.duplicate")}
                 </p>
               ) : null}
 
               <div className="word-list" data-testid="custom-word-list">
                 {trainer.customWords.length === 0 ? (
-                  <p>No custom words yet.</p>
+                  <p>{t(language, "words.empty")}</p>
                 ) : (
                   trainer.customWords.map((word) => (
                     <span key={word.id} className="word-chip" data-testid="word-chip">
@@ -253,16 +267,32 @@ function App() {
             <>
               <div className="panel-header">
                 <div>
-                  <p className="label">Session settings</p>
-                  <h2>Control practice conditions</h2>
+                  <p className="label">{t(language, "settings.title")}</p>
+                  <h2>{t(language, "settings.subtitle")}</h2>
                 </div>
               </div>
 
               <div className="settings-grid">
                 <label>
-                  <span>Words per session</span>
+                  <span>{t(language, "settings.language")}</span>
+                  <div className="language-toggle" data-testid="language-toggle">
+                    {displayLanguageOptions.map((option) => (
+                      <button
+                        key={option.value}
+                        type="button"
+                        className={trainer.displayLanguage === option.value ? "active" : "secondary"}
+                        data-testid={`language-${option.value}`}
+                        onClick={() => trainer.setDisplayLanguage(option.value)}
+                      >
+                        {option.label}
+                      </button>
+                    ))}
+                  </div>
+                </label>
+                <label>
+                  <span>{t(language, "settings.wordsPerSession")}</span>
                   <input
-                    aria-label="Words per session"
+                    aria-label={t(language, "settings.wordsPerSession")}
                     data-testid="word-count-input"
                     type="number"
                     min={1}
@@ -278,7 +308,7 @@ function App() {
                     checked={trainer.draftConfig.shuffle}
                     onChange={(event) => trainer.handleConfigChange("shuffle", event.target.checked)}
                   />
-                  <span>Shuffle words</span>
+                  <span>{t(language, "settings.shuffle")}</span>
                 </label>
                 <label className="toggle">
                   <input
@@ -287,7 +317,7 @@ function App() {
                     checked={trainer.draftConfig.speechEnabled}
                     onChange={(event) => trainer.handleConfigChange("speechEnabled", event.target.checked)}
                   />
-                  <span>Enable pronunciation</span>
+                  <span>{t(language, "settings.speech")}</span>
                 </label>
                 <label className="toggle">
                   <input
@@ -296,7 +326,7 @@ function App() {
                     checked={trainer.draftConfig.showKeyboardHint}
                     onChange={(event) => trainer.handleConfigChange("showKeyboardHint", event.target.checked)}
                   />
-                  <span>Show key position</span>
+                  <span>{t(language, "settings.keyboardHint")}</span>
                 </label>
                 <label className="toggle">
                   <input
@@ -305,14 +335,14 @@ function App() {
                     checked={trainer.draftConfig.showFingerGuide}
                     onChange={(event) => trainer.handleConfigChange("showFingerGuide", event.target.checked)}
                   />
-                  <span>Show finger guide</span>
+                  <span>{t(language, "settings.fingerGuide")}</span>
                 </label>
               </div>
 
               <div className={`settings-status ${trainer.hasPendingConfigChanges ? "pending" : ""}`} data-testid="settings-status">
                 {trainer.hasPendingConfigChanges
-                  ? "You have unapplied changes. Start a new session to use them."
-                  : "Current session already matches these settings."}
+                  ? t(language, "settings.pending")
+                  : t(language, "settings.synced")}
               </div>
 
               <div className="cta-row">
@@ -321,7 +351,7 @@ function App() {
                   onClick={trainer.applyConfigChanges}
                   disabled={!trainer.hasPendingConfigChanges}
                 >
-                  Apply and start new session
+                  {t(language, "settings.apply")}
                 </button>
                 <button
                   className="secondary"
@@ -329,7 +359,7 @@ function App() {
                   onClick={trainer.discardConfigChanges}
                   disabled={!trainer.hasPendingConfigChanges}
                 >
-                  Discard changes
+                  {t(language, "settings.discard")}
                 </button>
               </div>
             </>
@@ -339,50 +369,50 @@ function App() {
             <>
               <div className="panel-header">
                 <div>
-                  <p className="label">Session score</p>
-                  <h2>Review your typing result</h2>
+                  <p className="label">{t(language, "results.title")}</p>
+                  <h2>{t(language, "results.subtitle")}</h2>
                 </div>
               </div>
 
               <div className="completion-banner" data-testid="completion-banner">
-                Session complete. Nice finish.
+                {t(language, "results.complete")}
               </div>
 
               <div className="status-row">
                 <article className="metric">
-                  <span className="label">WPM</span>
+                  <span className="label">{t(language, "results.wpm")}</span>
                   <strong data-testid="score-wpm">{trainer.score.wpm}</strong>
                 </article>
                 <article className="metric">
-                  <span className="label">Accuracy</span>
+                  <span className="label">{t(language, "results.accuracy")}</span>
                   <strong data-testid="score-accuracy">{trainer.score.accuracy}%</strong>
                 </article>
                 <article className="metric">
-                  <span className="label">Score</span>
+                  <span className="label">{t(language, "results.score")}</span>
                   <strong data-testid="score-raw">{trainer.score.rawScore}</strong>
                 </article>
                 <article className="metric">
-                  <span className="label">Level</span>
+                  <span className="label">{t(language, "results.level")}</span>
                   <strong data-testid="score-level">{trainer.score.level}</strong>
                 </article>
               </div>
 
               <div className="results-list" data-testid="results-list">
                 {trainer.session.completedWords.length === 0 ? (
-                  <p>No completed words yet.</p>
+                  <p>{t(language, "results.empty")}</p>
                 ) : (
                   trainer.session.completedWords.map((result) => (
                     <article key={`${result.word}-${result.elapsedMs}`} className="result-card" data-testid="result-card">
                       <h3>{result.word}</h3>
                       <p>{result.elapsedMs} ms</p>
-                      <p>{result.mistakes} mistakes</p>
+                      <p>{result.mistakes} {t(language, "results.mistakes")}</p>
                     </article>
                   ))
                 )}
               </div>
 
               <div className="cta-row">
-                <button onClick={() => trainer.restartSession()}>Start new session</button>
+                <button onClick={() => trainer.restartSession()}>{t(language, "results.startNew")}</button>
               </div>
             </>
           )}

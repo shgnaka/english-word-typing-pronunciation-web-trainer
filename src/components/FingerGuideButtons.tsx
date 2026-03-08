@@ -1,12 +1,14 @@
-import { fingerButtonLabels, fingerButtonLayout } from "../domain/keyboard";
-import type { FingerId } from "../domain/types";
+import { fingerButtonLayout } from "../domain/keyboard";
+import { getFingerButtonLabel } from "../i18n";
+import type { DisplayLanguage, FingerId } from "../domain/types";
 
 interface FingerGuideButtonsProps {
   activeFingerId: FingerId | null;
   label: string;
+  language: DisplayLanguage;
 }
 
-export function FingerGuideButtons({ activeFingerId, label }: FingerGuideButtonsProps) {
+export function FingerGuideButtons({ activeFingerId, label, language }: FingerGuideButtonsProps) {
   return (
     <section className="guide-card" data-testid="finger-button-visual">
       <div className="guide-card-header">
@@ -19,12 +21,12 @@ export function FingerGuideButtons({ activeFingerId, label }: FingerGuideButtons
             {cluster.fingers.map((fingerId) => (
               <span
                 key={fingerId}
-                aria-label={fingerId}
+                aria-label={label}
                 className={`finger-button ${activeFingerId === fingerId ? "active" : ""}`}
                 data-testid={activeFingerId === fingerId ? "active-finger-button" : undefined}
                 data-finger-id={fingerId}
               >
-                {fingerButtonLabels[fingerId]}
+                {getFingerButtonLabel(language, fingerId)}
               </span>
             ))}
           </div>

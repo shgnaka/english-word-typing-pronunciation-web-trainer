@@ -3,12 +3,15 @@ import { defaultWords } from "../../data/defaultWords";
 import { keyboardGuideMap } from "../../domain/keyboard";
 import { calculateSessionScore } from "../../domain/scoring";
 import { applyKeystroke, buildSessionQueue, createInitialSession, getTargetCharacter } from "../../domain/session";
-import type { SessionConfig, TypingSessionState, WordEntry } from "../../domain/types";
+import type { DisplayLanguage, SessionConfig, TypingSessionState, WordEntry } from "../../domain/types";
 import { createWordEntry, dedupeWords } from "../../domain/words";
 import {
+  defaultDisplayLanguage,
   defaultSessionConfig,
+  loadDisplayLanguage,
   loadCustomWords,
   loadSessionConfig,
+  saveDisplayLanguage,
   saveCustomWords,
   saveSessionConfig
 } from "../../infra/storage";
@@ -21,6 +24,7 @@ export function useTrainer() {
   const [customWords, setCustomWords] = useState<WordEntry[]>([]);
   const [config, setConfig] = useState<SessionConfig>(defaultSessionConfig);
   const [draftConfig, setDraftConfig] = useState<SessionConfig>(defaultSessionConfig);
+  const [displayLanguage, setDisplayLanguage] = useState<DisplayLanguage>(defaultDisplayLanguage);
   const [session, setSession] = useState<TypingSessionState>(() => createInitialSession([]));
   const [inputValue, setInputValue] = useState("");
   const [addWordError, setAddWordError] = useState("");
@@ -29,9 +33,11 @@ export function useTrainer() {
   useEffect(() => {
     const loadedCustomWords = loadCustomWords();
     const loadedConfig = loadSessionConfig();
+    const loadedDisplayLanguage = loadDisplayLanguage();
     setCustomWords(loadedCustomWords);
     setConfig(loadedConfig);
     setDraftConfig(loadedConfig);
+    setDisplayLanguage(loadedDisplayLanguage);
     const queue = buildSessionQueue(dedupeWords([...defaultWords, ...loadedCustomWords]), loadedConfig.wordCount, loadedConfig.shuffle);
     setSession(createInitialSession(queue));
     setCountdown(queue.length > 0 ? 3 : 0);
@@ -84,12 +90,12 @@ export function useTrainer() {
   function handleAddWord() {
     const entry = createWordEntry(inputValue, "custom");
     if (!entry) {
-      setAddWordError("Enter letters only.");
+      setAddWordError("words.error.invalid");
       return;
     }
 
     if (allWords.some((word) => word.normalizedText === entry.normalizedText)) {
-      setAddWordError("That word already exists.");
+      setAddWordError("words.error.duplicate");
       return;
     }
 
@@ -124,12 +130,18 @@ export function useTrainer() {
     setDraftConfig(config);
   }
 
+  function handleDisplayLanguageChange(language: DisplayLanguage) {
+    setDisplayLanguage(language);
+    saveDisplayLanguage(language);
+  }
+
   return {
     screen,
     setScreen,
     session,
     config,
     draftConfig,
+    displayLanguage,
     customWords,
     inputValue,
     setInputValue: handleAddWordInputChange,
@@ -149,6 +161,7 @@ export function useTrainer() {
     handleConfigChange,
     applyConfigChanges,
     discardConfigChanges,
+    setDisplayLanguage: handleDisplayLanguageChange,
     restartSession,
     skipCountdown() {
       setCountdown(0);

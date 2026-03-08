@@ -1,7 +1,8 @@
-import type { SessionConfig, WordEntry } from "../domain/types";
+import type { DisplayLanguage, SessionConfig, WordEntry } from "../domain/types";
 
 const customWordsKey = "wordbeat.customWords";
 const sessionConfigKey = "wordbeat.sessionConfig";
+const displayLanguageKey = "wordbeat.displayLanguage";
 
 export const defaultSessionConfig: SessionConfig = {
   wordCount: 10,
@@ -10,6 +11,8 @@ export const defaultSessionConfig: SessionConfig = {
   showFingerGuide: true,
   showKeyboardHint: true
 };
+
+export const defaultDisplayLanguage: DisplayLanguage = "en";
 
 export function loadCustomWords(): WordEntry[] {
   const raw = globalThis.localStorage?.getItem(customWordsKey);
@@ -48,4 +51,17 @@ export function loadSessionConfig(): SessionConfig {
 
 export function saveSessionConfig(config: SessionConfig): void {
   globalThis.localStorage?.setItem(sessionConfigKey, JSON.stringify(config));
+}
+
+export function loadDisplayLanguage(): DisplayLanguage {
+  const raw = globalThis.localStorage?.getItem(displayLanguageKey);
+  if (raw === "en" || raw === "ja" || raw === "ja-hira") {
+    return raw;
+  }
+
+  return defaultDisplayLanguage;
+}
+
+export function saveDisplayLanguage(language: DisplayLanguage): void {
+  globalThis.localStorage?.setItem(displayLanguageKey, language);
 }

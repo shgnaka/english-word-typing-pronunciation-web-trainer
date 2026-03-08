@@ -243,6 +243,12 @@ input {
   gap: 2rem;
 }
 
+.language-toggle {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
 .finger-cluster {
   display: flex;
   gap: 0.7rem;

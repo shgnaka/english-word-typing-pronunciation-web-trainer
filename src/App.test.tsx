@@ -125,4 +125,33 @@ describe("App", () => {
 
     expect(screen.getByTestId("active-finger-button")).toHaveAttribute("data-finger-id", "right-pinky");
   });
+
+  it("switches display language in settings", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.click(screen.getByRole("button", { name: "Settings" }));
+    await user.click(screen.getByTestId("language-ja"));
+
+    expect(screen.getByRole("button", { name: "練習" })).toBeInTheDocument();
+    expect(screen.getByText("表示言語")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "練習" }));
+    expect(screen.getByTestId("finger-button-label")).toHaveTextContent("左小指");
+    expect(screen.getByTestId("active-finger-button")).toHaveTextContent("左小");
+  });
+
+  it("persists selected display language after reload", async () => {
+    const user = userEvent.setup();
+    const { unmount } = render(<App />);
+
+    await user.click(screen.getByRole("button", { name: "Settings" }));
+    await user.click(screen.getByTestId("language-ja-hira"));
+
+    unmount();
+    render(<App />);
+
+    expect(screen.getByRole("button", { name: "れんしゅう" })).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "れんしゅう" }));
+    expect(screen.getByTestId("finger-button-label")).toHaveTextContent("ひだりこゆび");
+  });
 });

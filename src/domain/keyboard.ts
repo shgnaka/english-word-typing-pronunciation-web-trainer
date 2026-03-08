@@ -1,4 +1,4 @@
-import type { FingerId, KeyboardGuideMap } from "./types";
+import type { DisplayLanguage, FingerId, KeyboardGuideMap } from "./types";
 
 export const keyboardGuideMap: KeyboardGuideMap = {
   a: { keyPosition: "Home row - A", finger: "Left pinky", fingerId: "left-pinky" },
@@ -46,13 +46,68 @@ export const fingerButtonLayout: Array<{ side: "left" | "right"; fingers: Finger
   }
 ];
 
-export const fingerButtonLabels: Record<FingerId, string> = {
-  "left-pinky": "LP",
-  "left-ring": "LR",
-  "left-middle": "LM",
-  "left-index": "LI",
-  "right-index": "RI",
-  "right-middle": "RM",
-  "right-ring": "RR",
-  "right-pinky": "RP"
+export const fingerButtonLabels: Record<DisplayLanguage, Record<FingerId, string>> = {
+  en: {
+    "left-pinky": "LP",
+    "left-ring": "LR",
+    "left-middle": "LM",
+    "left-index": "LI",
+    "right-index": "RI",
+    "right-middle": "RM",
+    "right-ring": "RR",
+    "right-pinky": "RP"
+  },
+  ja: {
+    "left-pinky": "左小",
+    "left-ring": "左薬",
+    "left-middle": "左中",
+    "left-index": "左人指",
+    "right-index": "右人指",
+    "right-middle": "右中",
+    "right-ring": "右薬",
+    "right-pinky": "右小"
+  },
+  "ja-hira": {
+    "left-pinky": "ひだりこ",
+    "left-ring": "ひだりくすり",
+    "left-middle": "ひだりなか",
+    "left-index": "ひだりひと",
+    "right-index": "みぎひと",
+    "right-middle": "みぎなか",
+    "right-ring": "みぎくすり",
+    "right-pinky": "みぎこ"
+  }
+};
+
+export const fingerLabels: Record<DisplayLanguage, Record<FingerId, string>> = {
+  en: {
+    "left-pinky": "Left pinky",
+    "left-ring": "Left ring",
+    "left-middle": "Left middle",
+    "left-index": "Left index",
+    "right-index": "Right index",
+    "right-middle": "Right middle",
+    "right-ring": "Right ring",
+    "right-pinky": "Right pinky"
+  },
+  ja: {
+    "left-pinky": "左小指",
+    "left-ring": "左薬指",
+    "left-middle": "左中指",
+    "left-index": "左人差し指",
+    "right-index": "右人差し指",
+    "right-middle": "右中指",
+    "right-ring": "右薬指",
+    "right-pinky": "右小指"
+  },
+  "ja-hira": {
+    "left-pinky": "ひだりこゆび",
+    "left-ring": "ひだりくすりゆび",
+    "left-middle": "ひだりなかゆび",
+    "left-index": "ひだりひとさしゆび",
+    "right-index": "みぎひとさしゆび",
+    "right-middle": "みぎなかゆび",
+    "right-ring": "みぎくすりゆび",
+    "right-pinky": "みぎこゆび"
+  }
 };

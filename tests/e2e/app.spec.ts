@@ -14,6 +14,18 @@ test("shows the main practice guidance", async ({ page }) => {
   await expect(page.getByTestId("active-finger-button")).toHaveAttribute("data-finger-id", "left-pinky");
 });
 
+test("switches the display language from settings", async ({ page }) => {
+  await page.getByTestId("tab-settings").click();
+  await page.getByTestId("language-ja").click();
+
+  await expect(page.getByTestId("tab-practice")).toHaveText("練習");
+  await expect(page.getByText("表示言語")).toBeVisible();
+
+  await page.getByTestId("tab-practice").click();
+  await expect(page.getByTestId("finger-button-label")).toHaveText("左小指");
+  await expect(page.getByTestId("active-finger-button")).toHaveText("左小");
+});
+
 test("navigates across all tabs", async ({ page }) => {
   await page.getByTestId("tab-words").click();
   await expect(page.getByText("Add your own practice words")).toBeVisible();
@@ -43,6 +55,7 @@ test("adds a custom word and rejects duplicates", async ({ page }) => {
 
 test("persists settings after reload", async ({ page }) => {
   await page.getByTestId("tab-settings").click();
+  await page.getByTestId("language-ja-hira").click();
   await page.getByTestId("word-count-input").fill("1");
   await page.getByTestId("speech-toggle").uncheck();
   await page.getByTestId("keyboard-hint-toggle").uncheck();
@@ -52,6 +65,7 @@ test("persists settings after reload", async ({ page }) => {
   await page.reload();
   await page.getByTestId("tab-settings").click();
 
+  await expect(page.getByTestId("tab-practice")).toHaveText("れんしゅう");
   await expect(page.getByTestId("word-count-input")).toHaveValue("1");
   await expect(page.getByTestId("speech-toggle")).not.toBeChecked();
   await expect(page.getByTestId("keyboard-hint-toggle")).not.toBeChecked();

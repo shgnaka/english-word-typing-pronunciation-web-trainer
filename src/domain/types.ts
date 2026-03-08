@@ -53,6 +53,8 @@ export type FingerId =
   | "right-ring"
   | "right-pinky";
 
+export type DisplayLanguage = "en" | "ja" | "ja-hira";
+
 export interface KeyboardGuide {
   keyPosition: string;
   finger: string;
