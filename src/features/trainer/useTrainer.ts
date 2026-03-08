@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { defaultWords } from "../../data/defaultWords";
 import { applyKeystroke, buildSessionQueue, createInitialSession } from "../../domain/session";
 import type { DisplayLanguage, SessionConfig, TypingSessionState, WordEntry } from "../../domain/types";
@@ -29,6 +29,7 @@ export function useTrainer() {
   const [inputValue, setInputValue] = useState("");
   const [addWordError, setAddWordError] = useState("");
   const [countdown, setCountdown] = useState(3);
+  const lastAutoPronouncedWordRef = useRef<string | null>(null);
 
   useEffect(() => {
     const loadedCustomWords = loadCustomWords();
@@ -55,6 +56,20 @@ export function useTrainer() {
     return () => window.clearTimeout(timeoutId);
   }, [countdown, screen, session.currentWord, session.isComplete]);
 
+  useEffect(() => {
+    if (screen !== "practice" || countdown > 0 || !config.speechEnabled || !session.currentWord || session.isComplete) {
+      return;
+    }
+
+    const pronunciationKey = `${session.currentWord.id}:${session.completedWords.length}`;
+    if (lastAutoPronouncedWordRef.current === pronunciationKey) {
+      return;
+    }
+
+    speakWord(session.currentWord.text);
+    lastAutoPronouncedWordRef.current = pronunciationKey;
+  }, [config.speechEnabled, countdown, screen, session.completedWords.length, session.currentWord, session.isComplete]);
+
   const allWords = dedupeWords([...defaultWords, ...customWords]);
   const { currentTarget, currentGuide, score, totalWords, remainingWords, completedWordsCount, progressPercent, isCountdownActive, hasPendingConfigChanges } =
     deriveTrainerViewState({
@@ -67,6 +82,7 @@ export function useTrainer() {
 
   function restartSession(nextConfig = config) {
     const queue = buildSessionQueue(allWords, nextConfig.wordCount, nextConfig.shuffle);
+    lastAutoPronouncedWordRef.current = null;
     setSession(createInitialSession(queue));
     setCountdown(queue.length > 0 ? 3 : 0);
     setScreen("practice");

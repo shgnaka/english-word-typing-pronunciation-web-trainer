@@ -22,6 +22,10 @@ beforeEach(() => {
   });
 });
 
+function getSpeechSynthesisMock() {
+  return window.speechSynthesis as unknown as { cancel: ReturnType<typeof vi.fn>; speak: ReturnType<typeof vi.fn> };
+}
+
 afterEach(() => {
   cleanup();
 });
@@ -78,6 +82,25 @@ describe("App", () => {
 
     expect(screen.queryByTestId("countdown-banner")).not.toBeInTheDocument();
     expect(screen.getByTestId("feedback")).toHaveTextContent("Type on your keyboard to progress.");
+  });
+
+  it("auto pronounces the first word when typing becomes available", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.click(screen.getByTestId("skip-countdown-button"));
+
+    expect(getSpeechSynthesisMock().speak).toHaveBeenCalledTimes(1);
+  });
+
+  it("auto pronounces the next word after completing the current one", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.click(screen.getByTestId("skip-countdown-button"));
+    await user.keyboard("apple");
+
+    expect(getSpeechSynthesisMock().speak).toHaveBeenCalledTimes(2);
   });
 
   it("resumes typing after a practice action button is clicked", async () => {
