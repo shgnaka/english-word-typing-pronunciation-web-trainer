@@ -7,6 +7,7 @@ import type { BrowserTtsWorkerResponse } from "./browserTtsShared";
 const databaseName = "wordbeat.browserTts";
 const databaseVersion = 1;
 const storeName = "audio-cache";
+const browserTtsCacheTtlMs = 1000 * 60 * 60 * 24 * 30;
 
 interface AudioCacheRecord {
   key: string;
@@ -23,6 +24,10 @@ let backgroundQueue = Promise.resolve();
 
 function normalizeWord(word: string): string {
   return word.trim().toLowerCase();
+}
+
+export function isBrowserTtsCacheExpired(createdAt: number, now = Date.now()): boolean {
+  return now - createdAt > browserTtsCacheTtlMs;
 }
 
 export function createBrowserTtsCacheKey(word: string): string {
@@ -80,6 +85,28 @@ async function writeAudioCacheRecord(record: AudioCacheRecord): Promise<void> {
     const request = transaction.objectStore(storeName).put(record);
     request.onsuccess = () => resolve();
     request.onerror = () => reject(request.error ?? new Error("Failed to write browser TTS cache record."));
+  });
+}
+
+async function deleteAudioCacheRecord(key: string): Promise<void> {
+  const database = await openAudioCacheDatabase();
+
+  await new Promise<void>((resolve, reject) => {
+    const transaction = database.transaction(storeName, "readwrite");
+    const request = transaction.objectStore(storeName).delete(key);
+    request.onsuccess = () => resolve();
+    request.onerror = () => reject(request.error ?? new Error("Failed to delete browser TTS cache record."));
+  });
+}
+
+async function listAudioCacheRecords(): Promise<AudioCacheRecord[]> {
+  const database = await openAudioCacheDatabase();
+
+  return await new Promise((resolve, reject) => {
+    const transaction = database.transaction(storeName, "readonly");
+    const request = transaction.objectStore(storeName).getAll();
+    request.onsuccess = () => resolve((request.result as AudioCacheRecord[] | undefined) ?? []);
+    request.onerror = () => reject(request.error ?? new Error("Failed to list browser TTS cache records."));
   });
 }
 
@@ -155,7 +182,33 @@ export async function getCachedWordAudio(word: string): Promise<Blob | null> {
   }
 
   const record = await readAudioCacheRecord(createBrowserTtsCacheKey(normalizedWord));
+  if (record && isBrowserTtsCacheExpired(record.createdAt)) {
+    await deleteAudioCacheRecord(record.key).catch(() => undefined);
+    return null;
+  }
+
   return record?.audioBlob ?? null;
+}
+
+export async function purgeExpiredBrowserTtsCache(now = Date.now()): Promise<number> {
+  if (!isBrowserTtsSupported()) {
+    return 0;
+  }
+
+  const records = await listAudioCacheRecords();
+  const expiredRecords = records.filter((record) => isBrowserTtsCacheExpired(record.createdAt, now));
+  await Promise.all(expiredRecords.map((record) => deleteAudioCacheRecord(record.key)));
+  return expiredRecords.length;
+}
+
+export async function clearBrowserTtsCache(): Promise<number> {
+  if (!isBrowserTtsSupported()) {
+    return 0;
+  }
+
+  const records = await listAudioCacheRecords();
+  await Promise.all(records.map((record) => deleteAudioCacheRecord(record.key)));
+  return records.length;
 }
 
 export async function ensureWordAudio(word: string): Promise<Blob> {
@@ -233,6 +286,7 @@ export function queueWordGeneration(word: string): void {
 
   backgroundQueue = backgroundQueue
     .then(async () => {
+      await purgeExpiredBrowserTtsCache();
       const isCached = await hasCachedWordAudio(normalizedWord);
       if (!isCached) {
         await ensureWordAudio(normalizedWord);
@@ -249,6 +303,7 @@ export function preloadBrowserTtsWords(words: string[]): void {
 
   backgroundQueue = backgroundQueue
     .then(async () => {
+      await purgeExpiredBrowserTtsCache();
       let hasMissingWord = false;
 
       for (const word of uniqueWords) {

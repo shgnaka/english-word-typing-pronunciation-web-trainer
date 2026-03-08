@@ -1,123 +1,62 @@
-import { useEffect, useRef, useState } from "react";
-import { defaultWords } from "../../data/defaultWords";
-import { applyKeystroke, buildSessionQueue, createInitialSession } from "../../domain/session";
-import type { DisplayLanguage, SessionConfig, TypingSessionState, WordEntry } from "../../domain/types";
-import { createWordEntry, dedupeWords } from "../../domain/words";
-import { hasCachedWordAudio, preloadBrowserTtsWords } from "../../infra/browserTts";
+import { useEffect, useState } from "react";
+import type { DisplayLanguage, SessionConfig, WordEntry } from "../../domain/types";
+import { createWordEntry } from "../../domain/words";
+import { clearBrowserTtsCache } from "../../infra/browserTts";
 import {
   defaultDisplayLanguage,
   defaultSessionConfig,
-  loadDisplayLanguage,
-  loadCustomWords,
-  loadSessionConfig,
   sanitizeWordCount,
   saveDisplayLanguage,
   saveCustomWords,
   saveSessionConfig
 } from "../../infra/storage";
-import { speakWord } from "../../infra/speech";
+import { buildAvailableWords, buildTrainerQueue, loadTrainerPreferences } from "./trainerData";
 import { deriveTrainerViewState } from "./trainerView";
-
-type Screen = "practice" | "words" | "settings" | "results";
-type PronunciationStatus = "idle" | "generating" | "fallback";
+import { useTrainerPronunciation } from "./useTrainerPronunciation";
+import { useTrainerSession } from "./useTrainerSession";
 
 export function useTrainer() {
-  const [screen, setScreen] = useState<Screen>("practice");
   const [customWords, setCustomWords] = useState<WordEntry[]>([]);
   const [config, setConfig] = useState<SessionConfig>(defaultSessionConfig);
   const [draftConfig, setDraftConfig] = useState<SessionConfig>(defaultSessionConfig);
   const [displayLanguage, setDisplayLanguage] = useState<DisplayLanguage>(defaultDisplayLanguage);
-  const [session, setSession] = useState<TypingSessionState>(() => createInitialSession([]));
   const [inputValue, setInputValue] = useState("");
   const [addWordError, setAddWordError] = useState("");
-  const [countdown, setCountdown] = useState(3);
-  const [pronunciationStatus, setPronunciationStatus] = useState<PronunciationStatus>("idle");
-  const lastAutoPronouncedWordRef = useRef<string | null>(null);
+  const [editingWordId, setEditingWordId] = useState<string | null>(null);
+  const [editingWordValue, setEditingWordValue] = useState("");
+  const [browserTtsCacheMessage, setBrowserTtsCacheMessage] = useState<"" | "cleared" | "failed">("");
+  const [isClearingBrowserTtsCache, setIsClearingBrowserTtsCache] = useState(false);
+  const sessionControls = useTrainerSession();
+  const allWords = buildAvailableWords(customWords);
+  const pronunciation = useTrainerPronunciation({
+    screen: sessionControls.screen,
+    countdown: sessionControls.countdown,
+    session: sessionControls.session,
+    config,
+    availableWords: allWords
+  });
 
   useEffect(() => {
-    const loadedCustomWords = loadCustomWords();
-    const loadedConfig = loadSessionConfig();
-    const loadedDisplayLanguage = loadDisplayLanguage();
+    const { customWords: loadedCustomWords, config: loadedConfig, displayLanguage: loadedDisplayLanguage } = loadTrainerPreferences();
     setCustomWords(loadedCustomWords);
     setConfig(loadedConfig);
     setDraftConfig(loadedConfig);
     setDisplayLanguage(loadedDisplayLanguage);
-    const queue = buildSessionQueue(dedupeWords([...defaultWords, ...loadedCustomWords]), loadedConfig.wordCount, loadedConfig.shuffle);
-    setSession(createInitialSession(queue));
-    setCountdown(queue.length > 0 ? 3 : 0);
+    pronunciation.resetAutoPronunciation();
+    sessionControls.initializeSession(buildTrainerQueue(buildAvailableWords(loadedCustomWords), loadedConfig));
   }, []);
-
-  useEffect(() => {
-    if (screen !== "practice" || countdown <= 0 || !session.currentWord || session.isComplete) {
-      return;
-    }
-
-    const timeoutId = window.setTimeout(() => {
-      setCountdown((current) => Math.max(current - 1, 0));
-    }, 1000);
-
-    return () => window.clearTimeout(timeoutId);
-  }, [countdown, screen, session.currentWord, session.isComplete]);
-
-  useEffect(() => {
-    if (screen !== "practice" || countdown > 0 || !config.speechEnabled || !session.currentWord || session.isComplete) {
-      return;
-    }
-
-    const pronunciationKey = `${session.currentWord.id}:${session.completedWords.length}`;
-    if (lastAutoPronouncedWordRef.current === pronunciationKey) {
-      return;
-    }
-
-    void speakWord(session.currentWord.text, {
-      browserTtsEnabled: config.browserTtsEnabled,
-      trigger: "auto"
-    });
-    lastAutoPronouncedWordRef.current = pronunciationKey;
-  }, [config.browserTtsEnabled, config.speechEnabled, countdown, screen, session.completedWords.length, session.currentWord, session.isComplete]);
-
-  useEffect(() => {
-    setPronunciationStatus("idle");
-  }, [session.currentWord?.id]);
-
-  useEffect(() => {
-    if (!config.speechEnabled || !config.browserTtsEnabled) {
-      return;
-    }
-
-    preloadBrowserTtsWords(dedupeWords([...defaultWords, ...customWords]).map((word) => word.text));
-  }, [config.browserTtsEnabled, config.speechEnabled, customWords]);
-
-  const allWords = dedupeWords([...defaultWords, ...customWords]);
   const { currentTarget, currentGuide, score, totalWords, remainingWords, completedWordsCount, progressPercent, isCountdownActive, isTypingActiveLayout, hasPendingConfigChanges } =
     deriveTrainerViewState({
-      session,
-      screen,
-      countdown,
+      session: sessionControls.session,
+      screen: sessionControls.screen,
+      countdown: sessionControls.countdown,
       config,
       draftConfig
     });
 
   function restartSession(nextConfig = config) {
-    const queue = buildSessionQueue(allWords, nextConfig.wordCount, nextConfig.shuffle);
-    lastAutoPronouncedWordRef.current = null;
-    setSession(createInitialSession(queue));
-    setCountdown(queue.length > 0 ? 3 : 0);
-    setScreen("practice");
-  }
-
-  function handleKeyInput(key: string) {
-    if (isCountdownActive) {
-      return;
-    }
-
-    setSession((current) => {
-      const next = applyKeystroke(current, key, Date.now());
-      if (next.isComplete && next.completedWords.length > 0) {
-        setScreen("results");
-      }
-      return next;
-    });
+    pronunciation.resetAutoPronunciation();
+    sessionControls.restartSession(allWords, nextConfig);
   }
 
   function handleAddWord() {
@@ -146,7 +85,115 @@ export function useTrainer() {
     }
   }
 
+  function handleRemoveWord(wordId: string) {
+    const nextWords = customWords.filter((word) => word.id !== wordId);
+    setCustomWords(nextWords);
+    saveCustomWords(nextWords);
+
+    if (editingWordId === wordId) {
+      setEditingWordId(null);
+      setEditingWordValue("");
+      setAddWordError("");
+    }
+  }
+
+  function moveCustomWord(wordId: string, direction: "up" | "down") {
+    const currentIndex = customWords.findIndex((word) => word.id === wordId);
+    if (currentIndex === -1) {
+      return;
+    }
+
+    const targetIndex = direction === "up" ? currentIndex - 1 : currentIndex + 1;
+    if (targetIndex < 0 || targetIndex >= customWords.length) {
+      return;
+    }
+
+    const nextWords = [...customWords];
+    [nextWords[currentIndex], nextWords[targetIndex]] = [nextWords[targetIndex], nextWords[currentIndex]];
+    setCustomWords(nextWords);
+    saveCustomWords(nextWords);
+  }
+
+  function startEditingWord(wordId: string) {
+    const targetWord = customWords.find((word) => word.id === wordId);
+    if (!targetWord) {
+      return;
+    }
+
+    setEditingWordId(wordId);
+    setEditingWordValue(targetWord.text);
+    setAddWordError("");
+  }
+
+  function cancelEditingWord() {
+    setEditingWordId(null);
+    setEditingWordValue("");
+    setAddWordError("");
+  }
+
+  function updateEditingWordValue(value: string) {
+    setEditingWordValue(value);
+    if (addWordError) {
+      setAddWordError("");
+    }
+  }
+
+  function saveEditingWord() {
+    if (!editingWordId) {
+      return;
+    }
+
+    const existingWord = customWords.find((word) => word.id === editingWordId);
+    if (!existingWord) {
+      cancelEditingWord();
+      return;
+    }
+
+    const entry = createWordEntry(editingWordValue, "custom");
+    if (!entry) {
+      setAddWordError("words.error.invalid");
+      return;
+    }
+
+    if (allWords.some((word) => word.id !== editingWordId && word.normalizedText === entry.normalizedText)) {
+      setAddWordError("words.error.duplicate");
+      return;
+    }
+
+    const nextWords = customWords.map((word) =>
+      word.id === editingWordId
+        ? {
+            ...word,
+            id: entry.id,
+            text: entry.text,
+            normalizedText: entry.normalizedText
+          }
+        : word
+    );
+
+    setCustomWords(nextWords);
+    saveCustomWords(nextWords);
+    cancelEditingWord();
+  }
+
   function handleConfigChange<K extends keyof SessionConfig>(key: K, value: SessionConfig[K]) {
+    if (key === "showKeyboardHint" || key === "showFingerGuide") {
+      const nextValue = Boolean(value) as SessionConfig[K];
+      setConfig((current) => {
+        const nextConfig = {
+          ...current,
+          [key]: nextValue
+        };
+        saveSessionConfig(nextConfig);
+        return nextConfig;
+      });
+      setDraftConfig((current) => ({
+        ...current,
+        [key]: nextValue
+      }));
+      return;
+    }
+
     setDraftConfig((current) => ({
       ...current,
       [key]: key === "wordCount" ? sanitizeWordCount(value as number) : value
@@ -168,48 +215,36 @@ export function useTrainer() {
     saveDisplayLanguage(language);
   }
 
-  async function pronounceCurrentWord(trigger: "auto" | "manual") {
-    if (!session.currentWord || !config.speechEnabled) {
-      return;
-    }
-
-    const word = session.currentWord.text;
-
-    if (trigger === "manual" && config.browserTtsEnabled) {
-      const hasCachedAudio = await hasCachedWordAudio(word).catch(() => false);
-      if (!hasCachedAudio) {
-        setPronunciationStatus("generating");
-      }
-    }
-
-    const result = await speakWord(word, {
-      browserTtsEnabled: config.browserTtsEnabled,
-      trigger
-    });
-
-    if (trigger === "manual" && config.browserTtsEnabled && result.source === "speech-synthesis") {
-      setPronunciationStatus("fallback");
-      return;
-    }
-
-    if (trigger === "manual") {
-      setPronunciationStatus("idle");
+  async function handleClearBrowserTtsCache() {
+    setIsClearingBrowserTtsCache(true);
+    try {
+      await clearBrowserTtsCache();
+      setBrowserTtsCacheMessage("cleared");
+    } catch {
+      setBrowserTtsCacheMessage("failed");
+    } finally {
+      setIsClearingBrowserTtsCache(false);
     }
   }
 
   return {
-    screen,
-    setScreen,
-    session,
+    screen: sessionControls.screen,
+    setScreen: sessionControls.setScreen,
+    session: sessionControls.session,
     config,
     draftConfig,
     displayLanguage,
+    builtinWords: allWords.filter((word) => word.source === "builtin"),
     customWords,
+    editingWordId,
+    editingWordValue,
     inputValue,
     setInputValue: handleAddWordInputChange,
     addWordError,
-    countdown,
-    pronunciationStatus,
+    browserTtsCacheMessage,
+    isClearingBrowserTtsCache,
+    countdown: sessionControls.countdown,
+    pronunciationStatus: pronunciation.pronunciationStatus,
     currentTarget,
     currentGuide,
     score,
@@ -220,18 +255,25 @@ export function useTrainer() {
     isCountdownActive,
     isTypingActiveLayout,
     hasPendingConfigChanges,
-    handleKeyInput,
+    handleKeyInput: sessionControls.handleKeyInput,
     handleAddWord,
+    handleRemoveWord,
+    moveCustomWord,
+    startEditingWord,
+    cancelEditingWord,
+    setEditingWordValue: updateEditingWordValue,
+    saveEditingWord,
     handleConfigChange,
     applyConfigChanges,
     discardConfigChanges,
+    clearBrowserTtsCache: handleClearBrowserTtsCache,
     setDisplayLanguage: handleDisplayLanguageChange,
     restartSession,
     skipCountdown() {
-      setCountdown(0);
+      sessionControls.skipCountdown();
     },
     speakCurrentWord() {
-      void pronounceCurrentWord("manual");
+      pronunciation.speakCurrentWord();
     }
   };
 }

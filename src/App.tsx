@@ -1,4 +1,5 @@
 import { useEffect, useRef } from "react";
+import type { KeyboardEvent as ReactKeyboardEvent, MouseEvent as ReactMouseEvent } from "react";
 import { PracticePanel } from "./components/PracticePanel";
 import { ResultsPanel } from "./components/ResultsPanel";
 import { SettingsPanel } from "./components/SettingsPanel";
@@ -21,27 +22,12 @@ function App() {
   const wasCountdownActiveRef = useRef(trainer.isCountdownActive);
 
   useEffect(() => {
-    function onKeyDown(event: KeyboardEvent) {
-      if (trainer.screen !== "practice") {
-        return;
-      }
-
-      if (trainer.isCountdownActive && event.key === "Enter") {
-        event.preventDefault();
-        trainer.skipCountdown();
-        return;
-      }
-
-      if (isInteractiveElement(event.target)) {
-        return;
-      }
-
-      trainer.handleKeyInput(event.key);
+    if (trainer.screen !== "practice") {
+      return;
     }
 
-    window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
-  }, [trainer]);
+    primaryPanelRef.current?.focus();
+  }, [trainer.screen]);
 
   useEffect(() => {
     const shouldScrollIntoPracticePanel = trainer.screen === "practice" && trainer.isTypingActiveLayout && wasCountdownActiveRef.current;
@@ -77,6 +63,36 @@ function App() {
     };
   }, [trainer.isCountdownActive, trainer.isTypingActiveLayout, trainer.screen]);
 
+  function handlePracticePanelKeyDown(event: ReactKeyboardEvent<HTMLElement>) {
+    if (trainer.screen !== "practice") {
+      return;
+    }
+
+    if (trainer.isCountdownActive && event.key === "Enter") {
+      event.preventDefault();
+      trainer.skipCountdown();
+      return;
+    }
+
+    if (isInteractiveElement(event.target)) {
+      return;
+    }
+
+    trainer.handleKeyInput(event.key);
+  }
+
+  function handlePracticePanelClick(event: ReactMouseEvent<HTMLElement>) {
+    if (trainer.screen !== "practice") {
+      return;
+    }
+
+    if (!isInteractiveElement(event.target)) {
+      return;
+    }
+
+    primaryPanelRef.current?.focus();
+  }
+
   return (
     <div className="app-shell" data-testid="app-shell">
       <nav className="tabs" aria-label="Primary" data-testid="app-tabs">
@@ -99,6 +115,9 @@ function App() {
           ref={primaryPanelRef}
           className="panel panel-primary"
           data-testid="primary-panel"
+          tabIndex={trainer.screen === "practice" ? -1 : undefined}
+          onKeyDown={handlePracticePanelKeyDown}
+          onClick={handlePracticePanelClick}
         >
           {trainer.screen === "practice" ? <PracticePanel trainer={trainer} /> : null}
           {trainer.screen === "words" ? <WordsPanel trainer={trainer} /> : null}

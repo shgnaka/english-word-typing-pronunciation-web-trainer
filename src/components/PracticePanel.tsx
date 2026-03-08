@@ -37,10 +37,12 @@ function PracticeMetricsBar({ trainer, language }: PracticePanelProps & { langua
 function PracticeWordStage({
   currentWord,
   hasMistype,
+  targetSummary,
   trainer
 }: {
   currentWord: string;
   hasMistype: boolean;
+  targetSummary: string;
   trainer: TrainerState;
 }) {
   return (
@@ -48,7 +50,9 @@ function PracticeWordStage({
       <div className="panel-header practice-header">
         <div>
           <p className={`label ${trainer.isTypingActiveLayout ? "typing-active-label" : ""}`}>{t(trainer.displayLanguage, "practice.currentWord")}</p>
-          <h2 data-testid="current-word">{currentWord || t(trainer.displayLanguage, "practice.noWords")}</h2>
+          <h2 data-testid="current-word" aria-describedby="practice-target-summary practice-status-message">
+            {currentWord || t(trainer.displayLanguage, "practice.noWords")}
+          </h2>
         </div>
         <button
           className="secondary"
@@ -57,7 +61,7 @@ function PracticeWordStage({
             trainer.speakCurrentWord();
             event.currentTarget.blur();
           }}
-          disabled={!currentWord || !trainer.config.speechEnabled || trainer.pronunciationStatus === "generating"}
+          disabled={!currentWord || !trainer.config.speechEnabled || trainer.pronunciationStatus === "generating" || trainer.pronunciationStatus === "playing"}
         >
           {t(trainer.displayLanguage, "practice.pronounce")}
         </button>
@@ -67,6 +71,10 @@ function PracticeWordStage({
         <div className="pronunciation-status" data-testid="pronunciation-status" aria-live="polite">
           {trainer.pronunciationStatus === "generating"
             ? t(trainer.displayLanguage, "practice.audio.generating")
+            : trainer.pronunciationStatus === "playing"
+            ? t(trainer.displayLanguage, "practice.audio.playing")
+            : trainer.pronunciationStatus === "error"
+            ? t(trainer.displayLanguage, "practice.audio.error")
             : t(trainer.displayLanguage, "practice.audio.fallback")}
         </div>
       ) : null}
@@ -85,6 +93,10 @@ function PracticeWordStage({
           );
         })}
       </div>
+
+      <p className="sr-only" data-testid="practice-target-summary" id="practice-target-summary">
+        {targetSummary}
+      </p>
     </div>
   );
 }
@@ -180,9 +192,28 @@ export function PracticePanel({ trainer }: PracticePanelProps) {
     : t(language, "practice.feedback.incorrect");
   const shouldShowKeyboardGuide = trainer.isTypingActiveLayout || trainer.config.showKeyboardHint;
   const shouldShowFingerGuide = trainer.isTypingActiveLayout || trainer.config.showFingerGuide;
+  const targetSummary = trainer.currentTarget && trainer.currentGuide
+    ? t(language, "practice.a11y.target")
+        .replace("{char}", trainer.currentTarget.toUpperCase())
+        .replace("{key}", trainer.currentTarget.toUpperCase())
+        .replace("{finger}", getFingerLabel(language, trainer.currentGuide.fingerId, trainer.currentGuide.finger))
+    : t(language, "practice.noKey");
+  const practiceStatusMessage = showEmptyState
+    ? t(language, "practice.a11y.status.empty")
+    : trainer.session.isComplete
+    ? t(language, "practice.a11y.status.complete")
+    : trainer.isCountdownActive
+    ? t(language, "practice.a11y.status.countdown").replace("{count}", String(trainer.countdown))
+    : trainer.session.lastInputCorrect === false
+    ? incorrectFeedback
+    : t(language, "practice.a11y.status.active");
 
   return (
     <div className={`practice-panel ${trainer.isTypingActiveLayout ? "typing-active-layout" : ""}`} data-testid="practice-panel">
+      <div className="sr-only" data-testid="practice-status-message" id="practice-status-message" role="status" aria-live="polite">
+        {practiceStatusMessage}
+      </div>
+
       {showEmptyState ? (
         <div className="empty-state" data-testid="practice-empty-state">
           <strong>{t(language, "practice.emptyTitle")}</strong>
@@ -195,7 +226,7 @@ export function PracticePanel({ trainer }: PracticePanelProps) {
           </div>
 
           <div className="practice-layout-slot word">
-            <PracticeWordStage currentWord={currentWord} hasMistype={hasMistype} trainer={trainer} />
+            <PracticeWordStage currentWord={currentWord} hasMistype={hasMistype} targetSummary={targetSummary} trainer={trainer} />
           </div>
         </>
       )}

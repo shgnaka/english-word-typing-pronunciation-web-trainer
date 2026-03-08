@@ -59,4 +59,16 @@ describe("speakWord", () => {
     expect(browserTtsMocks.queueWordGeneration).toHaveBeenCalledWith("apple");
     expect(globalThis.speechSynthesis.speak).toHaveBeenCalledTimes(1);
   });
+
+  it("returns none when no pronunciation backend is available", async () => {
+    // @ts-expect-error test override
+    globalThis.speechSynthesis = undefined;
+    // @ts-expect-error test override
+    globalThis.SpeechSynthesisUtterance = undefined;
+    browserTtsMocks.isBrowserTtsSupported.mockReturnValue(false);
+
+    const result = await speakWord("apple", { browserTtsEnabled: false, trigger: "manual" });
+
+    expect(result.source).toBe("none");
+  });
 });

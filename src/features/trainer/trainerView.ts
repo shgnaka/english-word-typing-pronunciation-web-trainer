@@ -3,6 +3,15 @@ import { calculateSessionScore } from "../../domain/scoring";
 import { getTargetCharacter } from "../../domain/session";
 import type { SessionConfig, TypingSessionState } from "../../domain/types";
 
+function hasPendingSessionSetupChanges(config: SessionConfig, draftConfig: SessionConfig): boolean {
+  return (
+    config.wordCount !== draftConfig.wordCount ||
+    config.shuffle !== draftConfig.shuffle ||
+    config.speechEnabled !== draftConfig.speechEnabled ||
+    config.browserTtsEnabled !== draftConfig.browserTtsEnabled
+  );
+}
+
 export interface TrainerViewState {
   currentTarget: string;
   currentGuide: (typeof keyboardGuideMap)[string] | null;
@@ -33,7 +42,7 @@ export function deriveTrainerViewState(args: {
   const progressPercent = totalWords > 0 ? Math.round((completedWordsCount / totalWords) * 100) : 0;
   const isCountdownActive = screen === "practice" && countdown > 0 && !session.isComplete && Boolean(session.currentWord);
   const isTypingActiveLayout = screen === "practice" && countdown === 0 && !session.isComplete && Boolean(session.currentWord);
-  const hasPendingConfigChanges = JSON.stringify(config) !== JSON.stringify(draftConfig);
+  const hasPendingConfigChanges = hasPendingSessionSetupChanges(config, draftConfig);
 
   return {
     currentTarget,
