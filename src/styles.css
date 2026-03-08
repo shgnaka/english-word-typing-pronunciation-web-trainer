@@ -87,14 +87,6 @@ input {
   padding: 2rem 1rem 3rem;
 }
 
-.hero {
-  display: grid;
-  gap: 1rem;
-  margin-bottom: 1.5rem;
-  transition: gap 180ms ease, margin-bottom 180ms ease, opacity 180ms ease;
-}
-
-.eyebrow,
 .label {
   margin: 0;
   text-transform: uppercase;
@@ -103,23 +95,16 @@ input {
   color: #ffbf69;
 }
 
-.hero h1,
 .panel h2,
 .result-card h3 {
   margin: 0;
-}
-
-.hero-copy {
-  max-width: 48rem;
-  color: rgba(246, 244, 239, 0.8);
-  transition: max-height 180ms ease, opacity 180ms ease, margin 180ms ease;
 }
 
 .tabs {
   display: flex;
   flex-wrap: wrap;
   gap: 0.75rem;
-  transition: gap 180ms ease, opacity 180ms ease, transform 180ms ease;
+  margin-bottom: 1rem;
 }
 
 .grid {
@@ -134,7 +119,7 @@ input {
   border-radius: 28px;
   padding: 1.5rem;
   box-shadow: 0 24px 80px rgba(0, 0, 0, 0.25);
-  transition: padding 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
+  transition: border-color 140ms ease, box-shadow 140ms ease;
 }
 
 .panel-header,
@@ -152,43 +137,6 @@ input {
 
 .session-summary {
   margin-bottom: 1rem;
-}
-
-.practice-focused-shell .grid {
-  gap: 0.75rem;
-}
-
-.practice-focused-hero {
-  gap: 0.55rem;
-  margin-bottom: 0.9rem;
-  opacity: 0.9;
-}
-
-.practice-focused-hero h1 {
-  font-size: clamp(1.5rem, 3vw, 2rem);
-}
-
-.practice-focused-hero .hero-copy {
-  max-height: 0;
-  opacity: 0;
-  overflow: hidden;
-  margin: 0;
-}
-
-.practice-focused-tabs {
-  gap: 0.5rem;
-  opacity: 0.82;
-  transform: translateY(-2px);
-}
-
-.practice-focused-tabs button {
-  padding: 0.55rem 0.95rem;
-}
-
-.practice-focused-panel {
-  padding-top: 1.1rem;
-  border-color: rgba(255, 255, 255, 0.08);
-  box-shadow: 0 18px 56px rgba(0, 0, 0, 0.2);
 }
 
 .practice-panel.typing-active-layout {
@@ -248,17 +196,8 @@ input {
   gap: 0.35rem;
 }
 
-.session-summary.focused {
-  gap: 0.75rem;
-  margin-bottom: 0.65rem;
-}
-
 .progress-block {
   margin-bottom: 1.5rem;
-}
-
-.progress-block.focused {
-  margin-bottom: 1rem;
 }
 
 .progress-track {
@@ -284,7 +223,7 @@ input {
   font-weight: 700;
 }
 
-.practice-panel.focused .word-display {
+.practice-panel.typing-active-layout .word-display {
   margin: 1.35rem 0 1.6rem;
   font-size: clamp(2.2rem, 6vw, 4.3rem);
 }
@@ -320,11 +259,6 @@ input {
   padding: 1rem;
 }
 
-.session-summary.focused .metric {
-  padding: 0.8rem 0.95rem;
-  background: rgba(255, 255, 255, 0.045);
-}
-
 .practice-layout-slot.keyboard,
 .practice-layout-slot.finger {
   margin: 1rem 0 0;
@@ -335,8 +269,8 @@ input {
   margin: 0;
 }
 
-.practice-layout-slot.keyboard.focused,
-.practice-layout-slot.finger.focused {
+.practice-panel.typing-active-layout .practice-layout-slot.keyboard,
+.practice-panel.typing-active-layout .practice-layout-slot.finger {
   margin-top: 0.8rem;
 }
 
@@ -346,7 +280,7 @@ input {
   padding: 1rem;
 }
 
-.guide-card.focused {
+.guide-card.typing-active {
   padding: 0.85rem 0.95rem;
 }
 
@@ -362,7 +296,7 @@ input {
   margin-bottom: 0.9rem;
 }
 
-.guide-card-header.focused {
+.guide-card-header.typing-active {
   margin-bottom: 0.65rem;
 }
 
@@ -521,7 +455,7 @@ input {
   color: #d8ffe0;
 }
 
-.feedback.focused {
+.practice-panel.typing-active-layout .feedback {
   margin: 0.8rem 0 1rem;
   padding: 0.75rem 0.9rem;
 }
@@ -576,20 +510,20 @@ input {
   justify-content: space-between;
 }
 
-.practice-header.focused {
+.practice-panel.typing-active-layout .practice-header {
   margin-bottom: 0.25rem;
 }
 
-.practice-focused-label {
+.typing-active-label {
   color: var(--color-text-faint);
 }
 
-.practice-actions.focused {
+.practice-panel.typing-active-layout .practice-actions {
   gap: 0.75rem;
   justify-content: flex-start;
 }
 
-.practice-actions.focused button {
+.practice-panel.typing-active-layout .practice-actions button {
   padding: 0.68rem 1rem;
 }
 

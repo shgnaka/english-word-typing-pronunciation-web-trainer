@@ -6,24 +6,52 @@ test.beforeEach(async ({ page }) => {
 
 test("scrolls the primary panel into view when typing starts", async ({ page }) => {
   await page.evaluate(() => {
-    (window as typeof window & { __scrollCalls?: Array<{ testId: string | null; block?: string; behavior?: string }> }).__scrollCalls = [];
-    Element.prototype.scrollIntoView = function (options?: ScrollIntoViewOptions) {
-      const element = this as HTMLElement;
+    (
+      window as typeof window & {
+        __scrollCalls?: Array<{ top?: number; behavior?: string }>;
+      }
+    ).__scrollCalls = [];
+    const originalGetBoundingClientRect = HTMLElement.prototype.getBoundingClientRect;
+    window.scrollTo = function (options?: ScrollToOptions | number, _y?: number) {
+      if (typeof options === "number") {
+        window.__scrollCalls?.push({ top: options });
+        return;
+      }
       window.__scrollCalls?.push({
-        testId: element.dataset.testid ?? null,
-        block: options?.block,
+        top: options?.top,
         behavior: options?.behavior
       });
     };
+    HTMLElement.prototype.getBoundingClientRect = function () {
+      const element = this as HTMLElement;
+      if (element.dataset.testid === "primary-panel") {
+        return {
+          x: 0,
+          y: 120,
+          width: 400,
+          height: 400,
+          top: 120,
+          right: 400,
+          bottom: 520,
+          left: 0,
+          toJSON: () => ({})
+        };
+      }
+      return originalGetBoundingClientRect.call(this);
+    };
+    Object.defineProperty(window, "scrollY", {
+      configurable: true,
+      value: 48
+    });
   });
 
   await page.getByTestId("skip-countdown-button").click();
 
   await expect
     .poll(() =>
-      page.evaluate(() => (window as typeof window & { __scrollCalls?: Array<{ testId: string | null; block?: string; behavior?: string }> }).__scrollCalls ?? [])
+      page.evaluate(() => (window as typeof window & { __scrollCalls?: Array<{ top?: number; behavior?: string }> }).__scrollCalls ?? [])
     )
-    .toEqual([{ testId: "primary-panel", block: "start", behavior: "smooth" }]);
+    .toEqual([{ top: 168, behavior: "smooth" }]);
 });
 
 test("shows the main practice guidance", async ({ page }) => {
@@ -143,12 +171,8 @@ test("clears mistype emphasis after the next correct key", async ({ page }) => {
 });
 
 test("enters the focused practice layout once typing starts", async ({ page }) => {
-  await expect(page.getByTestId("app-hero")).not.toHaveClass(/practice-focused-hero/);
   await page.getByTestId("skip-countdown-button").click();
 
-  await expect(page.getByTestId("app-hero")).toHaveClass(/practice-focused-hero/);
-  await expect(page.getByTestId("app-tabs")).toHaveClass(/practice-focused-tabs/);
-  await expect(page.getByTestId("practice-panel")).toHaveClass(/focused/);
   await expect(page.getByTestId("practice-panel")).toHaveClass(/typing-active-layout/);
   await expect(page.getByTestId("practice-metrics-bar")).toBeVisible();
   await expect(page.getByTestId("practice-word-stage")).toBeVisible();

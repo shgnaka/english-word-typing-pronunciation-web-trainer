@@ -4,11 +4,8 @@ import { fireEvent } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import App from "./App";
 
-const scrollIntoViewMock = vi.fn();
-
 beforeEach(() => {
   window.localStorage.clear();
-  scrollIntoViewMock.mockReset();
   Object.defineProperty(window, "speechSynthesis", {
     writable: true,
     value: {
@@ -23,10 +20,7 @@ beforeEach(() => {
       this.lang = "en-US";
     }
   });
-  Object.defineProperty(HTMLElement.prototype, "scrollIntoView", {
-    configurable: true,
-    value: scrollIntoViewMock
-  });
+  vi.stubGlobal("scrollTo", vi.fn());
 });
 
 function getSpeechSynthesisMock() {
@@ -34,6 +28,7 @@ function getSpeechSynthesisMock() {
 }
 
 afterEach(() => {
+  vi.unstubAllGlobals();
   cleanup();
 });
 
@@ -233,15 +228,10 @@ describe("App", () => {
     const user = userEvent.setup();
     render(<App />);
 
-    expect(screen.getByTestId("app-hero")).not.toHaveClass("practice-focused-hero");
-    expect(screen.getByTestId("practice-panel")).not.toHaveClass("focused");
     expect(screen.getByTestId("practice-panel")).not.toHaveClass("typing-active-layout");
 
     await user.click(screen.getByTestId("skip-countdown-button"));
 
-    expect(screen.getByTestId("app-hero")).toHaveClass("practice-focused-hero");
-    expect(screen.getByTestId("app-tabs")).toHaveClass("practice-focused-tabs");
-    expect(screen.getByTestId("practice-panel")).toHaveClass("focused");
     expect(screen.getByTestId("practice-panel")).toHaveClass("typing-active-layout");
     expect(screen.getByTestId("practice-metrics-bar")).toBeInTheDocument();
     expect(screen.getByTestId("practice-word-stage")).toBeInTheDocument();
@@ -253,29 +243,70 @@ describe("App", () => {
 
   it("scrolls the primary panel into view when typing starts", async () => {
     const user = userEvent.setup();
+    const scrollToMock = vi.fn();
+    const cancelAnimationFrameMock = vi.fn();
+    const animationFrameCallbacks: FrameRequestCallback[] = [];
+    vi.stubGlobal("scrollTo", scrollToMock);
+    vi.stubGlobal("cancelAnimationFrame", cancelAnimationFrameMock);
+    vi.stubGlobal("requestAnimationFrame", (callback: FrameRequestCallback) => {
+      animationFrameCallbacks.push(callback);
+      return animationFrameCallbacks.length;
+    });
+
     render(<App />);
+    const primaryPanel = screen.getByTestId("primary-panel");
+    vi.spyOn(primaryPanel, "getBoundingClientRect").mockReturnValue({
+      x: 0,
+      y: 120,
+      width: 100,
+      height: 100,
+      top: 120,
+      right: 100,
+      bottom: 220,
+      left: 0,
+      toJSON: () => ({})
+    });
+    Object.defineProperty(window, "scrollY", {
+      configurable: true,
+      value: 48
+    });
 
     await user.click(screen.getByTestId("skip-countdown-button"));
 
-    expect(scrollIntoViewMock).toHaveBeenCalledTimes(1);
-    expect(scrollIntoViewMock).toHaveBeenCalledWith({
+    expect(animationFrameCallbacks).toHaveLength(1);
+    animationFrameCallbacks.shift()?.(0);
+    expect(animationFrameCallbacks).toHaveLength(1);
+    animationFrameCallbacks.shift()?.(0);
+
+    expect(scrollToMock).toHaveBeenCalledTimes(1);
+    expect(scrollToMock).toHaveBeenCalledWith({
+      top: 168,
       behavior: "smooth",
-      block: "start"
     });
   });
 
   it("does not scroll again while typing or when returning to practice", async () => {
     const user = userEvent.setup();
+    const scrollToMock = vi.fn();
+    const animationFrameCallbacks: FrameRequestCallback[] = [];
+    vi.stubGlobal("scrollTo", scrollToMock);
+    vi.stubGlobal("requestAnimationFrame", (callback: FrameRequestCallback) => {
+      animationFrameCallbacks.push(callback);
+      return animationFrameCallbacks.length;
+    });
+    vi.stubGlobal("cancelAnimationFrame", vi.fn());
     render(<App />);
 
     await user.click(screen.getByTestId("skip-countdown-button"));
-    expect(scrollIntoViewMock).toHaveBeenCalledTimes(1);
+    animationFrameCallbacks.shift()?.(0);
+    animationFrameCallbacks.shift()?.(0);
+    expect(scrollToMock).toHaveBeenCalledTimes(1);
 
     await user.keyboard("a");
     await user.click(screen.getByRole("button", { name: "Settings" }));
     await user.click(screen.getByRole("button", { name: "Practice" }));
 
-    expect(scrollIntoViewMock).toHaveBeenCalledTimes(1);
+    expect(scrollToMock).toHaveBeenCalledTimes(1);
   });
 
   it("keeps keyboard and finger guides visible during typing even if assist settings are off", async () => {

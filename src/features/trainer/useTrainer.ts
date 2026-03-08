@@ -89,7 +89,7 @@ export function useTrainer() {
   }, [config.browserTtsEnabled, config.speechEnabled, customWords]);
 
   const allWords = dedupeWords([...defaultWords, ...customWords]);
-  const { currentTarget, currentGuide, score, totalWords, remainingWords, completedWordsCount, progressPercent, isCountdownActive, isPracticeFocused, isTypingActiveLayout, hasPendingConfigChanges } =
+  const { currentTarget, currentGuide, score, totalWords, remainingWords, completedWordsCount, progressPercent, isCountdownActive, isTypingActiveLayout, hasPendingConfigChanges } =
     deriveTrainerViewState({
       session,
       screen,
@@ -218,7 +218,6 @@ export function useTrainer() {
     completedWordsCount,
     progressPercent,
     isCountdownActive,
-    isPracticeFocused,
     isTypingActiveLayout,
     hasPendingConfigChanges,
     handleKeyInput,

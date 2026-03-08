@@ -12,7 +12,6 @@ export interface TrainerViewState {
   completedWordsCount: number;
   progressPercent: number;
   isCountdownActive: boolean;
-  isPracticeFocused: boolean;
   isTypingActiveLayout: boolean;
   hasPendingConfigChanges: boolean;
 }
@@ -33,8 +32,7 @@ export function deriveTrainerViewState(args: {
   const completedWordsCount = session.completedWords.length;
   const progressPercent = totalWords > 0 ? Math.round((completedWordsCount / totalWords) * 100) : 0;
   const isCountdownActive = screen === "practice" && countdown > 0 && !session.isComplete && Boolean(session.currentWord);
-  const isPracticeFocused = screen === "practice" && countdown === 0 && !session.isComplete && Boolean(session.currentWord);
-  const isTypingActiveLayout = isPracticeFocused;
+  const isTypingActiveLayout = screen === "practice" && countdown === 0 && !session.isComplete && Boolean(session.currentWord);
   const hasPendingConfigChanges = JSON.stringify(config) !== JSON.stringify(draftConfig);
 
   return {
@@ -46,7 +44,6 @@ export function deriveTrainerViewState(args: {
     completedWordsCount,
     progressPercent,
     isCountdownActive,
-    isPracticeFocused,
     isTypingActiveLayout,
     hasPendingConfigChanges
   };

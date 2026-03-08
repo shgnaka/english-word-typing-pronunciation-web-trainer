@@ -47,7 +47,7 @@ function PracticeWordStage({
     <div className={`practice-word-stage ${trainer.isTypingActiveLayout ? "typing-active" : ""}`} data-testid="practice-word-stage">
       <div className="panel-header practice-header">
         <div>
-          <p className={`label ${trainer.isPracticeFocused ? "practice-focused-label" : ""}`}>{t(trainer.displayLanguage, "practice.currentWord")}</p>
+          <p className={`label ${trainer.isTypingActiveLayout ? "typing-active-label" : ""}`}>{t(trainer.displayLanguage, "practice.currentWord")}</p>
           <h2 data-testid="current-word">{currentWord || t(trainer.displayLanguage, "practice.noWords")}</h2>
         </div>
         <button
@@ -102,10 +102,10 @@ function KeyboardGuideCard({
 }) {
   return (
     <section
-      className={`guide-card keyboard-guide-card ${trainer.isPracticeFocused ? "focused" : ""} ${trainer.isTypingActiveLayout ? "compact" : ""}`}
+      className={`guide-card keyboard-guide-card ${trainer.isTypingActiveLayout ? "typing-active compact" : ""}`}
       data-testid="keyboard-visual"
     >
-      <div className={`guide-card-header ${trainer.isPracticeFocused ? "focused" : ""} ${trainer.isTypingActiveLayout ? "compact" : ""}`}>
+      <div className={`guide-card-header ${trainer.isTypingActiveLayout ? "typing-active compact" : ""}`}>
         <div>
           <span className="label">{t(language, "practice.keyboardMap")}</span>
           <strong>{trainer.currentTarget ? `Key ${trainer.currentTarget.toUpperCase()}` : t(language, "practice.noKey")}</strong>
@@ -178,15 +178,11 @@ export function PracticePanel({ trainer }: PracticePanelProps) {
   const incorrectFeedback = mistypedKey
     ? t(language, "practice.feedback.incorrectWithKey").replace("{key}", mistypedKey.toUpperCase())
     : t(language, "practice.feedback.incorrect");
-  const practiceFeedback = trainer.isPracticeFocused ? t(language, "practice.feedback.focused") : t(language, "practice.feedback.default");
   const shouldShowKeyboardGuide = trainer.isTypingActiveLayout || trainer.config.showKeyboardHint;
   const shouldShowFingerGuide = trainer.isTypingActiveLayout || trainer.config.showFingerGuide;
 
   return (
-    <div
-      className={`practice-panel ${trainer.isPracticeFocused ? "focused" : ""} ${trainer.isTypingActiveLayout ? "typing-active-layout" : ""}`}
-      data-testid="practice-panel"
-    >
+    <div className={`practice-panel ${trainer.isTypingActiveLayout ? "typing-active-layout" : ""}`} data-testid="practice-panel">
       {showEmptyState ? (
         <div className="empty-state" data-testid="practice-empty-state">
           <strong>{t(language, "practice.emptyTitle")}</strong>
@@ -220,19 +216,19 @@ export function PracticePanel({ trainer }: PracticePanelProps) {
       ) : null}
 
       {shouldShowKeyboardGuide && !showEmptyState ? (
-        <div className={`practice-layout-slot keyboard ${trainer.isPracticeFocused ? "focused" : ""}`} data-testid="keyboard-guide-slot">
+        <div className="practice-layout-slot keyboard" data-testid="keyboard-guide-slot">
           <KeyboardGuideCard trainer={trainer} language={language} hasMistype={hasMistype} mistypedKey={mistypedKey} />
         </div>
       ) : null}
 
       {shouldShowFingerGuide && !showEmptyState ? (
-        <div className={`practice-layout-slot finger ${trainer.isPracticeFocused ? "focused" : ""}`} data-testid="finger-guide-slot">
+        <div className="practice-layout-slot finger" data-testid="finger-guide-slot">
           <FingerGuideCard trainer={trainer} language={language} hasMistype={hasMistype} />
         </div>
       ) : null}
 
       <div
-        className={`feedback ${trainer.isPracticeFocused ? "focused" : ""} ${trainer.isTypingActiveLayout ? "persistent" : ""} ${trainer.session.lastInputCorrect === false ? "error" : ""} ${trainer.session.isComplete ? "success" : ""}`}
+        className={`feedback ${trainer.isTypingActiveLayout ? "persistent" : ""} ${trainer.session.lastInputCorrect === false ? "error" : ""} ${trainer.session.isComplete ? "success" : ""}`}
         data-testid="feedback"
       >
         {trainer.session.isComplete
@@ -241,10 +237,10 @@ export function PracticePanel({ trainer }: PracticePanelProps) {
           ? t(language, "practice.feedback.ready")
           : trainer.session.lastInputCorrect === false
           ? incorrectFeedback
-          : practiceFeedback}
+          : t(language, "practice.feedback.default")}
       </div>
 
-      <div className={`cta-row practice-actions ${trainer.isPracticeFocused ? "focused" : ""}`} data-testid="practice-actions">
+      <div className="cta-row practice-actions" data-testid="practice-actions">
         <button onClick={(event) => blurButtonAfterAction(event, () => trainer.restartSession())}>{t(language, "practice.restart")}</button>
         <button className="secondary" onClick={(event) => blurButtonAfterAction(event, () => trainer.setScreen("results"))}>
           {t(language, "practice.viewResults")}
