@@ -131,5 +131,6 @@ MVP として以下は完了済みです。
 ## Related Files
 
 - 仕様メモ: [docs/english-word-typing-pronunciation-web-trainer-spec.md](./docs/english-word-typing-pronunciation-web-trainer-spec.md)
+- 実装仕様: [docs/implementation-spec.md](./docs/implementation-spec.md)
 - E2E 設定: [playwright.config.ts](./playwright.config.ts)
 - CI: [.github/workflows/ci.yml](./.github/workflows/ci.yml)

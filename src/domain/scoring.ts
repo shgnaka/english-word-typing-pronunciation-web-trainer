@@ -13,7 +13,7 @@ export function calculateSessionScore(results: TypingResult[]): SessionScore {
   const minutes = totalElapsedMs > 0 ? totalElapsedMs / 60000 : 1;
   const grossWpm = completedChars / 5 / minutes;
   const accuracy = totalKeystrokes > 0 ? ((totalKeystrokes - totalMistakes) / totalKeystrokes) * 100 : 100;
-  const rawScore = grossWpm * (accuracy / 100);
+  const rawScore = round(grossWpm * (accuracy / 100));
 
   let level = "Starter";
   if (rawScore >= 55) level = "Expert";
@@ -24,7 +24,7 @@ export function calculateSessionScore(results: TypingResult[]): SessionScore {
   return {
     wpm: round(grossWpm),
     accuracy: round(accuracy),
-    rawScore: round(rawScore),
+    rawScore,
     level
   };
 }
