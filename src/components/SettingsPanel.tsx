@@ -22,6 +22,7 @@ export function SettingsPanel({ trainer }: SettingsPanelProps) {
           <div className="settings-group-header">
             <span className="label">{t(language, "settings.sessionGroup")}</span>
           </div>
+          <p className="setting-hint">{t(language, "settings.sessionApplyHint")}</p>
           <label>
             <span>{t(language, "settings.language")}</span>
             <div className="language-toggle" data-testid="language-toggle">
@@ -79,12 +80,30 @@ export function SettingsPanel({ trainer }: SettingsPanelProps) {
             <span>{t(language, "settings.browserTts")}</span>
           </label>
           <p className="setting-hint">{t(language, "settings.browserTtsHelp")}</p>
+          <p className="setting-hint">{t(language, "settings.browserTtsCachePolicy")}</p>
+          <button
+            type="button"
+            className="secondary"
+            data-testid="clear-browser-tts-cache-button"
+            onClick={() => trainer.clearBrowserTtsCache()}
+            disabled={trainer.isClearingBrowserTtsCache}
+          >
+            {t(language, "settings.browserTtsClear")}
+          </button>
+          {trainer.browserTtsCacheMessage ? (
+            <p className="setting-hint" data-testid="browser-tts-cache-status" role="status" aria-live="polite">
+              {trainer.browserTtsCacheMessage === "cleared"
+                ? t(language, "settings.browserTtsCacheCleared")
+                : t(language, "settings.browserTtsCacheClearFailed")}
+            </p>
+          ) : null}
         </section>
 
         <section className="settings-group">
           <div className="settings-group-header">
             <span className="label">{t(language, "settings.assistGroup")}</span>
           </div>
+          <p className="setting-hint">{t(language, "settings.assistApplyHint")}</p>
           <label className="toggle">
             <input
               data-testid="keyboard-hint-toggle"
