@@ -8,6 +8,7 @@ export const defaultSessionConfig: SessionConfig = {
   wordCount: 10,
   shuffle: false,
   speechEnabled: true,
+  browserTtsEnabled: false,
   showFingerGuide: true,
   showKeyboardHint: true
 };
@@ -51,7 +52,8 @@ export function loadSessionConfig(): SessionConfig {
     return {
       ...defaultSessionConfig,
       ...parsed,
-      wordCount: sanitizeWordCount(parsed.wordCount ?? defaultSessionConfig.wordCount)
+      wordCount: sanitizeWordCount(parsed.wordCount ?? defaultSessionConfig.wordCount),
+      browserTtsEnabled: Boolean(parsed.browserTtsEnabled ?? defaultSessionConfig.browserTtsEnabled)
     };
   } catch {
     return defaultSessionConfig;
@@ -63,7 +65,8 @@ export function saveSessionConfig(config: SessionConfig): void {
     sessionConfigKey,
     JSON.stringify({
       ...config,
-      wordCount: sanitizeWordCount(config.wordCount)
+      wordCount: sanitizeWordCount(config.wordCount),
+      browserTtsEnabled: Boolean(config.browserTtsEnabled)
     })
   );
 }

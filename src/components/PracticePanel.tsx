@@ -15,7 +15,7 @@ export function PracticePanel({ trainer }: PracticePanelProps) {
   const hasMistype = trainer.session.lastInputCorrect === false;
   const mistypedKey = trainer.session.lastMistypedKey;
 
-  function blurButtonAfterAction(event: MouseEvent<HTMLButtonElement>, action: () => void) {
+  function blurButtonAfterAction(event: MouseEvent<HTMLButtonElement>, action: () => void | Promise<void>) {
     action();
     event.currentTarget.blur();
   }
@@ -58,11 +58,19 @@ export function PracticePanel({ trainer }: PracticePanelProps) {
           className="secondary"
           data-testid="pronounce-button"
           onClick={(event) => blurButtonAfterAction(event, trainer.speakCurrentWord)}
-          disabled={!currentWord || !trainer.config.speechEnabled}
+          disabled={!currentWord || !trainer.config.speechEnabled || trainer.pronunciationStatus === "generating"}
         >
           {t(language, "practice.pronounce")}
         </button>
       </div>
+
+      {trainer.pronunciationStatus !== "idle" ? (
+        <div className="pronunciation-status" data-testid="pronunciation-status" aria-live="polite">
+          {trainer.pronunciationStatus === "generating"
+            ? t(language, "practice.audio.generating")
+            : t(language, "practice.audio.fallback")}
+        </div>
+      ) : null}
 
       {showEmptyState ? (
         <div className="empty-state" data-testid="practice-empty-state">

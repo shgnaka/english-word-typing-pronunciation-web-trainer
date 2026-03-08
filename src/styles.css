@@ -349,6 +349,12 @@ input {
   color: #d8ffe0;
 }
 
+.pronunciation-status,
+.setting-hint {
+  margin: 0.5rem 0 0;
+  color: var(--color-text-muted);
+}
+
 .settings-status {
   margin-top: 1.5rem;
   padding: 0.9rem 1rem;

@@ -68,6 +68,17 @@ export function SettingsPanel({ trainer }: SettingsPanelProps) {
             />
             <span>{t(language, "settings.speech")}</span>
           </label>
+          <label className="toggle">
+            <input
+              data-testid="browser-tts-toggle"
+              type="checkbox"
+              checked={trainer.draftConfig.browserTtsEnabled}
+              disabled={!trainer.draftConfig.speechEnabled}
+              onChange={(event) => trainer.handleConfigChange("browserTtsEnabled", event.target.checked)}
+            />
+            <span>{t(language, "settings.browserTts")}</span>
+          </label>
+          <p className="setting-hint">{t(language, "settings.browserTtsHelp")}</p>
         </section>
 
         <section className="settings-group">

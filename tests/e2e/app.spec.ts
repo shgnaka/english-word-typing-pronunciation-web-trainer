@@ -55,6 +55,7 @@ test("persists settings after reload", async ({ page }) => {
   await page.getByTestId("tab-settings").click();
   await page.getByTestId("language-ja-hira").click();
   await page.getByTestId("word-count-input").fill("1");
+  await page.getByTestId("browser-tts-toggle").check();
   await page.getByTestId("speech-toggle").uncheck();
   await page.getByTestId("keyboard-hint-toggle").uncheck();
   await page.getByTestId("finger-guide-toggle").uncheck();
@@ -65,6 +66,7 @@ test("persists settings after reload", async ({ page }) => {
 
   await expect(page.getByTestId("tab-practice")).toHaveText("れんしゅう");
   await expect(page.getByTestId("word-count-input")).toHaveValue("1");
+  await expect(page.getByTestId("browser-tts-toggle")).toBeChecked();
   await expect(page.getByTestId("speech-toggle")).not.toBeChecked();
   await expect(page.getByTestId("keyboard-hint-toggle")).not.toBeChecked();
   await expect(page.getByTestId("finger-guide-toggle")).not.toBeChecked();

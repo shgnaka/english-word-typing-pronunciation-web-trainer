@@ -114,6 +114,21 @@ describe("App", () => {
     expect(screen.getByTestId("active-keycap")).toHaveTextContent("P");
   });
 
+  it("persists the browser pronunciation toggle after reload", async () => {
+    const user = userEvent.setup();
+    const { unmount } = render(<App />);
+
+    await user.click(screen.getByRole("button", { name: "Settings" }));
+    await user.click(screen.getByTestId("browser-tts-toggle"));
+    await user.click(screen.getByTestId("apply-settings-button"));
+
+    unmount();
+    render(<App />);
+
+    await user.click(screen.getByRole("button", { name: "Settings" }));
+    expect(screen.getByTestId("browser-tts-toggle")).toBeChecked();
+  });
+
   it("keeps settings as pending until they are applied", async () => {
     const user = userEvent.setup();
     render(<App />);

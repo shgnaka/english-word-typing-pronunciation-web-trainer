@@ -27,6 +27,8 @@ type MessageKey =
   | "practice.feedback.incorrectWithKey"
   | "practice.feedback.default"
   | "practice.feedback.complete"
+  | "practice.audio.generating"
+  | "practice.audio.fallback"
   | "practice.restart"
   | "practice.viewResults"
   | "practice.emptyTitle"
@@ -45,6 +47,8 @@ type MessageKey =
   | "settings.wordsPerSession"
   | "settings.shuffle"
   | "settings.speech"
+  | "settings.browserTts"
+  | "settings.browserTtsHelp"
   | "settings.keyboardHint"
   | "settings.fingerGuide"
   | "settings.sessionGroup"
@@ -93,6 +97,8 @@ const messages: Record<DisplayLanguage, Record<MessageKey, string>> = {
     "practice.feedback.incorrectWithKey": "Wrong key: {key}. Keep aiming for the highlighted letter.",
     "practice.feedback.default": "Type on your keyboard to progress.",
     "practice.feedback.complete": "Session complete. Review your score or start another round.",
+    "practice.audio.generating": "Generating browser audio for this word...",
+    "practice.audio.fallback": "Browser audio was unavailable, so system pronunciation was used.",
     "practice.restart": "Restart session",
     "practice.viewResults": "View results",
     "practice.emptyTitle": "Practice words are not available.",
@@ -111,6 +117,8 @@ const messages: Record<DisplayLanguage, Record<MessageKey, string>> = {
     "settings.wordsPerSession": "Words per session",
     "settings.shuffle": "Shuffle words",
     "settings.speech": "Enable pronunciation",
+    "settings.browserTts": "Use browser pronunciation (Experimental)",
+    "settings.browserTtsHelp": "Generate and cache English audio in this browser when system voices are not enough.",
     "settings.keyboardHint": "Show key position",
     "settings.fingerGuide": "Show finger guide",
     "settings.sessionGroup": "Session setup",
@@ -158,6 +166,8 @@ const messages: Record<DisplayLanguage, Record<MessageKey, string>> = {
     "practice.feedback.incorrectWithKey": "誤って押したキー: {key}。ハイライトされた文字をそのまま狙ってください。",
     "practice.feedback.default": "キーボードを打って進めてください。",
     "practice.feedback.complete": "セッション完了です。スコアを確認するか、新しく始めてください。",
+    "practice.audio.generating": "この単語のブラウザ音声を生成しています...",
+    "practice.audio.fallback": "ブラウザ音声を使えなかったため、システムの発音を使いました。",
     "practice.restart": "セッションをやり直す",
     "practice.viewResults": "結果を見る",
     "practice.emptyTitle": "練習できる単語がありません。",
@@ -176,6 +186,8 @@ const messages: Record<DisplayLanguage, Record<MessageKey, string>> = {
     "settings.wordsPerSession": "1セッションの単語数",
     "settings.shuffle": "単語をシャッフル",
     "settings.speech": "発音を有効化",
+    "settings.browserTts": "ブラウザ内発音を使う（実験中）",
+    "settings.browserTtsHelp": "システム音声が足りない環境でも、このブラウザ内で英語音声を生成して保存します。",
     "settings.keyboardHint": "キー位置を表示",
     "settings.fingerGuide": "指ガイドを表示",
     "settings.sessionGroup": "セッション条件",
@@ -223,6 +235,8 @@ const messages: Record<DisplayLanguage, Record<MessageKey, string>> = {
     "practice.feedback.incorrectWithKey": "あやまって おした キー: {key}。ハイライトされた もじを そのまま ねらってください。",
     "practice.feedback.default": "キーボードを うって すすめてください。",
     "practice.feedback.complete": "セッション かんりょうです。スコアを みるか、あたらしく はじめてください。",
+    "practice.audio.generating": "この たんごの ブラウザおんせいを せいせいしています...",
+    "practice.audio.fallback": "ブラウザおんせいが つかえなかったため、システムの はつおんを つかいました。",
     "practice.restart": "セッションを やりなおす",
     "practice.viewResults": "けっかを みる",
     "practice.emptyTitle": "れんしゅうできる たんごが ありません。",
@@ -241,6 +255,8 @@ const messages: Record<DisplayLanguage, Record<MessageKey, string>> = {
     "settings.wordsPerSession": "1せっしょんの たんごすう",
     "settings.shuffle": "たんごを シャッフル",
     "settings.speech": "はつおんを ゆうこうか",
+    "settings.browserTts": "ブラウザない はつおんを つかう（じっけんちゅう）",
+    "settings.browserTtsHelp": "システム おんせいが たりない かんきょうでも、この ブラウザないで えいごおんせいを つくって ほぞんします。",
     "settings.keyboardHint": "キーいちを ひょうじ",
     "settings.fingerGuide": "ゆびガイドを ひょうじ",
     "settings.sessionGroup": "セッション じょうけん",

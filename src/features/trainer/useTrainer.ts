@@ -3,6 +3,7 @@ import { defaultWords } from "../../data/defaultWords";
 import { applyKeystroke, buildSessionQueue, createInitialSession } from "../../domain/session";
 import type { DisplayLanguage, SessionConfig, TypingSessionState, WordEntry } from "../../domain/types";
 import { createWordEntry, dedupeWords } from "../../domain/words";
+import { hasCachedWordAudio, preloadBrowserTtsWords } from "../../infra/browserTts";
 import {
   defaultDisplayLanguage,
   defaultSessionConfig,
@@ -18,6 +19,7 @@ import { speakWord } from "../../infra/speech";
 import { deriveTrainerViewState } from "./trainerView";
 
 type Screen = "practice" | "words" | "settings" | "results";
+type PronunciationStatus = "idle" | "generating" | "fallback";
 
 export function useTrainer() {
   const [screen, setScreen] = useState<Screen>("practice");
@@ -29,6 +31,7 @@ export function useTrainer() {
   const [inputValue, setInputValue] = useState("");
   const [addWordError, setAddWordError] = useState("");
   const [countdown, setCountdown] = useState(3);
+  const [pronunciationStatus, setPronunciationStatus] = useState<PronunciationStatus>("idle");
   const lastAutoPronouncedWordRef = useRef<string | null>(null);
 
   useEffect(() => {
@@ -66,9 +69,24 @@ export function useTrainer() {
       return;
     }
 
-    speakWord(session.currentWord.text);
+    void speakWord(session.currentWord.text, {
+      browserTtsEnabled: config.browserTtsEnabled,
+      trigger: "auto"
+    });
     lastAutoPronouncedWordRef.current = pronunciationKey;
-  }, [config.speechEnabled, countdown, screen, session.completedWords.length, session.currentWord, session.isComplete]);
+  }, [config.browserTtsEnabled, config.speechEnabled, countdown, screen, session.completedWords.length, session.currentWord, session.isComplete]);
+
+  useEffect(() => {
+    setPronunciationStatus("idle");
+  }, [session.currentWord?.id]);
+
+  useEffect(() => {
+    if (!config.speechEnabled || !config.browserTtsEnabled) {
+      return;
+    }
+
+    preloadBrowserTtsWords(dedupeWords([...defaultWords, ...customWords]).map((word) => word.text));
+  }, [config.browserTtsEnabled, config.speechEnabled, customWords]);
 
   const allWords = dedupeWords([...defaultWords, ...customWords]);
   const { currentTarget, currentGuide, score, totalWords, remainingWords, completedWordsCount, progressPercent, isCountdownActive, hasPendingConfigChanges } =
@@ -150,6 +168,35 @@ export function useTrainer() {
     saveDisplayLanguage(language);
   }
 
+  async function pronounceCurrentWord(trigger: "auto" | "manual") {
+    if (!session.currentWord || !config.speechEnabled) {
+      return;
+    }
+
+    const word = session.currentWord.text;
+
+    if (trigger === "manual" && config.browserTtsEnabled) {
+      const hasCachedAudio = await hasCachedWordAudio(word).catch(() => false);
+      if (!hasCachedAudio) {
+        setPronunciationStatus("generating");
+      }
+    }
+
+    const result = await speakWord(word, {
+      browserTtsEnabled: config.browserTtsEnabled,
+      trigger
+    });
+
+    if (trigger === "manual" && config.browserTtsEnabled && result.source === "speech-synthesis") {
+      setPronunciationStatus("fallback");
+      return;
+    }
+
+    if (trigger === "manual") {
+      setPronunciationStatus("idle");
+    }
+  }
+
   return {
     screen,
     setScreen,
@@ -162,6 +209,7 @@ export function useTrainer() {
     setInputValue: handleAddWordInputChange,
     addWordError,
     countdown,
+    pronunciationStatus,
     currentTarget,
     currentGuide,
     score,
@@ -182,9 +230,7 @@ export function useTrainer() {
       setCountdown(0);
     },
     speakCurrentWord() {
-      if (session.currentWord && config.speechEnabled) {
-        speakWord(session.currentWord.text);
-      }
+      void pronounceCurrentWord("manual");
     }
   };
 }

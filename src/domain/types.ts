@@ -12,6 +12,7 @@ export interface SessionConfig {
   wordCount: number;
   shuffle: boolean;
   speechEnabled: boolean;
+  browserTtsEnabled: boolean;
   showFingerGuide: boolean;
   showKeyboardHint: boolean;
 }
