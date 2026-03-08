@@ -1,13 +1,14 @@
-import { env, pipeline } from "@huggingface/transformers";
-import { BROWSER_TTS_MODEL_ID } from "./browserTtsShared";
+import { KokoroTTS } from "kokoro-js";
+import { BROWSER_TTS_MODEL_ID, BROWSER_TTS_VOICE_VARIANT } from "./browserTtsShared";
 import type { BrowserTtsWorkerRequest, BrowserTtsWorkerResponse } from "./browserTtsShared";
 
-env.allowLocalModels = false;
-
-let synthesizerPromise: Promise<any> | null = null;
+let synthesizerPromise: Promise<KokoroTTS> | null = null;
 
 async function getSynthesizer() {
-  synthesizerPromise ??= pipeline("text-to-speech", BROWSER_TTS_MODEL_ID);
+  synthesizerPromise ??= KokoroTTS.from_pretrained(BROWSER_TTS_MODEL_ID, {
+    dtype: "q8",
+    device: "wasm"
+  });
   return synthesizerPromise;
 }
 
@@ -23,7 +24,9 @@ self.onmessage = async (event: MessageEvent<BrowserTtsWorkerRequest>) => {
     }
 
     const synthesizer = await getSynthesizer();
-    const output = await synthesizer(message.word);
+    const output = await synthesizer.generate(message.word, {
+      voice: BROWSER_TTS_VOICE_VARIANT
+    });
     const response: BrowserTtsWorkerResponse = {
       id: message.id,
       type: "generated",

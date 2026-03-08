@@ -1,6 +1,6 @@
-export const BROWSER_TTS_MODEL_ID = "Xenova/mms-tts-eng";
-export const BROWSER_TTS_MODEL_VERSION = "browser-tts-v1";
-export const BROWSER_TTS_VOICE_VARIANT = "default";
+export const BROWSER_TTS_MODEL_ID = "onnx-community/Kokoro-82M-v1.0-ONNX";
+export const BROWSER_TTS_MODEL_VERSION = "kokoro-82m-v1.0-onnx-q8";
+export const BROWSER_TTS_VOICE_VARIANT = "af_heart";
 
 export type BrowserTtsWorkerRequest =
   | { id: number; type: "generate"; word: string }
