@@ -24,10 +24,9 @@ type MessageKey =
   | "practice.noFinger"
   | "practice.feedback.ready"
   | "practice.feedback.incorrect"
+  | "practice.feedback.incorrectWithKey"
   | "practice.feedback.default"
   | "practice.feedback.complete"
-  | "practice.mistypeLabel"
-  | "practice.mistypeHint"
   | "practice.restart"
   | "practice.viewResults"
   | "practice.emptyTitle"
@@ -91,10 +90,9 @@ const messages: Record<DisplayLanguage, Record<MessageKey, string>> = {
     "practice.noFinger": "No finger",
     "practice.feedback.ready": "Get ready. Press Enter or Start now to begin immediately.",
     "practice.feedback.incorrect": "Incorrect key. Keep aiming for the highlighted letter.",
+    "practice.feedback.incorrectWithKey": "Wrong key: {key}. Keep aiming for the highlighted letter.",
     "practice.feedback.default": "Type on your keyboard to progress.",
     "practice.feedback.complete": "Session complete. Review your score or start another round.",
-    "practice.mistypeLabel": "Wrong key",
-    "practice.mistypeHint": "The guide stays on the correct key and finger until you recover.",
     "practice.restart": "Restart session",
     "practice.viewResults": "View results",
     "practice.emptyTitle": "Practice words are not available.",
@@ -157,10 +155,9 @@ const messages: Record<DisplayLanguage, Record<MessageKey, string>> = {
     "practice.noFinger": "指なし",
     "practice.feedback.ready": "準備してください。Enter または今すぐ開始で始められます。",
     "practice.feedback.incorrect": "キーが違います。ハイライトされた文字をそのまま狙ってください。",
+    "practice.feedback.incorrectWithKey": "誤って押したキー: {key}。ハイライトされた文字をそのまま狙ってください。",
     "practice.feedback.default": "キーボードを打って進めてください。",
     "practice.feedback.complete": "セッション完了です。スコアを確認するか、新しく始めてください。",
-    "practice.mistypeLabel": "誤って押したキー",
-    "practice.mistypeHint": "ガイドは正しいキーと指をそのまま示し続けます。",
     "practice.restart": "セッションをやり直す",
     "practice.viewResults": "結果を見る",
     "practice.emptyTitle": "練習できる単語がありません。",
@@ -223,10 +220,9 @@ const messages: Record<DisplayLanguage, Record<MessageKey, string>> = {
     "practice.noFinger": "ゆびなし",
     "practice.feedback.ready": "じゅんびしてください。Enter または いますぐ かいしで はじめられます。",
     "practice.feedback.incorrect": "キーが ちがいます。ハイライトされた もじを そのまま ねらってください。",
+    "practice.feedback.incorrectWithKey": "あやまって おした キー: {key}。ハイライトされた もじを そのまま ねらってください。",
     "practice.feedback.default": "キーボードを うって すすめてください。",
     "practice.feedback.complete": "セッション かんりょうです。スコアを みるか、あたらしく はじめてください。",
-    "practice.mistypeLabel": "あやまって おした キー",
-    "practice.mistypeHint": "ガイドは ただしい キーと ゆびを そのまま しめしつづけます。",
     "practice.restart": "セッションを やりなおす",
     "practice.viewResults": "けっかを みる",
     "practice.emptyTitle": "れんしゅうできる たんごが ありません。",

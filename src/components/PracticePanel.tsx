@@ -20,6 +20,10 @@ export function PracticePanel({ trainer }: PracticePanelProps) {
     event.currentTarget.blur();
   }
 
+  const incorrectFeedback = mistypedKey
+    ? t(language, "practice.feedback.incorrectWithKey").replace("{key}", mistypedKey.toUpperCase())
+    : t(language, "practice.feedback.incorrect");
+
   return (
     <>
       <div className="session-summary">
@@ -161,18 +165,9 @@ export function PracticePanel({ trainer }: PracticePanelProps) {
           : trainer.isCountdownActive
           ? t(language, "practice.feedback.ready")
           : trainer.session.lastInputCorrect === false
-          ? t(language, "practice.feedback.incorrect")
+          ? incorrectFeedback
           : t(language, "practice.feedback.default")}
       </div>
-
-      {trainer.session.lastMistypedKey ? (
-        <div className="mistype-banner" data-testid="mistype-banner" aria-live="polite">
-          <strong>
-            {t(language, "practice.mistypeLabel")}: {trainer.session.lastMistypedKey.toUpperCase()}
-          </strong>
-          <span>{t(language, "practice.mistypeHint")}</span>
-        </div>
-      ) : null}
 
       <div className="cta-row">
         <button onClick={(event) => blurButtonAfterAction(event, () => trainer.restartSession())}>{t(language, "practice.restart")}</button>

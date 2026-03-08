@@ -98,8 +98,7 @@ test("can discard pending settings changes", async ({ page }) => {
 test("shows feedback on incorrect input", async ({ page }) => {
   await page.getByTestId("skip-countdown-button").click();
   await page.keyboard.press("z");
-  await expect(page.getByTestId("feedback")).toHaveText("Incorrect key. Keep aiming for the highlighted letter.");
-  await expect(page.getByTestId("mistype-banner")).toContainText("Wrong key: Z");
+  await expect(page.getByTestId("feedback")).toHaveText("Wrong key: Z. Keep aiming for the highlighted letter.");
   await expect(page.getByTestId("target-char")).toHaveClass(/error/);
   await expect(page.getByTestId("mistyped-keycap")).toHaveText("Z");
   await expect(page.getByTestId("mistyped-keycap")).toHaveClass(/mistyped/);
@@ -109,12 +108,11 @@ test("shows feedback on incorrect input", async ({ page }) => {
 });
 
 test("clears mistype emphasis after the next correct key", async ({ page }) => {
-  const mistypeBanner = page.getByTestId("mistype-banner");
   await page.getByTestId("skip-countdown-button").click();
   await page.keyboard.press("z");
   await page.keyboard.press("a");
 
-  await expect(mistypeBanner).toHaveCount(0);
+  await expect(page.getByTestId("feedback")).toHaveText("Type on your keyboard to progress.");
   await expect(page.getByTestId("mistyped-keycap")).toHaveCount(0);
   await expect(page.getByTestId("active-keycap")).not.toHaveClass(/target-outline/);
   await expect(page.getByTestId("active-finger-button")).not.toHaveClass(/target-outline/);

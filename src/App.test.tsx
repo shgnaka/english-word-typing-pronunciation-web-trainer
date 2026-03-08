@@ -132,8 +132,7 @@ describe("App", () => {
     fireEvent.keyDown(window, { key: "Enter" });
     fireEvent.keyDown(window, { key: "z" });
 
-    expect(screen.getByTestId("feedback")).toHaveTextContent("Incorrect key. Keep aiming for the highlighted letter.");
-    expect(screen.getByTestId("mistype-banner")).toHaveTextContent("Wrong key: Z");
+    expect(screen.getByTestId("feedback")).toHaveTextContent("Wrong key: Z. Keep aiming for the highlighted letter.");
     expect(screen.getByTestId("target-char")).toHaveClass("error");
     expect(screen.getByTestId("mistyped-keycap")).toHaveTextContent("Z");
     expect(screen.getByTestId("mistyped-keycap")).toHaveClass("mistyped");
@@ -149,7 +148,7 @@ describe("App", () => {
     fireEvent.keyDown(window, { key: "z" });
     fireEvent.keyDown(window, { key: "a" });
 
-    expect(screen.queryByTestId("mistype-banner")).not.toBeInTheDocument();
+    expect(screen.getByTestId("feedback")).toHaveTextContent("Type on your keyboard to progress.");
     expect(screen.getByTestId("target-char")).not.toHaveClass("error");
     expect(screen.queryByTestId("mistyped-keycap")).not.toBeInTheDocument();
     expect(screen.getByTestId("active-keycap")).not.toHaveClass("target-outline");

@@ -372,23 +372,6 @@ input {
   color: #e7ffe6;
 }
 
-.mistype-banner {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.6rem 1rem;
-  align-items: center;
-  margin: -0.5rem 0 1.5rem;
-  padding: 0.85rem 1rem;
-  border-radius: 18px;
-  background: var(--color-danger-banner-bg);
-  border: 1px solid var(--color-danger-banner-border);
-  color: var(--color-danger-banner-text);
-}
-
-.mistype-banner strong {
-  color: var(--color-danger-banner-strong);
-}
-
 .countdown-banner,
 .completion-banner {
   margin: 0 0 1rem;
