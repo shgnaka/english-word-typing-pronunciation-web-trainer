@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { PracticePanel } from "./components/PracticePanel";
 import { ResultsPanel } from "./components/ResultsPanel";
 import { SettingsPanel } from "./components/SettingsPanel";
@@ -17,6 +17,8 @@ function isInteractiveElement(target: EventTarget | null): boolean {
 function App() {
   const trainer = useTrainer();
   const language = trainer.displayLanguage;
+  const primaryPanelRef = useRef<HTMLElement | null>(null);
+  const wasCountdownActiveRef = useRef(trainer.isCountdownActive);
 
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
@@ -41,15 +43,28 @@ function App() {
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [trainer]);
 
+  useEffect(() => {
+    const shouldScrollIntoPracticePanel = trainer.screen === "practice" && trainer.isTypingActiveLayout && wasCountdownActiveRef.current;
+
+    if (shouldScrollIntoPracticePanel) {
+      primaryPanelRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "start"
+      });
+    }
+
+    wasCountdownActiveRef.current = trainer.isCountdownActive;
+  }, [trainer.isCountdownActive, trainer.isTypingActiveLayout, trainer.screen]);
+
   return (
-    <div className="app-shell">
-      <header className="hero">
+    <div className={`app-shell ${trainer.isPracticeFocused ? "practice-focused-shell" : ""}`} data-testid="app-shell">
+      <header className={`hero ${trainer.isPracticeFocused ? "practice-focused-hero" : ""}`} data-testid="app-hero">
         <div>
           <p className="eyebrow">WordBeat Trainer</p>
           <h1>{t(language, "hero.title")}</h1>
           <p className="hero-copy">{t(language, "hero.copy")}</p>
         </div>
-        <nav className="tabs" aria-label="Primary">
+        <nav className={`tabs ${trainer.isPracticeFocused ? "practice-focused-tabs" : ""}`} aria-label="Primary" data-testid="app-tabs">
           <button className={trainer.screen === "practice" ? "active" : ""} data-testid="tab-practice" onClick={() => trainer.setScreen("practice")}>
             {t(language, "tabs.practice")}
           </button>
@@ -66,7 +81,11 @@ function App() {
       </header>
 
       <main className="grid">
-        <section className="panel panel-primary">
+        <section
+          ref={primaryPanelRef}
+          className={`panel panel-primary ${trainer.isPracticeFocused ? "practice-focused-panel" : ""}`}
+          data-testid="primary-panel"
+        >
           {trainer.screen === "practice" ? <PracticePanel trainer={trainer} /> : null}
           {trainer.screen === "words" ? <WordsPanel trainer={trainer} /> : null}
           {trainer.screen === "settings" ? <SettingsPanel trainer={trainer} /> : null}

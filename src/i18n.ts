@@ -26,6 +26,7 @@ type MessageKey =
   | "practice.feedback.incorrect"
   | "practice.feedback.incorrectWithKey"
   | "practice.feedback.default"
+  | "practice.feedback.focused"
   | "practice.feedback.complete"
   | "practice.audio.generating"
   | "practice.audio.fallback"
@@ -96,6 +97,7 @@ const messages: Record<DisplayLanguage, Record<MessageKey, string>> = {
     "practice.feedback.incorrect": "Incorrect key. Keep aiming for the highlighted letter.",
     "practice.feedback.incorrectWithKey": "Wrong key: {key}. Keep aiming for the highlighted letter.",
     "practice.feedback.default": "Type on your keyboard to progress.",
+    "practice.feedback.focused": "Keep typing.",
     "practice.feedback.complete": "Session complete. Review your score or start another round.",
     "practice.audio.generating": "Generating browser audio for this word...",
     "practice.audio.fallback": "Browser audio was unavailable, so system pronunciation was used.",
@@ -165,6 +167,7 @@ const messages: Record<DisplayLanguage, Record<MessageKey, string>> = {
     "practice.feedback.incorrect": "キーが違います。ハイライトされた文字をそのまま狙ってください。",
     "practice.feedback.incorrectWithKey": "誤って押したキー: {key}。ハイライトされた文字をそのまま狙ってください。",
     "practice.feedback.default": "キーボードを打って進めてください。",
+    "practice.feedback.focused": "そのまま入力を続けてください。",
     "practice.feedback.complete": "セッション完了です。スコアを確認するか、新しく始めてください。",
     "practice.audio.generating": "この単語のブラウザ音声を生成しています...",
     "practice.audio.fallback": "ブラウザ音声を使えなかったため、システムの発音を使いました。",
@@ -234,6 +237,7 @@ const messages: Record<DisplayLanguage, Record<MessageKey, string>> = {
     "practice.feedback.incorrect": "キーが ちがいます。ハイライトされた もじを そのまま ねらってください。",
     "practice.feedback.incorrectWithKey": "あやまって おした キー: {key}。ハイライトされた もじを そのまま ねらってください。",
     "practice.feedback.default": "キーボードを うって すすめてください。",
+    "practice.feedback.focused": "そのまま にゅうりょくを つづけてください。",
     "practice.feedback.complete": "セッション かんりょうです。スコアを みるか、あたらしく はじめてください。",
     "practice.audio.generating": "この たんごの ブラウザおんせいを せいせいしています...",
     "practice.audio.fallback": "ブラウザおんせいが つかえなかったため、システムの はつおんを つかいました。",

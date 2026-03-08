@@ -4,8 +4,11 @@ import { fireEvent } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import App from "./App";
 
+const scrollIntoViewMock = vi.fn();
+
 beforeEach(() => {
   window.localStorage.clear();
+  scrollIntoViewMock.mockReset();
   Object.defineProperty(window, "speechSynthesis", {
     writable: true,
     value: {
@@ -19,6 +22,10 @@ beforeEach(() => {
       this.text = text;
       this.lang = "en-US";
     }
+  });
+  Object.defineProperty(HTMLElement.prototype, "scrollIntoView", {
+    configurable: true,
+    value: scrollIntoViewMock
   });
 });
 
@@ -81,7 +88,7 @@ describe("App", () => {
     fireEvent.keyDown(window, { key: "Enter" });
 
     expect(screen.queryByTestId("countdown-banner")).not.toBeInTheDocument();
-    expect(screen.getByTestId("feedback")).toHaveTextContent("Type on your keyboard to progress.");
+    expect(screen.getByTestId("feedback")).toHaveTextContent("Keep typing.");
   });
 
   it("auto pronounces the first word when typing becomes available", async () => {
@@ -186,7 +193,7 @@ describe("App", () => {
     fireEvent.keyDown(window, { key: "z" });
     fireEvent.keyDown(window, { key: "a" });
 
-    expect(screen.getByTestId("feedback")).toHaveTextContent("Type on your keyboard to progress.");
+    expect(screen.getByTestId("feedback")).toHaveTextContent("Keep typing.");
     expect(screen.getByTestId("target-char")).not.toHaveClass("error");
     expect(screen.queryByTestId("mistyped-keycap")).not.toBeInTheDocument();
     expect(screen.getByTestId("active-keycap")).not.toHaveClass("target-outline");
@@ -220,6 +227,72 @@ describe("App", () => {
 
     expect(screen.getByTestId("results-summary")).toHaveTextContent("Score blends speed and accuracy");
     expect(screen.getByTestId("completion-banner")).toHaveTextContent("Session complete");
+  });
+
+  it("switches into the focused practice layout after countdown", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    expect(screen.getByTestId("app-hero")).not.toHaveClass("practice-focused-hero");
+    expect(screen.getByTestId("practice-panel")).not.toHaveClass("focused");
+    expect(screen.getByTestId("practice-panel")).not.toHaveClass("typing-active-layout");
+
+    await user.click(screen.getByTestId("skip-countdown-button"));
+
+    expect(screen.getByTestId("app-hero")).toHaveClass("practice-focused-hero");
+    expect(screen.getByTestId("app-tabs")).toHaveClass("practice-focused-tabs");
+    expect(screen.getByTestId("practice-panel")).toHaveClass("focused");
+    expect(screen.getByTestId("practice-panel")).toHaveClass("typing-active-layout");
+    expect(screen.getByTestId("practice-metrics-bar")).toBeInTheDocument();
+    expect(screen.getByTestId("practice-word-stage")).toBeInTheDocument();
+    expect(screen.getByTestId("keyboard-guide-slot")).toBeInTheDocument();
+    expect(screen.getByTestId("finger-guide-slot")).toBeInTheDocument();
+    expect(screen.getByTestId("feedback")).toHaveClass("persistent");
+    expect(screen.getByTestId("practice-actions")).toBeInTheDocument();
+  });
+
+  it("scrolls the primary panel into view when typing starts", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.click(screen.getByTestId("skip-countdown-button"));
+
+    expect(scrollIntoViewMock).toHaveBeenCalledTimes(1);
+    expect(scrollIntoViewMock).toHaveBeenCalledWith({
+      behavior: "smooth",
+      block: "start"
+    });
+  });
+
+  it("does not scroll again while typing or when returning to practice", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.click(screen.getByTestId("skip-countdown-button"));
+    expect(scrollIntoViewMock).toHaveBeenCalledTimes(1);
+
+    await user.keyboard("a");
+    await user.click(screen.getByRole("button", { name: "Settings" }));
+    await user.click(screen.getByRole("button", { name: "Practice" }));
+
+    expect(scrollIntoViewMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("keeps keyboard and finger guides visible during typing even if assist settings are off", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.click(screen.getByRole("button", { name: "Settings" }));
+    await user.click(screen.getByTestId("keyboard-hint-toggle"));
+    await user.click(screen.getByTestId("finger-guide-toggle"));
+    await user.click(screen.getByTestId("apply-settings-button"));
+    await user.click(screen.getByTestId("skip-countdown-button"));
+
+    expect(screen.getByTestId("keyboard-visual")).toBeInTheDocument();
+    expect(screen.getByTestId("finger-button-visual")).toBeInTheDocument();
+    expect(screen.getByTestId("keyboard-guide-slot").compareDocumentPosition(screen.getByTestId("finger-guide-slot"))).toBe(
+      Node.DOCUMENT_POSITION_FOLLOWING
+    );
   });
 
   it("switches display language in settings", async () => {

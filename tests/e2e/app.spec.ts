@@ -4,6 +4,28 @@ test.beforeEach(async ({ page }) => {
   await page.goto("/");
 });
 
+test("scrolls the primary panel into view when typing starts", async ({ page }) => {
+  await page.evaluate(() => {
+    (window as typeof window & { __scrollCalls?: Array<{ testId: string | null; block?: string; behavior?: string }> }).__scrollCalls = [];
+    Element.prototype.scrollIntoView = function (options?: ScrollIntoViewOptions) {
+      const element = this as HTMLElement;
+      window.__scrollCalls?.push({
+        testId: element.dataset.testid ?? null,
+        block: options?.block,
+        behavior: options?.behavior
+      });
+    };
+  });
+
+  await page.getByTestId("skip-countdown-button").click();
+
+  await expect
+    .poll(() =>
+      page.evaluate(() => (window as typeof window & { __scrollCalls?: Array<{ testId: string | null; block?: string; behavior?: string }> }).__scrollCalls ?? [])
+    )
+    .toEqual([{ testId: "primary-panel", block: "start", behavior: "smooth" }]);
+});
+
 test("shows the main practice guidance", async ({ page }) => {
   await expect(page.getByTestId("current-word")).toHaveText("apple");
   await expect(page.getByTestId("pronounce-button")).toBeVisible();
@@ -114,10 +136,43 @@ test("clears mistype emphasis after the next correct key", async ({ page }) => {
   await page.keyboard.press("z");
   await page.keyboard.press("a");
 
-  await expect(page.getByTestId("feedback")).toHaveText("Type on your keyboard to progress.");
+  await expect(page.getByTestId("feedback")).toHaveText("Keep typing.");
   await expect(page.getByTestId("mistyped-keycap")).toHaveCount(0);
   await expect(page.getByTestId("active-keycap")).not.toHaveClass(/target-outline/);
   await expect(page.getByTestId("active-finger-button")).not.toHaveClass(/target-outline/);
+});
+
+test("enters the focused practice layout once typing starts", async ({ page }) => {
+  await expect(page.getByTestId("app-hero")).not.toHaveClass(/practice-focused-hero/);
+  await page.getByTestId("skip-countdown-button").click();
+
+  await expect(page.getByTestId("app-hero")).toHaveClass(/practice-focused-hero/);
+  await expect(page.getByTestId("app-tabs")).toHaveClass(/practice-focused-tabs/);
+  await expect(page.getByTestId("practice-panel")).toHaveClass(/focused/);
+  await expect(page.getByTestId("practice-panel")).toHaveClass(/typing-active-layout/);
+  await expect(page.getByTestId("practice-metrics-bar")).toBeVisible();
+  await expect(page.getByTestId("practice-word-stage")).toBeVisible();
+  await expect(page.getByTestId("keyboard-guide-slot")).toBeVisible();
+  await expect(page.getByTestId("finger-guide-slot")).toBeVisible();
+  await expect(page.getByTestId("feedback")).toHaveClass(/persistent/);
+});
+
+test("keeps guides visible during typing even when assist settings are turned off", async ({ page }) => {
+  await page.getByTestId("tab-settings").click();
+  await page.getByTestId("keyboard-hint-toggle").uncheck();
+  await page.getByTestId("finger-guide-toggle").uncheck();
+  await page.getByTestId("apply-settings-button").click();
+
+  await page.getByTestId("skip-countdown-button").click();
+
+  await expect(page.getByTestId("keyboard-visual")).toBeVisible();
+  await expect(page.getByTestId("finger-button-visual")).toBeVisible();
+
+  const keyboardBox = await page.getByTestId("keyboard-guide-slot").boundingBox();
+  const fingerBox = await page.getByTestId("finger-guide-slot").boundingBox();
+  expect(keyboardBox).not.toBeNull();
+  expect(fingerBox).not.toBeNull();
+  expect(keyboardBox!.y).toBeLessThan(fingerBox!.y);
 });
 
 test("updates the finger button guide as typing advances", async ({ page }) => {
