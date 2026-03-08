@@ -24,6 +24,20 @@ describe("session", () => {
     expect(next.charIndex).toBe(0);
     expect(next.mistakes).toBe(1);
     expect(next.lastInputCorrect).toBe(false);
+    expect(next.lastMistypedKey).toBe("z");
+  });
+
+  it("clears mistype state after the next correct key", () => {
+    const word = createWordEntry("apple", "builtin");
+    expect(word).not.toBeNull();
+    let state = createInitialSession([word!]);
+
+    state = applyKeystroke(state, "z", 100);
+    state = applyKeystroke(state, "a", 120);
+
+    expect(state.charIndex).toBe(1);
+    expect(state.lastInputCorrect).toBe(true);
+    expect(state.lastMistypedKey).toBeNull();
   });
 
   it("completes the word and records a result", () => {

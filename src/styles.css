@@ -3,6 +3,28 @@
   line-height: 1.5;
   font-weight: 400;
   color: #f6f4ef;
+  --color-text-primary: #f6f4ef;
+  --color-text-on-accent: #1c2438;
+  --color-text-on-danger: #fff7f7;
+  --color-text-muted: rgba(246, 244, 239, 0.78);
+  --color-text-subtle: rgba(246, 244, 239, 0.72);
+  --color-text-faint: rgba(246, 244, 239, 0.45);
+  --color-panel-border-soft: rgba(255, 255, 255, 0.08);
+  --color-surface-dark: rgba(17, 24, 39, 0.65);
+  --color-surface-dark-strong: rgba(17, 24, 39, 0.78);
+  --color-accent-fill-start: rgba(255, 191, 105, 0.95);
+  --color-accent-fill-end: rgba(124, 199, 144, 0.95);
+  --color-accent-shadow: rgba(255, 191, 105, 0.22);
+  --color-accent-outline: #ffbf69;
+  --color-accent-outline-soft: rgba(255, 191, 105, 0.55);
+  --color-danger-fill-start: rgba(255, 107, 107, 0.95);
+  --color-danger-fill-end: rgba(255, 154, 139, 0.95);
+  --color-danger-shadow: rgba(255, 107, 107, 0.28);
+  --color-danger-banner-bg: rgba(255, 107, 107, 0.12);
+  --color-danger-banner-border: rgba(255, 107, 107, 0.22);
+  --color-danger-banner-text: #ffdede;
+  --color-danger-banner-strong: #fff3f3;
+  --color-finger-shadow-base: rgba(130, 82, 19, 0.3);
   background:
     radial-gradient(circle at top left, rgba(255, 191, 105, 0.22), transparent 30%),
     radial-gradient(circle at top right, rgba(107, 142, 35, 0.18), transparent 28%),
@@ -164,12 +186,18 @@ input {
 }
 
 .char.done {
-  color: rgba(246, 244, 239, 0.45);
+  color: var(--color-text-faint);
 }
 
 .char.target {
-  background: #ffbf69;
-  color: #1c2438;
+  background: var(--color-accent-outline);
+  color: var(--color-text-on-accent);
+}
+
+.char.target.error {
+  background: linear-gradient(135deg, var(--color-danger-fill-start), var(--color-danger-fill-end));
+  color: var(--color-text-on-danger);
+  box-shadow: 0 10px 24px var(--color-danger-shadow);
 }
 
 .metric,
@@ -195,9 +223,21 @@ input {
 .guide-card-header {
   display: flex;
   gap: 1rem;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   margin-bottom: 0.9rem;
+}
+
+.guide-card-header strong {
+  display: block;
+  margin-top: 0.25rem;
+}
+
+.guide-card-copy,
+.results-summary,
+.empty-state p {
+  margin: 0;
+  color: var(--color-text-muted);
 }
 
 .keyboard-map {
@@ -219,8 +259,8 @@ input {
   min-height: 2.7rem;
   padding: 0.6rem 0.9rem;
   border-radius: 14px;
-  background: rgba(17, 24, 39, 0.65);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--color-surface-dark);
+  border: 1px solid var(--color-panel-border-soft);
   color: rgba(246, 244, 239, 0.82);
 }
 
@@ -230,10 +270,24 @@ input {
 }
 
 .keycap.active {
-  background: linear-gradient(135deg, rgba(255, 191, 105, 0.95), rgba(124, 199, 144, 0.95));
+  background: linear-gradient(135deg, var(--color-accent-fill-start), var(--color-accent-fill-end));
   border-color: rgba(255, 255, 255, 0.28);
-  color: #1c2438;
-  box-shadow: 0 10px 24px rgba(255, 191, 105, 0.22);
+  color: var(--color-text-on-accent);
+  box-shadow: 0 10px 24px var(--color-accent-shadow);
+}
+
+.keycap.target-outline {
+  background: var(--color-surface-dark);
+  border-color: var(--color-accent-outline);
+  color: var(--color-text-primary);
+  box-shadow: 0 0 0 2px var(--color-accent-outline-soft);
+}
+
+.keycap.mistyped {
+  background: linear-gradient(135deg, var(--color-danger-fill-start), var(--color-danger-fill-end));
+  border-color: transparent;
+  color: var(--color-text-on-danger);
+  box-shadow: 0 12px 26px var(--color-danger-shadow);
 }
 
 .finger-button-map {
@@ -262,9 +316,9 @@ input {
   min-height: 3.2rem;
   padding: 0.8rem 0.9rem;
   border-radius: 18px;
-  background: rgba(17, 24, 39, 0.78);
+  background: var(--color-surface-dark-strong);
   border: 1px solid rgba(255, 255, 255, 0.1);
-  color: rgba(246, 244, 239, 0.72);
+  color: var(--color-text-subtle);
   font-weight: 700;
   letter-spacing: 0.02em;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
@@ -272,11 +326,19 @@ input {
 }
 
 .finger-button.active {
-  background: linear-gradient(180deg, #ffd89a 0%, #ffbf69 100%);
+  background: linear-gradient(180deg, var(--color-accent-fill-start) 0%, var(--color-accent-outline) 100%);
   border-color: rgba(255, 255, 255, 0.45);
-  color: #1c2438;
+  color: var(--color-text-on-accent);
   transform: translateY(-4px);
-  box-shadow: 0 12px 24px rgba(255, 191, 105, 0.22), 0 4px 0 rgba(130, 82, 19, 0.3);
+  box-shadow: 0 12px 24px var(--color-accent-shadow), 0 4px 0 var(--color-finger-shadow-base);
+}
+
+.finger-button.target-outline {
+  background: var(--color-surface-dark-strong);
+  border-color: var(--color-accent-outline);
+  color: var(--color-text-primary);
+  transform: translateY(-4px);
+  box-shadow: 0 0 0 2px var(--color-accent-outline-soft);
 }
 
 .feedback {
@@ -303,6 +365,28 @@ input {
 .feedback.error {
   background: rgba(255, 107, 107, 0.18);
   color: #ffd6d6;
+}
+
+.feedback.success {
+  background: rgba(124, 199, 144, 0.22);
+  color: #e7ffe6;
+}
+
+.mistype-banner {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem 1rem;
+  align-items: center;
+  margin: -0.5rem 0 1.5rem;
+  padding: 0.85rem 1rem;
+  border-radius: 18px;
+  background: var(--color-danger-banner-bg);
+  border: 1px solid var(--color-danger-banner-border);
+  color: var(--color-danger-banner-text);
+}
+
+.mistype-banner strong {
+  color: var(--color-danger-banner-strong);
 }
 
 .countdown-banner,
@@ -342,6 +426,37 @@ input {
   display: grid;
   gap: 1rem;
   margin-top: 1.5rem;
+}
+
+.settings-grid {
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+}
+
+.settings-group {
+  display: grid;
+  gap: 1rem;
+  padding: 1rem;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.settings-group-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.empty-state {
+  margin: 2rem 0;
+  padding: 1rem 1.1rem;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.empty-state strong {
+  display: block;
+  margin-bottom: 0.4rem;
 }
 
 .word-chip {

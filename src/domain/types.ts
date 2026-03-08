@@ -41,6 +41,7 @@ export interface TypingSessionState {
   completedWords: TypingResult[];
   isComplete: boolean;
   lastInputCorrect: boolean | null;
+  lastMistypedKey: string | null;
 }
 
 export type FingerId =

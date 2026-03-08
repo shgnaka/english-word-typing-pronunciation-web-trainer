@@ -21,7 +21,8 @@ export function createInitialSession(queue: WordEntry[]): TypingSessionState {
     startedAt: null,
     completedWords: [],
     isComplete: queue.length === 0,
-    lastInputCorrect: null
+    lastInputCorrect: null,
+    lastMistypedKey: null
   };
 }
 
@@ -63,7 +64,8 @@ export function applyKeystroke(
       startedAt,
       keystrokes: nextKeystrokes,
       mistakes: state.mistakes + 1,
-      lastInputCorrect: false
+      lastInputCorrect: false,
+      lastMistypedKey: normalizedKey
     };
   }
 
@@ -76,7 +78,8 @@ export function applyKeystroke(
       startedAt,
       charIndex: nextIndex,
       keystrokes: nextKeystrokes,
-      lastInputCorrect: true
+      lastInputCorrect: true,
+      lastMistypedKey: null
     };
   }
 
@@ -92,6 +95,7 @@ export function applyKeystroke(
     startedAt: remainingQueue[0] ? timestamp : null,
     completedWords: [...state.completedWords, result],
     isComplete: remainingQueue.length === 0,
-    lastInputCorrect: true
+    lastInputCorrect: true,
+    lastMistypedKey: null
   };
 }

@@ -77,6 +77,8 @@ npm run test:e2e:ui
 
 - 初回は Playwright ブラウザの導入が必要です
 - 必要に応じて `npx playwright install` を実行してください
+- 既定の E2E は `chromium` と `firefox` を実行します
+- `WebKit` を含める場合は `PLAYWRIGHT_INCLUDE_WEBKIT=1 npm run test:e2e` を使ってください
 - 一部環境では `WebKit` 実行に追加のシステム依存が必要です
 
 ## Project Structure

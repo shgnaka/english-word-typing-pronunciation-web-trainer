@@ -41,8 +41,8 @@ describe("App", () => {
   it("shows key guidance on the practice screen", () => {
     render(<App />);
 
-    expect(screen.getByTestId("next-key")).toBeInTheDocument();
-    expect(screen.getByTestId("finger-guide")).toBeInTheDocument();
+    expect(screen.queryByTestId("next-key")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("finger-guide")).not.toBeInTheDocument();
     expect(screen.getByTestId("keyboard-visual")).toBeInTheDocument();
     expect(screen.getByTestId("finger-button-visual")).toBeInTheDocument();
     expect(screen.getByTestId("active-keycap")).toHaveTextContent("A");
@@ -80,14 +80,15 @@ describe("App", () => {
     expect(screen.getByTestId("feedback")).toHaveTextContent("Type on your keyboard to progress.");
   });
 
-  it("does not type when a button is focused", async () => {
+  it("resumes typing after a practice action button is clicked", async () => {
     const user = userEvent.setup();
     render(<App />);
 
+    await user.click(screen.getByTestId("skip-countdown-button"));
     await user.click(screen.getByRole("button", { name: "Pronounce" }));
     await user.keyboard("a");
 
-    expect(screen.getByTestId("next-key")).toHaveTextContent("a");
+    expect(screen.getByTestId("active-keycap")).toHaveTextContent("P");
   });
 
   it("keeps settings as pending until they are applied", async () => {
@@ -95,8 +96,7 @@ describe("App", () => {
     render(<App />);
 
     await user.click(screen.getByRole("button", { name: "Settings" }));
-    await user.clear(screen.getByLabelText("Words per session"));
-    await user.type(screen.getByLabelText("Words per session"), "1");
+    fireEvent.change(screen.getByLabelText("Words per session"), { target: { value: "1" } });
 
     expect(screen.getByTestId("settings-status")).toHaveTextContent("You have unapplied changes.");
 
@@ -124,6 +124,65 @@ describe("App", () => {
     fireEvent.keyDown(window, { key: "a" });
 
     expect(screen.getByTestId("active-finger-button")).toHaveAttribute("data-finger-id", "right-pinky");
+  });
+
+  it("surfaces mistyped keys across the practice guidance", () => {
+    render(<App />);
+
+    fireEvent.keyDown(window, { key: "Enter" });
+    fireEvent.keyDown(window, { key: "z" });
+
+    expect(screen.getByTestId("feedback")).toHaveTextContent("Incorrect key. Keep aiming for the highlighted letter.");
+    expect(screen.getByTestId("mistype-banner")).toHaveTextContent("Wrong key: Z");
+    expect(screen.getByTestId("target-char")).toHaveClass("error");
+    expect(screen.getByTestId("mistyped-keycap")).toHaveTextContent("Z");
+    expect(screen.getByTestId("mistyped-keycap")).toHaveClass("mistyped");
+    expect(screen.getByTestId("active-keycap")).toHaveClass("target-outline");
+    expect(screen.getByTestId("active-finger-button")).toHaveClass("target-outline");
+    expect(screen.getByTestId("active-finger-button")).not.toHaveClass("active");
+  });
+
+  it("clears mistype emphasis after the next correct key", () => {
+    render(<App />);
+
+    fireEvent.keyDown(window, { key: "Enter" });
+    fireEvent.keyDown(window, { key: "z" });
+    fireEvent.keyDown(window, { key: "a" });
+
+    expect(screen.queryByTestId("mistype-banner")).not.toBeInTheDocument();
+    expect(screen.getByTestId("target-char")).not.toHaveClass("error");
+    expect(screen.queryByTestId("mistyped-keycap")).not.toBeInTheDocument();
+    expect(screen.getByTestId("active-keycap")).not.toHaveClass("target-outline");
+    expect(screen.getByTestId("active-finger-button")).not.toHaveClass("target-outline");
+  });
+
+  it("clamps invalid word counts before applying settings", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.click(screen.getByRole("button", { name: "Settings" }));
+    fireEvent.change(screen.getByLabelText("Words per session"), { target: { value: "99" } });
+
+    expect(screen.getByLabelText("Words per session")).toHaveValue(20);
+
+    await user.click(screen.getByTestId("apply-settings-button"));
+
+    expect(screen.getByTestId("progress-count")).toHaveTextContent("0 / 20 words");
+  });
+
+  it("shows a results summary once the session is complete", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.click(screen.getByRole("button", { name: "Settings" }));
+    fireEvent.change(screen.getByLabelText("Words per session"), { target: { value: "1" } });
+    await user.click(screen.getByTestId("apply-settings-button"));
+
+    fireEvent.keyDown(window, { key: "Enter" });
+    await user.keyboard("apple");
+
+    expect(screen.getByTestId("results-summary")).toHaveTextContent("Score blends speed and accuracy");
+    expect(screen.getByTestId("completion-banner")).toHaveTextContent("Session complete");
   });
 
   it("switches display language in settings", async () => {

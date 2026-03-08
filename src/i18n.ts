@@ -16,18 +16,22 @@ type MessageKey =
   | "practice.pronounce"
   | "practice.countdown"
   | "practice.startNow"
-  | "practice.nextKey"
-  | "practice.keyPosition"
-  | "practice.finger"
   | "practice.keyboardMap"
+  | "practice.keyboardHelp"
   | "practice.noKey"
-  | "practice.fingerButtons"
+  | "practice.fingerGuideTitle"
+  | "practice.fingerGuideHelp"
   | "practice.noFinger"
   | "practice.feedback.ready"
   | "practice.feedback.incorrect"
   | "practice.feedback.default"
+  | "practice.feedback.complete"
+  | "practice.mistypeLabel"
+  | "practice.mistypeHint"
   | "practice.restart"
   | "practice.viewResults"
+  | "practice.emptyTitle"
+  | "practice.emptyCopy"
   | "words.title"
   | "words.subtitle"
   | "words.placeholder"
@@ -44,6 +48,8 @@ type MessageKey =
   | "settings.speech"
   | "settings.keyboardHint"
   | "settings.fingerGuide"
+  | "settings.sessionGroup"
+  | "settings.assistGroup"
   | "settings.pending"
   | "settings.synced"
   | "settings.apply"
@@ -55,8 +61,10 @@ type MessageKey =
   | "results.accuracy"
   | "results.score"
   | "results.level"
+  | "results.summary"
   | "results.empty"
   | "results.mistakes"
+  | "results.time"
   | "results.startNew";
 
 const messages: Record<DisplayLanguage, Record<MessageKey, string>> = {
@@ -75,18 +83,22 @@ const messages: Record<DisplayLanguage, Record<MessageKey, string>> = {
     "practice.pronounce": "Pronounce",
     "practice.countdown": "Start in",
     "practice.startNow": "Start now",
-    "practice.nextKey": "Next key",
-    "practice.keyPosition": "Key position",
-    "practice.finger": "Finger",
     "practice.keyboardMap": "Keyboard map",
+    "practice.keyboardHelp": "Follow the highlighted key for the next letter.",
     "practice.noKey": "No key",
-    "practice.fingerButtons": "Finger buttons",
+    "practice.fingerGuideTitle": "Finger guide",
+    "practice.fingerGuideHelp": "Use the raised finger button as the recommended touch-typing finger.",
     "practice.noFinger": "No finger",
     "practice.feedback.ready": "Get ready. Press Enter or Start now to begin immediately.",
-    "practice.feedback.incorrect": "Incorrect key. Stay on the highlighted character.",
+    "practice.feedback.incorrect": "Incorrect key. Keep aiming for the highlighted letter.",
     "practice.feedback.default": "Type on your keyboard to progress.",
+    "practice.feedback.complete": "Session complete. Review your score or start another round.",
+    "practice.mistypeLabel": "Wrong key",
+    "practice.mistypeHint": "The guide stays on the correct key and finger until you recover.",
     "practice.restart": "Restart session",
     "practice.viewResults": "View results",
+    "practice.emptyTitle": "Practice words are not available.",
+    "practice.emptyCopy": "Add a custom word or increase the session word count to continue.",
     "words.title": "Custom vocabulary",
     "words.subtitle": "Add your own practice words",
     "words.placeholder": "Enter an English word",
@@ -103,6 +115,8 @@ const messages: Record<DisplayLanguage, Record<MessageKey, string>> = {
     "settings.speech": "Enable pronunciation",
     "settings.keyboardHint": "Show key position",
     "settings.fingerGuide": "Show finger guide",
+    "settings.sessionGroup": "Session setup",
+    "settings.assistGroup": "Visual assistance",
     "settings.pending": "You have unapplied changes. Start a new session to use them.",
     "settings.synced": "Current session already matches these settings.",
     "settings.apply": "Apply and start new session",
@@ -114,8 +128,10 @@ const messages: Record<DisplayLanguage, Record<MessageKey, string>> = {
     "results.accuracy": "Accuracy",
     "results.score": "Score",
     "results.level": "Level",
+    "results.summary": "Score blends speed and accuracy across the whole session.",
     "results.empty": "No completed words yet.",
     "results.mistakes": "mistakes",
+    "results.time": "time",
     "results.startNew": "Start new session"
   },
   ja: {
@@ -133,18 +149,22 @@ const messages: Record<DisplayLanguage, Record<MessageKey, string>> = {
     "practice.pronounce": "発音",
     "practice.countdown": "開始まで",
     "practice.startNow": "今すぐ開始",
-    "practice.nextKey": "次のキー",
-    "practice.keyPosition": "キー位置",
-    "practice.finger": "指",
     "practice.keyboardMap": "キーボードマップ",
+    "practice.keyboardHelp": "ハイライトされたキーが次に押す位置です。",
     "practice.noKey": "キーなし",
-    "practice.fingerButtons": "指ボタン",
+    "practice.fingerGuideTitle": "指ガイド",
+    "practice.fingerGuideHelp": "浮き上がっている指ボタンが、次に使うおすすめの指です。",
     "practice.noFinger": "指なし",
     "practice.feedback.ready": "準備してください。Enter または今すぐ開始で始められます。",
     "practice.feedback.incorrect": "キーが違います。ハイライトされた文字をそのまま狙ってください。",
     "practice.feedback.default": "キーボードを打って進めてください。",
+    "practice.feedback.complete": "セッション完了です。スコアを確認するか、新しく始めてください。",
+    "practice.mistypeLabel": "誤って押したキー",
+    "practice.mistypeHint": "ガイドは正しいキーと指をそのまま示し続けます。",
     "practice.restart": "セッションをやり直す",
     "practice.viewResults": "結果を見る",
+    "practice.emptyTitle": "練習できる単語がありません。",
+    "practice.emptyCopy": "カスタム単語を追加するか、セッション単語数を見直してください。",
     "words.title": "カスタム単語",
     "words.subtitle": "練習したい単語を追加できます",
     "words.placeholder": "英単語を入力",
@@ -161,6 +181,8 @@ const messages: Record<DisplayLanguage, Record<MessageKey, string>> = {
     "settings.speech": "発音を有効化",
     "settings.keyboardHint": "キー位置を表示",
     "settings.fingerGuide": "指ガイドを表示",
+    "settings.sessionGroup": "セッション条件",
+    "settings.assistGroup": "表示補助",
     "settings.pending": "未適用の変更があります。新しいセッションで反映されます。",
     "settings.synced": "現在のセッションはこの設定と一致しています。",
     "settings.apply": "適用して新しいセッションを開始",
@@ -172,8 +194,10 @@ const messages: Record<DisplayLanguage, Record<MessageKey, string>> = {
     "results.accuracy": "正確さ",
     "results.score": "スコア",
     "results.level": "レベル",
+    "results.summary": "スコアはセッション全体の速さと正確さをまとめて評価します。",
     "results.empty": "完了した単語はまだありません。",
     "results.mistakes": "ミス",
+    "results.time": "時間",
     "results.startNew": "新しいセッションを開始"
   },
   "ja-hira": {
@@ -191,18 +215,22 @@ const messages: Record<DisplayLanguage, Record<MessageKey, string>> = {
     "practice.pronounce": "はつおん",
     "practice.countdown": "かいしまで",
     "practice.startNow": "いますぐ かいし",
-    "practice.nextKey": "つぎの キー",
-    "practice.keyPosition": "キー いち",
-    "practice.finger": "ゆび",
     "practice.keyboardMap": "キーボード マップ",
+    "practice.keyboardHelp": "ハイライトされた キーが つぎに おす いちです。",
     "practice.noKey": "キーなし",
-    "practice.fingerButtons": "ゆび ボタン",
+    "practice.fingerGuideTitle": "ゆび ガイド",
+    "practice.fingerGuideHelp": "うきあがっている ゆびボタンが、つぎに つかう おすすめの ゆびです。",
     "practice.noFinger": "ゆびなし",
     "practice.feedback.ready": "じゅんびしてください。Enter または いますぐ かいしで はじめられます。",
     "practice.feedback.incorrect": "キーが ちがいます。ハイライトされた もじを そのまま ねらってください。",
     "practice.feedback.default": "キーボードを うって すすめてください。",
+    "practice.feedback.complete": "セッション かんりょうです。スコアを みるか、あたらしく はじめてください。",
+    "practice.mistypeLabel": "あやまって おした キー",
+    "practice.mistypeHint": "ガイドは ただしい キーと ゆびを そのまま しめしつづけます。",
     "practice.restart": "セッションを やりなおす",
     "practice.viewResults": "けっかを みる",
+    "practice.emptyTitle": "れんしゅうできる たんごが ありません。",
+    "practice.emptyCopy": "カスタムたんごを ついかするか、セッションの たんごすうを みなおしてください。",
     "words.title": "カスタム たんご",
     "words.subtitle": "れんしゅうしたい たんごを ついかできます",
     "words.placeholder": "えいたんごを にゅうりょく",
@@ -219,6 +247,8 @@ const messages: Record<DisplayLanguage, Record<MessageKey, string>> = {
     "settings.speech": "はつおんを ゆうこうか",
     "settings.keyboardHint": "キーいちを ひょうじ",
     "settings.fingerGuide": "ゆびガイドを ひょうじ",
+    "settings.sessionGroup": "セッション じょうけん",
+    "settings.assistGroup": "ひょうじ ほじょ",
     "settings.pending": "みてきようの へんこうが あります。あたらしい セッションで はんえいされます。",
     "settings.synced": "いまの セッションは この せっていと いっちしています。",
     "settings.apply": "てきようして あたらしい セッションを かいし",
@@ -230,8 +260,10 @@ const messages: Record<DisplayLanguage, Record<MessageKey, string>> = {
     "results.accuracy": "せいかくさ",
     "results.score": "スコア",
     "results.level": "レベル",
+    "results.summary": "スコアは セッションぜんたいの はやさと せいかくさを まとめて ひょうかします。",
     "results.empty": "かんりょうした たんごは まだ ありません。",
     "results.mistakes": "みす",
+    "results.time": "じかん",
     "results.startNew": "あたらしい セッションを かいし"
   }
 };

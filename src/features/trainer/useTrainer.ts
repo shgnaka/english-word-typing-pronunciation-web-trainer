@@ -1,8 +1,6 @@
 import { useEffect, useState } from "react";
 import { defaultWords } from "../../data/defaultWords";
-import { keyboardGuideMap } from "../../domain/keyboard";
-import { calculateSessionScore } from "../../domain/scoring";
-import { applyKeystroke, buildSessionQueue, createInitialSession, getTargetCharacter } from "../../domain/session";
+import { applyKeystroke, buildSessionQueue, createInitialSession } from "../../domain/session";
 import type { DisplayLanguage, SessionConfig, TypingSessionState, WordEntry } from "../../domain/types";
 import { createWordEntry, dedupeWords } from "../../domain/words";
 import {
@@ -11,11 +9,13 @@ import {
   loadDisplayLanguage,
   loadCustomWords,
   loadSessionConfig,
+  sanitizeWordCount,
   saveDisplayLanguage,
   saveCustomWords,
   saveSessionConfig
 } from "../../infra/storage";
 import { speakWord } from "../../infra/speech";
+import { deriveTrainerViewState } from "./trainerView";
 
 type Screen = "practice" | "words" | "settings" | "results";
 
@@ -56,15 +56,14 @@ export function useTrainer() {
   }, [countdown, screen, session.currentWord, session.isComplete]);
 
   const allWords = dedupeWords([...defaultWords, ...customWords]);
-  const currentTarget = getTargetCharacter(session);
-  const currentGuide = currentTarget ? keyboardGuideMap[currentTarget] : null;
-  const score = calculateSessionScore(session.completedWords);
-  const totalWords = session.completedWords.length + session.queue.length;
-  const remainingWords = session.queue.length;
-  const completedWordsCount = session.completedWords.length;
-  const progressPercent = totalWords > 0 ? Math.round((completedWordsCount / totalWords) * 100) : 0;
-  const isCountdownActive = screen === "practice" && countdown > 0 && !session.isComplete && Boolean(session.currentWord);
-  const hasPendingConfigChanges = JSON.stringify(config) !== JSON.stringify(draftConfig);
+  const { currentTarget, currentGuide, score, totalWords, remainingWords, completedWordsCount, progressPercent, isCountdownActive, hasPendingConfigChanges } =
+    deriveTrainerViewState({
+      session,
+      screen,
+      countdown,
+      config,
+      draftConfig
+    });
 
   function restartSession(nextConfig = config) {
     const queue = buildSessionQueue(allWords, nextConfig.wordCount, nextConfig.shuffle);
@@ -116,7 +115,7 @@ export function useTrainer() {
   function handleConfigChange<K extends keyof SessionConfig>(key: K, value: SessionConfig[K]) {
     setDraftConfig((current) => ({
       ...current,
-      [key]: value
+      [key]: key === "wordCount" ? sanitizeWordCount(value as number) : value
     }));
   }
 
@@ -173,3 +172,5 @@ export function useTrainer() {
     }
   };
 }
+
+export type TrainerState = ReturnType<typeof useTrainer>;

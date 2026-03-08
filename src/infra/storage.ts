@@ -14,6 +14,14 @@ export const defaultSessionConfig: SessionConfig = {
 
 export const defaultDisplayLanguage: DisplayLanguage = "en";
 
+export function sanitizeWordCount(value: number): number {
+  if (!Number.isFinite(value)) {
+    return defaultSessionConfig.wordCount;
+  }
+
+  return Math.min(20, Math.max(1, Math.round(value)));
+}
+
 export function loadCustomWords(): WordEntry[] {
   const raw = globalThis.localStorage?.getItem(customWordsKey);
   if (!raw) {
@@ -42,7 +50,8 @@ export function loadSessionConfig(): SessionConfig {
     const parsed = JSON.parse(raw) as Partial<SessionConfig>;
     return {
       ...defaultSessionConfig,
-      ...parsed
+      ...parsed,
+      wordCount: sanitizeWordCount(parsed.wordCount ?? defaultSessionConfig.wordCount)
     };
   } catch {
     return defaultSessionConfig;
@@ -50,7 +59,13 @@ export function loadSessionConfig(): SessionConfig {
 }
 
 export function saveSessionConfig(config: SessionConfig): void {
-  globalThis.localStorage?.setItem(sessionConfigKey, JSON.stringify(config));
+  globalThis.localStorage?.setItem(
+    sessionConfigKey,
+    JSON.stringify({
+      ...config,
+      wordCount: sanitizeWordCount(config.wordCount)
+    })
+  );
 }
 
 export function loadDisplayLanguage(): DisplayLanguage {

@@ -6,8 +6,6 @@ test.beforeEach(async ({ page }) => {
 
 test("shows the main practice guidance", async ({ page }) => {
   await expect(page.getByTestId("current-word")).toHaveText("apple");
-  await expect(page.getByTestId("next-key")).toHaveText("a");
-  await expect(page.getByTestId("finger-guide")).toContainText("Left");
   await expect(page.getByTestId("pronounce-button")).toBeVisible();
   await expect(page.getByTestId("active-keycap")).toHaveText("A");
   await expect(page.getByTestId("finger-button-label")).toHaveText("Left pinky");
@@ -100,8 +98,26 @@ test("can discard pending settings changes", async ({ page }) => {
 test("shows feedback on incorrect input", async ({ page }) => {
   await page.getByTestId("skip-countdown-button").click();
   await page.keyboard.press("z");
-  await expect(page.getByTestId("feedback")).toHaveText("Incorrect key. Stay on the highlighted character.");
-  await expect(page.getByTestId("next-key")).toHaveText("a");
+  await expect(page.getByTestId("feedback")).toHaveText("Incorrect key. Keep aiming for the highlighted letter.");
+  await expect(page.getByTestId("mistype-banner")).toContainText("Wrong key: Z");
+  await expect(page.getByTestId("target-char")).toHaveClass(/error/);
+  await expect(page.getByTestId("mistyped-keycap")).toHaveText("Z");
+  await expect(page.getByTestId("mistyped-keycap")).toHaveClass(/mistyped/);
+  await expect(page.getByTestId("active-keycap")).toHaveClass(/target-outline/);
+  await expect(page.getByTestId("active-finger-button")).toHaveClass(/target-outline/);
+  await expect(page.getByTestId("active-finger-button")).not.toHaveClass(/active/);
+});
+
+test("clears mistype emphasis after the next correct key", async ({ page }) => {
+  const mistypeBanner = page.getByTestId("mistype-banner");
+  await page.getByTestId("skip-countdown-button").click();
+  await page.keyboard.press("z");
+  await page.keyboard.press("a");
+
+  await expect(mistypeBanner).toHaveCount(0);
+  await expect(page.getByTestId("mistyped-keycap")).toHaveCount(0);
+  await expect(page.getByTestId("active-keycap")).not.toHaveClass(/target-outline/);
+  await expect(page.getByTestId("active-finger-button")).not.toHaveClass(/target-outline/);
 });
 
 test("updates the finger button guide as typing advances", async ({ page }) => {
@@ -124,12 +140,12 @@ test("supports Enter to add words and skip countdown", async ({ page }) => {
   await expect(page.getByTestId("countdown-banner")).toBeHidden({ timeout: 1000 });
 });
 
-test("does not progress typing while an action button is focused", async ({ page }) => {
+test("resumes typing after a practice action button is clicked", async ({ page }) => {
   await page.getByTestId("skip-countdown-button").click();
-  await page.getByTestId("pronounce-button").focus();
+  await page.getByTestId("pronounce-button").click();
   await page.keyboard.press("a");
 
-  await expect(page.getByTestId("next-key")).toHaveText("a");
+  await expect(page.getByTestId("active-keycap")).toHaveText("P");
 });
 
 test("completes a single-word session and shows results", async ({ page }) => {
@@ -144,5 +160,16 @@ test("completes a single-word session and shows results", async ({ page }) => {
   await expect(page.getByTestId("score-wpm")).not.toHaveText("0");
   await expect(page.getByTestId("score-accuracy")).toContainText("%");
   await expect(page.getByTestId("score-level")).not.toHaveText("");
+  await expect(page.getByTestId("results-summary")).toContainText("Score blends speed and accuracy");
   await expect(page.getByTestId("results-list")).toContainText("apple");
+});
+
+test("clamps an oversized word count before saving", async ({ page }) => {
+  await page.getByTestId("tab-settings").click();
+  await page.getByTestId("word-count-input").fill("99");
+
+  await expect(page.getByTestId("word-count-input")).toHaveValue("20");
+
+  await page.getByTestId("apply-settings-button").click();
+  await expect(page.getByTestId("progress-count")).toHaveText("0 / 20 words");
 });
