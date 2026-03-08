@@ -1,5 +1,15 @@
 import { useEffect } from "react";
+import { keyboardRows } from "./domain/keyboard";
+import { FingerGuideButtons } from "./components/FingerGuideButtons";
 import { useTrainer } from "./features/trainer/useTrainer";
+
+function isInteractiveElement(target: EventTarget | null): boolean {
+  if (!(target instanceof HTMLElement)) {
+    return false;
+  }
+
+  return Boolean(target.closest("input, textarea, button, select, a, [contenteditable='true'], [role='button']"));
+}
 
 function App() {
   const trainer = useTrainer();
@@ -10,8 +20,13 @@ function App() {
         return;
       }
 
-      const target = event.target;
-      if (target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement) {
+      if (trainer.isCountdownActive && event.key === "Enter") {
+        event.preventDefault();
+        trainer.skipCountdown();
+        return;
+      }
+
+      if (isInteractiveElement(event.target)) {
         return;
       }
 
@@ -114,7 +129,10 @@ function App() {
 
               {trainer.isCountdownActive ? (
                 <div className="countdown-banner" data-testid="countdown-banner" aria-live="polite">
-                  Start in {trainer.countdown}
+                  <span>Start in {trainer.countdown}</span>
+                  <button className="secondary inline-action" data-testid="skip-countdown-button" onClick={trainer.skipCountdown}>
+                    Start now
+                  </button>
                 </div>
               ) : null}
 
@@ -135,9 +153,41 @@ function App() {
                 </article>
               </div>
 
+              {trainer.config.showKeyboardHint || trainer.config.showFingerGuide ? (
+                <div className="guide-visuals">
+                  {trainer.config.showKeyboardHint ? (
+                    <section className="guide-card" data-testid="keyboard-visual">
+                      <div className="guide-card-header">
+                        <span className="label">Keyboard map</span>
+                        <strong>{trainer.currentTarget ? `Key ${trainer.currentTarget.toUpperCase()}` : "No key"}</strong>
+                      </div>
+                      <div className="keyboard-map" aria-label="Keyboard guide">
+                        {keyboardRows.map((row, rowIndex) => (
+                          <div key={row.join("")} className={`keyboard-row row-${rowIndex}`}>
+                            {row.map((key) => (
+                              <span
+                                key={key}
+                                className={`keycap ${trainer.currentTarget === key ? "active" : ""}`}
+                                data-testid={trainer.currentTarget === key ? "active-keycap" : undefined}
+                              >
+                                {key.toUpperCase()}
+                              </span>
+                            ))}
+                          </div>
+                        ))}
+                      </div>
+                    </section>
+                  ) : null}
+
+                  {trainer.config.showFingerGuide ? (
+                    <FingerGuideButtons activeFingerId={trainer.currentGuide?.fingerId ?? null} label={trainer.currentGuide?.finger ?? "No finger"} />
+                  ) : null}
+                </div>
+              ) : null}
+
               <div className={`feedback ${trainer.session.lastInputCorrect === false ? "error" : ""}`} data-testid="feedback">
                 {trainer.isCountdownActive
-                  ? "Get ready. Typing unlocks when the countdown finishes."
+                  ? "Get ready. Press Enter or Start now to begin immediately."
                   : trainer.session.lastInputCorrect === false
                   ? "Incorrect key. Stay on the highlighted character."
                   : "Type on your keyboard to progress."}
@@ -166,6 +216,12 @@ function App() {
                   data-testid="new-word-input"
                   value={trainer.inputValue}
                   onChange={(event) => trainer.setInputValue(event.target.value)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter") {
+                      event.preventDefault();
+                      trainer.handleAddWord();
+                    }
+                  }}
                   placeholder="Enter an English word"
                   aria-label="New word"
                 />
@@ -211,7 +267,7 @@ function App() {
                     type="number"
                     min={1}
                     max={20}
-                    value={trainer.config.wordCount}
+                    value={trainer.draftConfig.wordCount}
                     onChange={(event) => trainer.handleConfigChange("wordCount", Number(event.target.value))}
                   />
                 </label>
@@ -219,7 +275,7 @@ function App() {
                   <input
                     data-testid="shuffle-toggle"
                     type="checkbox"
-                    checked={trainer.config.shuffle}
+                    checked={trainer.draftConfig.shuffle}
                     onChange={(event) => trainer.handleConfigChange("shuffle", event.target.checked)}
                   />
                   <span>Shuffle words</span>
@@ -228,7 +284,7 @@ function App() {
                   <input
                     data-testid="speech-toggle"
                     type="checkbox"
-                    checked={trainer.config.speechEnabled}
+                    checked={trainer.draftConfig.speechEnabled}
                     onChange={(event) => trainer.handleConfigChange("speechEnabled", event.target.checked)}
                   />
                   <span>Enable pronunciation</span>
@@ -237,7 +293,7 @@ function App() {
                   <input
                     data-testid="keyboard-hint-toggle"
                     type="checkbox"
-                    checked={trainer.config.showKeyboardHint}
+                    checked={trainer.draftConfig.showKeyboardHint}
                     onChange={(event) => trainer.handleConfigChange("showKeyboardHint", event.target.checked)}
                   />
                   <span>Show key position</span>
@@ -246,16 +302,34 @@ function App() {
                   <input
                     data-testid="finger-guide-toggle"
                     type="checkbox"
-                    checked={trainer.config.showFingerGuide}
+                    checked={trainer.draftConfig.showFingerGuide}
                     onChange={(event) => trainer.handleConfigChange("showFingerGuide", event.target.checked)}
                   />
                   <span>Show finger guide</span>
                 </label>
               </div>
 
+              <div className={`settings-status ${trainer.hasPendingConfigChanges ? "pending" : ""}`} data-testid="settings-status">
+                {trainer.hasPendingConfigChanges
+                  ? "You have unapplied changes. Start a new session to use them."
+                  : "Current session already matches these settings."}
+              </div>
+
               <div className="cta-row">
-                <button data-testid="apply-settings-button" onClick={() => trainer.restartSession(trainer.config)}>
-                  Apply and restart
+                <button
+                  data-testid="apply-settings-button"
+                  onClick={trainer.applyConfigChanges}
+                  disabled={!trainer.hasPendingConfigChanges}
+                >
+                  Apply and start new session
+                </button>
+                <button
+                  className="secondary"
+                  data-testid="discard-settings-button"
+                  onClick={trainer.discardConfigChanges}
+                  disabled={!trainer.hasPendingConfigChanges}
+                >
+                  Discard changes
                 </button>
               </div>
             </>

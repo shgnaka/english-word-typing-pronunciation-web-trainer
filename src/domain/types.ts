@@ -43,9 +43,20 @@ export interface TypingSessionState {
   lastInputCorrect: boolean | null;
 }
 
+export type FingerId =
+  | "left-pinky"
+  | "left-ring"
+  | "left-middle"
+  | "left-index"
+  | "right-index"
+  | "right-middle"
+  | "right-ring"
+  | "right-pinky";
+
 export interface KeyboardGuide {
   keyPosition: string;
   finger: string;
+  fingerId: FingerId;
 }
 
 export type KeyboardGuideMap = Record<string, KeyboardGuide>;

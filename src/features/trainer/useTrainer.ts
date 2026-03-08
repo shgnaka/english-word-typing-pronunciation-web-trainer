@@ -20,6 +20,7 @@ export function useTrainer() {
   const [screen, setScreen] = useState<Screen>("practice");
   const [customWords, setCustomWords] = useState<WordEntry[]>([]);
   const [config, setConfig] = useState<SessionConfig>(defaultSessionConfig);
+  const [draftConfig, setDraftConfig] = useState<SessionConfig>(defaultSessionConfig);
   const [session, setSession] = useState<TypingSessionState>(() => createInitialSession([]));
   const [inputValue, setInputValue] = useState("");
   const [addWordError, setAddWordError] = useState("");
@@ -30,6 +31,7 @@ export function useTrainer() {
     const loadedConfig = loadSessionConfig();
     setCustomWords(loadedCustomWords);
     setConfig(loadedConfig);
+    setDraftConfig(loadedConfig);
     const queue = buildSessionQueue(dedupeWords([...defaultWords, ...loadedCustomWords]), loadedConfig.wordCount, loadedConfig.shuffle);
     setSession(createInitialSession(queue));
     setCountdown(queue.length > 0 ? 3 : 0);
@@ -56,6 +58,7 @@ export function useTrainer() {
   const completedWordsCount = session.completedWords.length;
   const progressPercent = totalWords > 0 ? Math.round((completedWordsCount / totalWords) * 100) : 0;
   const isCountdownActive = screen === "practice" && countdown > 0 && !session.isComplete && Boolean(session.currentWord);
+  const hasPendingConfigChanges = JSON.stringify(config) !== JSON.stringify(draftConfig);
 
   function restartSession(nextConfig = config) {
     const queue = buildSessionQueue(allWords, nextConfig.wordCount, nextConfig.shuffle);
@@ -97,13 +100,28 @@ export function useTrainer() {
     setAddWordError("");
   }
 
+  function handleAddWordInputChange(value: string) {
+    setInputValue(value);
+    if (addWordError) {
+      setAddWordError("");
+    }
+  }
+
   function handleConfigChange<K extends keyof SessionConfig>(key: K, value: SessionConfig[K]) {
-    const nextConfig = {
-      ...config,
+    setDraftConfig((current) => ({
+      ...current,
       [key]: value
-    };
-    setConfig(nextConfig);
-    saveSessionConfig(nextConfig);
+    }));
+  }
+
+  function applyConfigChanges() {
+    setConfig(draftConfig);
+    saveSessionConfig(draftConfig);
+    restartSession(draftConfig);
+  }
+
+  function discardConfigChanges() {
+    setDraftConfig(config);
   }
 
   return {
@@ -111,9 +129,10 @@ export function useTrainer() {
     setScreen,
     session,
     config,
+    draftConfig,
     customWords,
     inputValue,
-    setInputValue,
+    setInputValue: handleAddWordInputChange,
     addWordError,
     countdown,
     currentTarget,
@@ -124,10 +143,16 @@ export function useTrainer() {
     completedWordsCount,
     progressPercent,
     isCountdownActive,
+    hasPendingConfigChanges,
     handleKeyInput,
     handleAddWord,
     handleConfigChange,
+    applyConfigChanges,
+    discardConfigChanges,
     restartSession,
+    skipCountdown() {
+      setCountdown(0);
+    },
     speakCurrentWord() {
       if (session.currentWord && config.speechEnabled) {
         speakWord(session.currentWord.text);

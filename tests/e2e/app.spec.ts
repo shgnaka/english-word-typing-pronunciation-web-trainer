@@ -9,6 +9,9 @@ test("shows the main practice guidance", async ({ page }) => {
   await expect(page.getByTestId("next-key")).toHaveText("a");
   await expect(page.getByTestId("finger-guide")).toContainText("Left");
   await expect(page.getByTestId("pronounce-button")).toBeVisible();
+  await expect(page.getByTestId("active-keycap")).toHaveText("A");
+  await expect(page.getByTestId("finger-button-label")).toHaveText("Left pinky");
+  await expect(page.getByTestId("active-finger-button")).toHaveAttribute("data-finger-id", "left-pinky");
 });
 
 test("navigates across all tabs", async ({ page }) => {
@@ -44,6 +47,7 @@ test("persists settings after reload", async ({ page }) => {
   await page.getByTestId("speech-toggle").uncheck();
   await page.getByTestId("keyboard-hint-toggle").uncheck();
   await page.getByTestId("finger-guide-toggle").uncheck();
+  await page.getByTestId("apply-settings-button").click();
 
   await page.reload();
   await page.getByTestId("tab-settings").click();
@@ -54,10 +58,63 @@ test("persists settings after reload", async ({ page }) => {
   await expect(page.getByTestId("finger-guide-toggle")).not.toBeChecked();
 });
 
+test("shows pending settings until they are applied", async ({ page }) => {
+  await page.getByTestId("tab-settings").click();
+  await page.getByTestId("word-count-input").fill("1");
+
+  await expect(page.getByTestId("settings-status")).toContainText("You have unapplied changes.");
+
+  await page.getByTestId("tab-practice").click();
+  await expect(page.getByTestId("progress-count")).toHaveText("0 / 10 words");
+
+  await page.getByTestId("tab-settings").click();
+  await page.getByTestId("apply-settings-button").click();
+  await expect(page.getByTestId("progress-count")).toHaveText("0 / 1 words");
+});
+
+test("can discard pending settings changes", async ({ page }) => {
+  await page.getByTestId("tab-settings").click();
+  await page.getByTestId("shuffle-toggle").check();
+  await expect(page.getByTestId("settings-status")).toContainText("You have unapplied changes.");
+
+  await page.getByTestId("discard-settings-button").click();
+
+  await expect(page.getByTestId("shuffle-toggle")).not.toBeChecked();
+  await expect(page.getByTestId("settings-status")).toContainText("Current session already matches these settings.");
+});
+
 test("shows feedback on incorrect input", async ({ page }) => {
-  await page.getByTestId("current-word").click();
+  await page.getByTestId("skip-countdown-button").click();
   await page.keyboard.press("z");
   await expect(page.getByTestId("feedback")).toHaveText("Incorrect key. Stay on the highlighted character.");
+  await expect(page.getByTestId("next-key")).toHaveText("a");
+});
+
+test("updates the finger button guide as typing advances", async ({ page }) => {
+  await page.getByTestId("skip-countdown-button").click();
+
+  await expect(page.getByTestId("active-finger-button")).toHaveAttribute("data-finger-id", "left-pinky");
+  await page.keyboard.press("a");
+  await expect(page.getByTestId("active-finger-button")).toHaveAttribute("data-finger-id", "right-pinky");
+});
+
+test("supports Enter to add words and skip countdown", async ({ page }) => {
+  await page.getByTestId("tab-words").click();
+  await page.getByTestId("new-word-input").fill("banana");
+  await page.getByTestId("new-word-input").press("Enter");
+  await expect(page.getByTestId("custom-word-list")).toContainText("banana");
+
+  await page.getByTestId("tab-practice").click();
+  await expect(page.getByTestId("countdown-banner")).toContainText("Start in 3");
+  await page.keyboard.press("Enter");
+  await expect(page.getByTestId("countdown-banner")).toBeHidden({ timeout: 1000 });
+});
+
+test("does not progress typing while an action button is focused", async ({ page }) => {
+  await page.getByTestId("skip-countdown-button").click();
+  await page.getByTestId("pronounce-button").focus();
+  await page.keyboard.press("a");
+
   await expect(page.getByTestId("next-key")).toHaveText("a");
 });
 
@@ -67,6 +124,7 @@ test("completes a single-word session and shows results", async ({ page }) => {
   await page.getByTestId("apply-settings-button").click();
 
   await expect(page.getByTestId("current-word")).toHaveText("apple");
+  await page.getByTestId("skip-countdown-button").click();
   await page.keyboard.type("apple");
 
   await expect(page.getByTestId("score-wpm")).not.toHaveText("0");
