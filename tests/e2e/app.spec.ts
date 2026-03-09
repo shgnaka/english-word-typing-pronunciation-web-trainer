@@ -219,8 +219,9 @@ test("keeps guides visible during typing even when assist settings are turned of
   await page.getByTestId("tab-settings").click();
   await page.getByTestId("keyboard-hint-toggle").uncheck();
   await page.getByTestId("finger-guide-toggle").uncheck();
-  await page.getByTestId("apply-settings-button").click();
+  await expect(page.getByTestId("apply-settings-button")).toBeDisabled();
 
+  await page.getByTestId("tab-practice").click();
   await page.getByTestId("skip-countdown-button").click();
 
   await expect(page.getByTestId("keyboard-visual")).toBeVisible();
