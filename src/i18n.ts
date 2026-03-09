@@ -50,6 +50,12 @@ type MessageKey =
   | "words.moveUp"
   | "words.moveDown"
   | "words.builtinTitle"
+  | "words.builtinHint"
+  | "words.builtinEdited"
+  | "words.hiddenBuiltinTitle"
+  | "words.hiddenBuiltinEmpty"
+  | "words.restore"
+  | "words.resetBuiltin"
   | "words.customTitle"
   | "words.empty"
   | "words.error.invalid"
@@ -145,6 +151,12 @@ const messages: Record<DisplayLanguage, Record<MessageKey, string>> = {
     "words.moveUp": "Move up",
     "words.moveDown": "Move down",
     "words.builtinTitle": "Built-in words",
+    "words.builtinHint": "Built-in word changes are stored only in this browser.",
+    "words.builtinEdited": "Edited locally",
+    "words.hiddenBuiltinTitle": "Hidden built-in words",
+    "words.hiddenBuiltinEmpty": "No hidden built-in words.",
+    "words.restore": "Restore",
+    "words.resetBuiltin": "Reset built-in words",
     "words.customTitle": "Custom words",
     "words.empty": "No custom words yet.",
     "words.error.invalid": "Enter letters only.",
@@ -239,6 +251,12 @@ const messages: Record<DisplayLanguage, Record<MessageKey, string>> = {
     "words.moveUp": "上へ移動",
     "words.moveDown": "下へ移動",
     "words.builtinTitle": "標準単語",
+    "words.builtinHint": "標準単語の変更はこのブラウザにだけ保存されます。",
+    "words.builtinEdited": "このブラウザで編集済み",
+    "words.hiddenBuiltinTitle": "非表示の標準単語",
+    "words.hiddenBuiltinEmpty": "非表示の標準単語はありません。",
+    "words.restore": "元に戻す",
+    "words.resetBuiltin": "標準単語をリセット",
     "words.customTitle": "カスタム単語",
     "words.empty": "カスタム単語はまだありません。",
     "words.error.invalid": "英字のみ入力してください。",
@@ -333,6 +351,12 @@ const messages: Record<DisplayLanguage, Record<MessageKey, string>> = {
     "words.moveUp": "うえへ いどう",
     "words.moveDown": "したへ いどう",
     "words.builtinTitle": "はじめからある たんご",
+    "words.builtinHint": "はじめからある たんごの へんこうは このブラウザだけに ほぞんされます。",
+    "words.builtinEdited": "このブラウザで へんこうずみ",
+    "words.hiddenBuiltinTitle": "ひょうじしていない はじめからある たんご",
+    "words.hiddenBuiltinEmpty": "ひょうじしていない はじめからある たんごは ありません。",
+    "words.restore": "もとに もどす",
+    "words.resetBuiltin": "はじめからある たんごを リセット",
     "words.customTitle": "カスタムたんご",
     "words.empty": "カスタムたんごは まだ ありません。",
     "words.error.invalid": "えいじのみ にゅうりょくしてください。",

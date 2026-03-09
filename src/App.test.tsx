@@ -81,6 +81,67 @@ describe("App", () => {
     expect(screen.getByText("banana")).toBeInTheDocument();
   });
 
+  it("edits a builtin word", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.click(screen.getByRole("button", { name: "Words" }));
+    await user.click(screen.getByTestId("edit-word-button-builtin-apple"));
+    await user.clear(screen.getByTestId("edit-word-input-builtin-apple"));
+    await user.type(screen.getByTestId("edit-word-input-builtin-apple"), "apricot");
+    await user.click(screen.getByTestId("save-word-button-builtin-apple"));
+
+    expect(screen.getByTestId("builtin-word-list")).toHaveTextContent("apricot");
+    expect(screen.getByTestId("builtin-word-state-builtin-apple")).toHaveTextContent("Edited locally");
+  });
+
+  it("deletes and restores a builtin word", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.click(screen.getByRole("button", { name: "Words" }));
+    await user.click(screen.getByTestId("delete-word-button-builtin-apple"));
+
+    expect(screen.getByTestId("builtin-word-list")).not.toHaveTextContent("apple");
+    expect(screen.getByTestId("hidden-builtin-word-list")).toHaveTextContent("apple");
+
+    await user.click(screen.getAllByTestId("restore-word-button-builtin-apple")[0]);
+
+    expect(screen.getByTestId("builtin-word-list")).toHaveTextContent("apple");
+    expect(screen.getByTestId("hidden-builtin-empty")).toHaveTextContent("No hidden built-in words.");
+  });
+
+  it("rejects duplicate builtin word edits", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.click(screen.getByRole("button", { name: "Words" }));
+    await user.click(screen.getByTestId("edit-word-button-builtin-apple"));
+    await user.clear(screen.getByTestId("edit-word-input-builtin-apple"));
+    await user.type(screen.getByTestId("edit-word-input-builtin-apple"), "book");
+    await user.click(screen.getByTestId("save-word-button-builtin-apple"));
+
+    expect(screen.getByRole("alert")).toHaveTextContent("That word already exists.");
+    expect(screen.getByTestId("edit-word-input-builtin-apple")).toHaveValue("book");
+  });
+
+  it("resets builtin word overrides", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.click(screen.getByRole("button", { name: "Words" }));
+    await user.click(screen.getByTestId("edit-word-button-builtin-apple"));
+    await user.clear(screen.getByTestId("edit-word-input-builtin-apple"));
+    await user.type(screen.getByTestId("edit-word-input-builtin-apple"), "apricot");
+    await user.click(screen.getByTestId("save-word-button-builtin-apple"));
+    await user.click(screen.getByTestId("delete-word-button-builtin-book"));
+    await user.click(screen.getByTestId("reset-builtin-words-button"));
+
+    expect(screen.getByTestId("builtin-word-list")).toHaveTextContent("apple");
+    expect(screen.getByTestId("builtin-word-list")).toHaveTextContent("book");
+    expect(screen.getByTestId("hidden-builtin-empty")).toHaveTextContent("No hidden built-in words.");
+  });
+
   it("deletes a custom word", async () => {
     const user = userEvent.setup();
     render(<App />);
@@ -183,6 +244,26 @@ describe("App", () => {
     } finally {
       randomSpy.mockRestore();
     }
+  });
+
+  it("rebuilds the active session when a builtin word is edited or deleted", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.click(screen.getByRole("button", { name: "Words" }));
+    await user.click(screen.getByTestId("edit-word-button-builtin-apple"));
+    await user.clear(screen.getByTestId("edit-word-input-builtin-apple"));
+    await user.type(screen.getByTestId("edit-word-input-builtin-apple"), "apricot");
+    await user.click(screen.getByTestId("save-word-button-builtin-apple"));
+    await user.click(screen.getByRole("button", { name: "Practice" }));
+
+    expect(screen.getByTestId("current-word")).toHaveTextContent("apricot");
+
+    await user.click(screen.getByRole("button", { name: "Words" }));
+    await user.click(screen.getByTestId("delete-word-button-builtin-apple"));
+    await user.click(screen.getByRole("button", { name: "Practice" }));
+
+    expect(screen.getByTestId("current-word")).toHaveTextContent("book");
   });
 
   it("skips countdown when Enter is pressed", () => {

@@ -135,6 +135,40 @@ test("rebuilds the active session after deleting a custom word", async ({ page }
   await expect(page.getByTestId("current-word")).toHaveText("language");
 });
 
+test("edits and restores a builtin word", async ({ page }) => {
+  await page.getByTestId("tab-words").click();
+  await page.getByTestId("edit-word-button-builtin-apple").click();
+  await page.getByTestId("edit-word-input-builtin-apple").fill("apricot");
+  await page.getByTestId("save-word-button-builtin-apple").click();
+
+  await expect(page.getByTestId("builtin-word-list")).toContainText("apricot");
+  await expect(page.getByTestId("builtin-word-state-builtin-apple")).toHaveText("Edited locally");
+
+  await page.getByTestId("tab-practice").click();
+  await expect(page.getByTestId("current-word")).toHaveText("apricot");
+
+  await page.getByTestId("tab-words").click();
+  await page.getByTestId("restore-word-button-builtin-apple").click();
+  await expect(page.getByTestId("builtin-word-list")).toContainText("apple");
+  await expect(page.getByTestId("builtin-word-state-builtin-apple")).toHaveCount(0);
+});
+
+test("deletes a builtin word and can reset builtin overrides", async ({ page }) => {
+  await page.getByTestId("tab-words").click();
+  await page.getByTestId("delete-word-button-builtin-apple").click();
+
+  await expect(page.getByTestId("builtin-word-list")).not.toContainText("apple");
+  await expect(page.getByTestId("hidden-builtin-word-list")).toContainText("apple");
+
+  await page.getByTestId("tab-practice").click();
+  await expect(page.getByTestId("current-word")).toHaveText("book");
+
+  await page.getByTestId("tab-words").click();
+  await page.getByTestId("reset-builtin-words-button").click();
+  await expect(page.getByTestId("builtin-word-list")).toContainText("apple");
+  await expect(page.getByTestId("hidden-builtin-empty")).toHaveText("No hidden built-in words.");
+});
+
 test("persists settings after reload", async ({ page }) => {
   await page.getByTestId("tab-settings").click();
   await page.getByTestId("language-ja-hira").click();

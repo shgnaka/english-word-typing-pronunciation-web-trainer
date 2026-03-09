@@ -1,5 +1,16 @@
 export type WordSource = "builtin" | "custom";
 
+export type BuiltinWordOverrideStatus = "edited" | "deleted";
+
+export interface BuiltinWordOverride {
+  status: BuiltinWordOverrideStatus;
+  text?: string;
+  normalizedText?: string;
+  updatedAt: string;
+}
+
+export type BuiltinWordOverrides = Record<string, BuiltinWordOverride>;
+
 export interface WordEntry {
   id: string;
   text: string;

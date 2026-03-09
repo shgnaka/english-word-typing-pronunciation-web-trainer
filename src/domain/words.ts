@@ -1,4 +1,4 @@
-import type { WordEntry } from "./types";
+import type { BuiltinWordOverrides, WordEntry } from "./types";
 
 export function normalizeWord(input: string): string {
   return input.trim().toLowerCase().replace(/[^a-z]/g, "");
@@ -27,5 +27,26 @@ export function dedupeWords(words: WordEntry[]): WordEntry[] {
     }
     seen.add(word.normalizedText);
     return true;
+  });
+}
+
+export function resolveBuiltinWords(words: WordEntry[], overrides: BuiltinWordOverrides): WordEntry[] {
+  return words.flatMap((word) => {
+    const override = overrides[word.id];
+    if (!override) {
+      return [word];
+    }
+
+    if (override.status === "deleted") {
+      return [];
+    }
+
+    return [
+      {
+        ...word,
+        text: override.text ?? word.text,
+        normalizedText: override.normalizedText ?? word.normalizedText
+      }
+    ];
   });
 }

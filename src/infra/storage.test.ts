@@ -1,14 +1,18 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import {
+  clearBuiltinWordOverrides,
   defaultSessionConfig,
+  loadBuiltinWordOverrides,
   loadCustomWords,
   loadSessionConfig,
+  saveBuiltinWordOverrides,
   saveCustomWords,
   saveSessionConfig
 } from "./storage";
-import type { WordEntry } from "../domain/types";
+import type { BuiltinWordOverrides, WordEntry } from "../domain/types";
 
 const customWordsKey = "wordbeat.customWords";
+const builtinWordOverridesKey = "wordbeat.builtinWordOverrides";
 const sessionConfigKey = "wordbeat.sessionConfig";
 
 describe("storage", () => {
@@ -98,6 +102,57 @@ describe("storage", () => {
         wordCount: 3,
         shuffle: true
       }
+    });
+  });
+
+  it("loads legacy builtin word overrides and migrates them to the versioned format", () => {
+    const legacyOverrides = {
+      "builtin-apple": {
+        status: "edited",
+        text: "apricot",
+        normalizedText: "apricot",
+        updatedAt: "2026-03-09T00:00:00.000Z"
+      }
+    };
+    window.localStorage.setItem(builtinWordOverridesKey, JSON.stringify(legacyOverrides));
+
+    expect(loadBuiltinWordOverrides()).toEqual(legacyOverrides);
+    expect(JSON.parse(window.localStorage.getItem(builtinWordOverridesKey) ?? "null")).toEqual({
+      version: 1,
+      value: legacyOverrides
+    });
+  });
+
+  it("saves builtin word overrides in a versioned format", () => {
+    const overrides: BuiltinWordOverrides = {
+      "builtin-apple": {
+        status: "deleted",
+        updatedAt: "2026-03-09T00:00:00.000Z"
+      }
+    };
+
+    saveBuiltinWordOverrides(overrides);
+
+    expect(JSON.parse(window.localStorage.getItem(builtinWordOverridesKey) ?? "null")).toEqual({
+      version: 1,
+      value: overrides
+    });
+  });
+
+  it("clears builtin word overrides by writing an empty versioned record", () => {
+    const overrides: BuiltinWordOverrides = {
+      "builtin-apple": {
+        status: "deleted",
+        updatedAt: "2026-03-09T00:00:00.000Z"
+      }
+    };
+    saveBuiltinWordOverrides(overrides);
+
+    clearBuiltinWordOverrides();
+
+    expect(JSON.parse(window.localStorage.getItem(builtinWordOverridesKey) ?? "null")).toEqual({
+      version: 1,
+      value: {}
     });
   });
 });
