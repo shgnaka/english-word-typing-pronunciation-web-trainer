@@ -153,6 +153,38 @@ describe("App", () => {
     expect(customWordChips.at(-1)).toHaveTextContent("banana");
   });
 
+  it("rebuilds the active session when a custom word is deleted", async () => {
+    const user = userEvent.setup();
+    let randomCallCount = 0;
+    const randomSpy = vi.spyOn(Math, "random").mockImplementation(() => {
+      const nextValue = randomCallCount === 0 || randomCallCount === 20 ? 0 : 0.999999;
+      randomCallCount += 1;
+      return nextValue;
+    });
+    try {
+      render(<App />);
+
+      await user.click(screen.getByRole("button", { name: "Words" }));
+      await user.type(screen.getByLabelText("New word"), "banana");
+      await user.click(screen.getByRole("button", { name: "Add word" }));
+
+      await user.click(screen.getByRole("button", { name: "Settings" }));
+      fireEvent.change(screen.getByTestId("word-count-input"), { target: { value: "20" } });
+      await user.click(screen.getByTestId("shuffle-toggle"));
+      await user.click(screen.getByTestId("apply-settings-button"));
+
+      expect(screen.getByTestId("current-word")).toHaveTextContent("banana");
+
+      await user.click(screen.getByRole("button", { name: "Words" }));
+      await user.click(screen.getByTestId("delete-word-button-custom-banana"));
+      await user.click(screen.getByRole("button", { name: "Practice" }));
+
+      expect(screen.getByTestId("current-word")).toHaveTextContent("language");
+    } finally {
+      randomSpy.mockRestore();
+    }
+  });
+
   it("skips countdown when Enter is pressed", () => {
     render(<App />);
     const practicePanel = screen.getByTestId("primary-panel");

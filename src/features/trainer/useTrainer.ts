@@ -59,6 +59,11 @@ export function useTrainer() {
     sessionControls.restartSession(allWords, nextConfig);
   }
 
+  function syncSessionWithCustomWords(nextWords: WordEntry[]) {
+    pronunciation.resetAutoPronunciation();
+    sessionControls.initializeSession(buildTrainerQueue(buildAvailableWords(nextWords), config));
+  }
+
   function handleAddWord() {
     const entry = createWordEntry(inputValue, "custom");
     if (!entry) {
@@ -74,6 +79,7 @@ export function useTrainer() {
     const nextWords = [...customWords, entry];
     setCustomWords(nextWords);
     saveCustomWords(nextWords);
+    syncSessionWithCustomWords(nextWords);
     setInputValue("");
     setAddWordError("");
   }
@@ -89,6 +95,7 @@ export function useTrainer() {
     const nextWords = customWords.filter((word) => word.id !== wordId);
     setCustomWords(nextWords);
     saveCustomWords(nextWords);
+    syncSessionWithCustomWords(nextWords);
 
     if (editingWordId === wordId) {
       setEditingWordId(null);
@@ -112,6 +119,7 @@ export function useTrainer() {
     [nextWords[currentIndex], nextWords[targetIndex]] = [nextWords[targetIndex], nextWords[currentIndex]];
     setCustomWords(nextWords);
     saveCustomWords(nextWords);
+    syncSessionWithCustomWords(nextWords);
   }
 
   function startEditingWord(wordId: string) {
@@ -173,6 +181,7 @@ export function useTrainer() {
 
     setCustomWords(nextWords);
     saveCustomWords(nextWords);
+    syncSessionWithCustomWords(nextWords);
     cancelEditingWord();
   }
 

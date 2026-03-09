@@ -101,6 +101,40 @@ test("adds a custom word and rejects duplicates", async ({ page }) => {
   await expect(page.getByTestId("add-word-error")).toHaveText("That word already exists.");
 });
 
+test("rebuilds the active session after deleting a custom word", async ({ page }) => {
+  await page.getByTestId("tab-words").click();
+  await page.getByTestId("new-word-input").fill("banana");
+  await page.getByTestId("add-word-button").click();
+
+  await page.getByTestId("tab-settings").click();
+  await page.evaluate(() => {
+    let randomCallCount = 0;
+    Math.random = () => {
+      const nextValue = randomCallCount === 0 ? 0 : 0.999999;
+      randomCallCount += 1;
+      return nextValue;
+    };
+  });
+  await page.getByTestId("word-count-input").fill("20");
+  await page.getByTestId("shuffle-toggle").check();
+  await page.getByTestId("apply-settings-button").click();
+  await expect(page.getByTestId("current-word")).toHaveText("banana");
+
+  await page.getByTestId("tab-words").click();
+  await page.evaluate(() => {
+    let randomCallCount = 0;
+    Math.random = () => {
+      const nextValue = randomCallCount === 0 ? 0 : 0.999999;
+      randomCallCount += 1;
+      return nextValue;
+    };
+  });
+  await page.getByTestId("delete-word-button-custom-banana").click();
+  await page.getByTestId("tab-practice").click();
+
+  await expect(page.getByTestId("current-word")).toHaveText("language");
+});
+
 test("persists settings after reload", async ({ page }) => {
   await page.getByTestId("tab-settings").click();
   await page.getByTestId("language-ja-hira").click();
