@@ -141,16 +141,16 @@ describe("App", () => {
     await user.click(screen.getByTestId("move-word-up-button-custom-grape"));
 
     let customWordChips = screen.getAllByTestId("word-chip");
-    expect(customWordChips.at(-2)).toHaveTextContent("grape");
-    expect(customWordChips.at(-1)).toHaveTextContent("banana");
+    expect(customWordChips[customWordChips.length - 2]).toHaveTextContent("grape");
+    expect(customWordChips[customWordChips.length - 1]).toHaveTextContent("banana");
 
     unmount();
     render(<App />);
     await user.click(screen.getByRole("button", { name: "Words" }));
 
     customWordChips = screen.getAllByTestId("word-chip");
-    expect(customWordChips.at(-2)).toHaveTextContent("grape");
-    expect(customWordChips.at(-1)).toHaveTextContent("banana");
+    expect(customWordChips[customWordChips.length - 2]).toHaveTextContent("grape");
+    expect(customWordChips[customWordChips.length - 1]).toHaveTextContent("banana");
   });
 
   it("rebuilds the active session when a custom word is deleted", async () => {
