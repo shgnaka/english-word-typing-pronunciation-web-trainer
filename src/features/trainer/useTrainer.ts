@@ -1,24 +1,26 @@
 import { useEffect, useState } from "react";
-import { defaultWords } from "../../data/defaultWords";
-import type { BuiltinWordOverrides, DisplayLanguage, SessionConfig, WordEntry } from "../../domain/types";
+import type { BuiltinWordOrder, BuiltinWordOverrides, DisplayLanguage, SessionConfig, WordEntry } from "../../domain/types";
 import { createWordEntry } from "../../domain/words";
 import { clearBrowserTtsCache } from "../../infra/browserTts";
 import {
+  clearBuiltinWordOrder,
   clearBuiltinWordOverrides,
   defaultDisplayLanguage,
   defaultSessionConfig,
+  saveBuiltinWordOrder,
   sanitizeWordCount,
   saveBuiltinWordOverrides,
   saveDisplayLanguage,
   saveCustomWords,
   saveSessionConfig
 } from "../../infra/storage";
-import { buildAvailableWords, buildResolvedBuiltinWords, buildTrainerQueue, loadTrainerPreferences } from "./trainerData";
+import { buildAvailableWords, buildBuiltinWordOrder, buildResolvedBuiltinWords, buildResolvedHiddenBuiltinWords, buildTrainerQueue, loadTrainerPreferences } from "./trainerData";
 import { deriveTrainerViewState } from "./trainerView";
 import { useTrainerPronunciation } from "./useTrainerPronunciation";
 import { useTrainerSession } from "./useTrainerSession";
 
 export function useTrainer() {
+  const [builtinWordOrder, setBuiltinWordOrder] = useState<BuiltinWordOrder>([]);
   const [builtinWordOverrides, setBuiltinWordOverrides] = useState<BuiltinWordOverrides>({});
   const [customWords, setCustomWords] = useState<WordEntry[]>([]);
   const [config, setConfig] = useState<SessionConfig>(defaultSessionConfig);
@@ -32,8 +34,9 @@ export function useTrainer() {
   const [browserTtsCacheMessage, setBrowserTtsCacheMessage] = useState<"" | "cleared" | "failed">("");
   const [isClearingBrowserTtsCache, setIsClearingBrowserTtsCache] = useState(false);
   const sessionControls = useTrainerSession();
-  const builtinWords = buildResolvedBuiltinWords(builtinWordOverrides);
-  const hiddenBuiltinWords = defaultWords.filter((word) => builtinWordOverrides[word.id]?.status === "deleted");
+  const sanitizedBuiltinWordOrder = buildBuiltinWordOrder(builtinWordOrder);
+  const builtinWords = buildResolvedBuiltinWords(builtinWordOverrides, sanitizedBuiltinWordOrder);
+  const hiddenBuiltinWords = buildResolvedHiddenBuiltinWords(builtinWordOverrides, sanitizedBuiltinWordOrder);
   const editedBuiltinWordIds = Object.entries(builtinWordOverrides)
     .filter(([, override]) => override.status === "edited")
     .map(([wordId]) => wordId);
@@ -48,11 +51,13 @@ export function useTrainer() {
 
   useEffect(() => {
     const {
+      builtinWordOrder: loadedBuiltinWordOrder,
       builtinWordOverrides: loadedBuiltinWordOverrides,
       customWords: loadedCustomWords,
       config: loadedConfig,
       displayLanguage: loadedDisplayLanguage
     } = loadTrainerPreferences();
+    setBuiltinWordOrder(loadedBuiltinWordOrder);
     setBuiltinWordOverrides(loadedBuiltinWordOverrides);
     setCustomWords(loadedCustomWords);
     setConfig(loadedConfig);
@@ -60,7 +65,7 @@ export function useTrainer() {
     setDisplayLanguage(loadedDisplayLanguage);
     pronunciation.resetAutoPronunciation();
     sessionControls.initializeSession(
-      buildTrainerQueue(buildAvailableWords(buildResolvedBuiltinWords(loadedBuiltinWordOverrides), loadedCustomWords), loadedConfig)
+      buildTrainerQueue(buildAvailableWords(buildResolvedBuiltinWords(loadedBuiltinWordOverrides, loadedBuiltinWordOrder), loadedCustomWords), loadedConfig)
     );
   }, []);
   const { currentTarget, currentGuide, score, totalWords, remainingWords, completedWordsCount, progressPercent, isCountdownActive, isTypingActiveLayout, hasPendingConfigChanges } =
@@ -77,9 +82,15 @@ export function useTrainer() {
     sessionControls.restartSession(allWords, nextConfig);
   }
 
-  function syncSession(nextBuiltinWordOverrides = builtinWordOverrides, nextCustomWords = customWords) {
+  function syncSession(
+    nextBuiltinWordOverrides = builtinWordOverrides,
+    nextCustomWords = customWords,
+    nextBuiltinWordOrder = sanitizedBuiltinWordOrder
+  ) {
     pronunciation.resetAutoPronunciation();
-    sessionControls.initializeSession(buildTrainerQueue(buildAvailableWords(buildResolvedBuiltinWords(nextBuiltinWordOverrides), nextCustomWords), config));
+    sessionControls.initializeSession(
+      buildTrainerQueue(buildAvailableWords(buildResolvedBuiltinWords(nextBuiltinWordOverrides, nextBuiltinWordOrder), nextCustomWords), config)
+    );
   }
 
   function handleAddWord() {
@@ -97,7 +108,7 @@ export function useTrainer() {
     const nextWords = [...customWords, entry];
     setCustomWords(nextWords);
     saveCustomWords(nextWords);
-    syncSession(builtinWordOverrides, nextWords);
+    syncSession(builtinWordOverrides, nextWords, sanitizedBuiltinWordOrder);
     setInputValue("");
     setAddWordError("");
   }
@@ -113,7 +124,7 @@ export function useTrainer() {
     const nextWords = customWords.filter((word) => word.id !== wordId);
     setCustomWords(nextWords);
     saveCustomWords(nextWords);
-    syncSession(builtinWordOverrides, nextWords);
+    syncSession(builtinWordOverrides, nextWords, sanitizedBuiltinWordOrder);
 
     if (editingWordId === wordId) {
       setEditingWordSource(null);
@@ -138,7 +149,7 @@ export function useTrainer() {
     [nextWords[currentIndex], nextWords[targetIndex]] = [nextWords[targetIndex], nextWords[currentIndex]];
     setCustomWords(nextWords);
     saveCustomWords(nextWords);
-    syncSession(builtinWordOverrides, nextWords);
+    syncSession(builtinWordOverrides, nextWords, sanitizedBuiltinWordOrder);
   }
 
   function startEditingWord(wordId: string, source: WordEntry["source"]) {
@@ -203,7 +214,7 @@ export function useTrainer() {
 
       setBuiltinWordOverrides(nextBuiltinWordOverrides);
       saveBuiltinWordOverrides(nextBuiltinWordOverrides);
-      syncSession(nextBuiltinWordOverrides, customWords);
+      syncSession(nextBuiltinWordOverrides, customWords, sanitizedBuiltinWordOrder);
       cancelEditingWord();
       return;
     }
@@ -221,8 +232,40 @@ export function useTrainer() {
 
     setCustomWords(nextWords);
     saveCustomWords(nextWords);
-    syncSession(builtinWordOverrides, nextWords);
+    syncSession(builtinWordOverrides, nextWords, sanitizedBuiltinWordOrder);
     cancelEditingWord();
+  }
+
+  function moveBuiltinWord(wordId: string, direction: "up" | "down") {
+    const currentActiveIds = builtinWords.map((word) => word.id);
+    const currentIndex = currentActiveIds.findIndex((currentWordId) => currentWordId === wordId);
+    if (currentIndex === -1) {
+      return;
+    }
+
+    const targetIndex = direction === "up" ? currentIndex - 1 : currentIndex + 1;
+    if (targetIndex < 0 || targetIndex >= currentActiveIds.length) {
+      return;
+    }
+
+    const nextActiveIds = [...currentActiveIds];
+    [nextActiveIds[currentIndex], nextActiveIds[targetIndex]] = [nextActiveIds[targetIndex], nextActiveIds[currentIndex]];
+
+    let activeCursor = 0;
+    const activeIdSet = new Set(currentActiveIds);
+    const nextBuiltinWordOrder = sanitizedBuiltinWordOrder.map((currentWordId) => {
+      if (!activeIdSet.has(currentWordId)) {
+        return currentWordId;
+      }
+
+      const nextWordId = nextActiveIds[activeCursor];
+      activeCursor += 1;
+      return nextWordId;
+    });
+
+    setBuiltinWordOrder(nextBuiltinWordOrder);
+    saveBuiltinWordOrder(nextBuiltinWordOrder);
+    syncSession(builtinWordOverrides, customWords, nextBuiltinWordOrder);
   }
 
   function handleRemoveBuiltinWord(wordId: string) {
@@ -236,7 +279,7 @@ export function useTrainer() {
 
     setBuiltinWordOverrides(nextBuiltinWordOverrides);
     saveBuiltinWordOverrides(nextBuiltinWordOverrides);
-    syncSession(nextBuiltinWordOverrides, customWords);
+    syncSession(nextBuiltinWordOverrides, customWords, sanitizedBuiltinWordOrder);
 
     if (editingWordId === wordId) {
       cancelEditingWord();
@@ -252,7 +295,7 @@ export function useTrainer() {
     delete nextBuiltinWordOverrides[wordId];
     setBuiltinWordOverrides(nextBuiltinWordOverrides);
     saveBuiltinWordOverrides(nextBuiltinWordOverrides);
-    syncSession(nextBuiltinWordOverrides, customWords);
+    syncSession(nextBuiltinWordOverrides, customWords, sanitizedBuiltinWordOrder);
 
     if (editingWordId === wordId) {
       cancelEditingWord();
@@ -260,9 +303,11 @@ export function useTrainer() {
   }
 
   function resetBuiltinWords() {
+    setBuiltinWordOrder([]);
     setBuiltinWordOverrides({});
+    clearBuiltinWordOrder();
     clearBuiltinWordOverrides();
-    syncSession({}, customWords);
+    syncSession({}, customWords, buildBuiltinWordOrder([]));
 
     if (editingWordSource === "builtin") {
       cancelEditingWord();
@@ -354,6 +399,7 @@ export function useTrainer() {
     handleKeyInput: sessionControls.handleKeyInput,
     handleAddWord,
     handleRemoveWord,
+    moveBuiltinWord,
     handleRemoveBuiltinWord,
     restoreBuiltinWord,
     resetBuiltinWords,

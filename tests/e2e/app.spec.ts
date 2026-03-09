@@ -169,6 +169,36 @@ test("deletes a builtin word and can reset builtin overrides", async ({ page }) 
   await expect(page.getByTestId("hidden-builtin-empty")).toHaveText("No hidden built-in words.");
 });
 
+test("reorders builtin words and persists the order after reload", async ({ page }) => {
+  await page.getByTestId("tab-words").click();
+  await page.getByTestId("move-word-down-button-builtin-apple").click();
+
+  const builtinWordChips = page.getByTestId("builtin-word-chip");
+  await expect(builtinWordChips.nth(0)).toHaveText("book");
+  await expect(builtinWordChips.nth(1)).toHaveText("apple");
+
+  await page.reload();
+  await page.getByTestId("tab-words").click();
+
+  await expect(builtinWordChips.nth(0)).toHaveText("book");
+  await expect(builtinWordChips.nth(1)).toHaveText("apple");
+});
+
+test("uses reordered builtin words for non-shuffled practice and reset restores shipped order", async ({ page }) => {
+  await page.getByTestId("tab-words").click();
+  await page.getByTestId("move-word-down-button-builtin-apple").click();
+
+  await page.getByTestId("tab-practice").click();
+  await expect(page.getByTestId("current-word")).toHaveText("book");
+
+  await page.getByTestId("tab-words").click();
+  await page.getByTestId("reset-builtin-words-button").click();
+
+  const builtinWordChips = page.getByTestId("builtin-word-chip");
+  await expect(builtinWordChips.nth(0)).toHaveText("apple");
+  await expect(builtinWordChips.nth(1)).toHaveText("book");
+});
+
 test("persists settings after reload", async ({ page }) => {
   await page.getByTestId("tab-settings").click();
   await page.getByTestId("language-ja-hira").click();

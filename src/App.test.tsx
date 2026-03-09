@@ -142,6 +142,26 @@ describe("App", () => {
     expect(screen.getByTestId("hidden-builtin-empty")).toHaveTextContent("No hidden built-in words.");
   });
 
+  it("reorders builtin words and keeps the order after reload", async () => {
+    const user = userEvent.setup();
+    const { unmount } = render(<App />);
+
+    await user.click(screen.getByRole("button", { name: "Words" }));
+    await user.click(screen.getByTestId("move-word-down-button-builtin-apple"));
+
+    let builtinWordChips = screen.getAllByTestId("builtin-word-chip");
+    expect(builtinWordChips[0]).toHaveTextContent("book");
+    expect(builtinWordChips[1]).toHaveTextContent("apple");
+
+    unmount();
+    render(<App />);
+    await user.click(screen.getByRole("button", { name: "Words" }));
+
+    builtinWordChips = screen.getAllByTestId("builtin-word-chip");
+    expect(builtinWordChips[0]).toHaveTextContent("book");
+    expect(builtinWordChips[1]).toHaveTextContent("apple");
+  });
+
   it("deletes a custom word", async () => {
     const user = userEvent.setup();
     render(<App />);
@@ -264,6 +284,30 @@ describe("App", () => {
     await user.click(screen.getByRole("button", { name: "Practice" }));
 
     expect(screen.getByTestId("current-word")).toHaveTextContent("book");
+  });
+
+  it("uses the reordered builtin order for practice when shuffle is off", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.click(screen.getByRole("button", { name: "Words" }));
+    await user.click(screen.getByTestId("move-word-down-button-builtin-apple"));
+    await user.click(screen.getByRole("button", { name: "Practice" }));
+
+    expect(screen.getByTestId("current-word")).toHaveTextContent("book");
+  });
+
+  it("reset builtin words restores the shipped builtin order", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.click(screen.getByRole("button", { name: "Words" }));
+    await user.click(screen.getByTestId("move-word-down-button-builtin-apple"));
+    await user.click(screen.getByTestId("reset-builtin-words-button"));
+
+    const builtinWordChips = screen.getAllByTestId("builtin-word-chip");
+    expect(builtinWordChips[0]).toHaveTextContent("apple");
+    expect(builtinWordChips[1]).toHaveTextContent("book");
   });
 
   it("skips countdown when Enter is pressed", () => {

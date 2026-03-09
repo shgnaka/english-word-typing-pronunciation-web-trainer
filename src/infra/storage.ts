@@ -1,7 +1,8 @@
-import type { BuiltinWordOverrides, DisplayLanguage, SessionConfig, WordEntry } from "../domain/types";
+import type { BuiltinWordOrder, BuiltinWordOverrides, DisplayLanguage, SessionConfig, WordEntry } from "../domain/types";
 
 const customWordsKey = "wordbeat.customWords";
 const builtinWordOverridesKey = "wordbeat.builtinWordOverrides";
+const builtinWordOrderKey = "wordbeat.builtinWordOrder";
 const sessionConfigKey = "wordbeat.sessionConfig";
 const displayLanguageKey = "wordbeat.displayLanguage";
 const storageSchemaVersion = 1;
@@ -116,6 +117,35 @@ export function saveBuiltinWordOverrides(overrides: BuiltinWordOverrides): void 
 
 export function clearBuiltinWordOverrides(): void {
   saveVersionedRecord(builtinWordOverridesKey, {});
+}
+
+export function loadBuiltinWordOrder(): BuiltinWordOrder {
+  const raw = globalThis.localStorage?.getItem(builtinWordOrderKey);
+  if (!raw) {
+    return [];
+  }
+
+  try {
+    const parsed = JSON.parse(raw) as BuiltinWordOrder | VersionedStorageRecord<BuiltinWordOrder>;
+    const order = Array.isArray(parsed)
+      ? parsed
+      : isVersionedStorageRecord<BuiltinWordOrder>(parsed) && Array.isArray(parsed.value)
+      ? parsed.value
+      : [];
+
+    saveVersionedRecord(builtinWordOrderKey, order);
+    return order;
+  } catch {
+    return [];
+  }
+}
+
+export function saveBuiltinWordOrder(order: BuiltinWordOrder): void {
+  saveVersionedRecord(builtinWordOrderKey, order);
+}
+
+export function clearBuiltinWordOrder(): void {
+  saveVersionedRecord(builtinWordOrderKey, []);
 }
 
 export function loadSessionConfig(): SessionConfig {

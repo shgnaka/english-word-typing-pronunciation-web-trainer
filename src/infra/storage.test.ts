@@ -1,17 +1,21 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import {
+  clearBuiltinWordOrder,
   clearBuiltinWordOverrides,
   defaultSessionConfig,
+  loadBuiltinWordOrder,
   loadBuiltinWordOverrides,
   loadCustomWords,
   loadSessionConfig,
+  saveBuiltinWordOrder,
   saveBuiltinWordOverrides,
   saveCustomWords,
   saveSessionConfig
 } from "./storage";
-import type { BuiltinWordOverrides, WordEntry } from "../domain/types";
+import type { BuiltinWordOrder, BuiltinWordOverrides, WordEntry } from "../domain/types";
 
 const customWordsKey = "wordbeat.customWords";
+const builtinWordOrderKey = "wordbeat.builtinWordOrder";
 const builtinWordOverridesKey = "wordbeat.builtinWordOverrides";
 const sessionConfigKey = "wordbeat.sessionConfig";
 
@@ -153,6 +157,39 @@ describe("storage", () => {
     expect(JSON.parse(window.localStorage.getItem(builtinWordOverridesKey) ?? "null")).toEqual({
       version: 1,
       value: {}
+    });
+  });
+
+  it("loads legacy builtin word order and migrates it to the versioned format", () => {
+    const legacyOrder: BuiltinWordOrder = ["builtin-book", "builtin-apple"];
+    window.localStorage.setItem(builtinWordOrderKey, JSON.stringify(legacyOrder));
+
+    expect(loadBuiltinWordOrder()).toEqual(legacyOrder);
+    expect(JSON.parse(window.localStorage.getItem(builtinWordOrderKey) ?? "null")).toEqual({
+      version: 1,
+      value: legacyOrder
+    });
+  });
+
+  it("saves builtin word order in a versioned format", () => {
+    const order: BuiltinWordOrder = ["builtin-book", "builtin-apple"];
+
+    saveBuiltinWordOrder(order);
+
+    expect(JSON.parse(window.localStorage.getItem(builtinWordOrderKey) ?? "null")).toEqual({
+      version: 1,
+      value: order
+    });
+  });
+
+  it("clears builtin word order by writing an empty versioned record", () => {
+    saveBuiltinWordOrder(["builtin-book", "builtin-apple"]);
+
+    clearBuiltinWordOrder();
+
+    expect(JSON.parse(window.localStorage.getItem(builtinWordOrderKey) ?? "null")).toEqual({
+      version: 1,
+      value: []
     });
   });
 });

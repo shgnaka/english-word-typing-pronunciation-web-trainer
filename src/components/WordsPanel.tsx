@@ -7,6 +7,7 @@ interface WordsPanelProps {
 
 export function WordsPanel({ trainer }: WordsPanelProps) {
   const language = trainer.displayLanguage;
+  const lastBuiltinWordIndex = trainer.builtinWords.length - 1;
   const lastCustomWordIndex = trainer.customWords.length - 1;
   const editedBuiltinWordIds = new Set(trainer.editedBuiltinWordIds);
 
@@ -88,6 +89,24 @@ export function WordsPanel({ trainer }: WordsPanelProps) {
                     {word.text}
                   </span>
                   {editedBuiltinWordIds.has(word.id) ? <span data-testid={`builtin-word-state-${word.id}`}>{t(language, "words.builtinEdited")}</span> : null}
+                  <button
+                    type="button"
+                    className="secondary"
+                    data-testid={`move-word-up-button-${word.id}`}
+                    onClick={() => trainer.moveBuiltinWord(word.id, "up")}
+                    disabled={trainer.builtinWords.findIndex((entry) => entry.id === word.id) === 0}
+                  >
+                    {t(language, "words.moveUp")}
+                  </button>
+                  <button
+                    type="button"
+                    className="secondary"
+                    data-testid={`move-word-down-button-${word.id}`}
+                    onClick={() => trainer.moveBuiltinWord(word.id, "down")}
+                    disabled={trainer.builtinWords.findIndex((entry) => entry.id === word.id) === lastBuiltinWordIndex}
+                  >
+                    {t(language, "words.moveDown")}
+                  </button>
                   <button
                     type="button"
                     className="secondary"

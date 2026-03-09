@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { createWordEntry, resolveBuiltinWords } from "./words";
+import { createWordEntry, orderBuiltinWords, resolveBuiltinWords, sanitizeBuiltinWordOrder } from "./words";
 
 describe("words", () => {
   it("applies builtin edit overrides when resolving words", () => {
@@ -28,5 +28,23 @@ describe("words", () => {
     });
 
     expect(resolved.map((word) => word.text)).toEqual(["book"]);
+  });
+
+  it("sanitizes builtin word order by removing stale ids and appending missing ids", () => {
+    const builtinWords = [createWordEntry("apple", "builtin")!, createWordEntry("book", "builtin")!, createWordEntry("chair", "builtin")!];
+
+    expect(sanitizeBuiltinWordOrder(builtinWords, ["builtin-book", "builtin-stale"])).toEqual([
+      "builtin-book",
+      "builtin-apple",
+      "builtin-chair"
+    ]);
+  });
+
+  it("orders builtin words using the sanitized persisted order", () => {
+    const builtinWords = [createWordEntry("apple", "builtin")!, createWordEntry("book", "builtin")!, createWordEntry("chair", "builtin")!];
+
+    const ordered = orderBuiltinWords(builtinWords, ["builtin-book"]);
+
+    expect(ordered.map((word) => word.text)).toEqual(["book", "apple", "chair"]);
   });
 });

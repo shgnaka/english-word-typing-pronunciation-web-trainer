@@ -1,4 +1,4 @@
-import type { BuiltinWordOverrides, WordEntry } from "./types";
+import type { BuiltinWordOrder, BuiltinWordOverrides, WordEntry } from "./types";
 
 export function normalizeWord(input: string): string {
   return input.trim().toLowerCase().replace(/[^a-z]/g, "");
@@ -48,5 +48,29 @@ export function resolveBuiltinWords(words: WordEntry[], overrides: BuiltinWordOv
         normalizedText: override.normalizedText ?? word.normalizedText
       }
     ];
+  });
+}
+
+export function sanitizeBuiltinWordOrder(words: WordEntry[], order: BuiltinWordOrder): BuiltinWordOrder {
+  const validIds = new Set(words.map((word) => word.id));
+  const sanitizedOrder = order.filter((wordId) => validIds.has(wordId));
+  const seen = new Set(sanitizedOrder);
+
+  for (const word of words) {
+    if (!seen.has(word.id)) {
+      sanitizedOrder.push(word.id);
+      seen.add(word.id);
+    }
+  }
+
+  return sanitizedOrder;
+}
+
+export function orderBuiltinWords(words: WordEntry[], order: BuiltinWordOrder): WordEntry[] {
+  const sanitizedOrder = sanitizeBuiltinWordOrder(words, order);
+  const orderById = new Map(sanitizedOrder.map((wordId, index) => [wordId, index]));
+
+  return [...words].sort((left, right) => {
+    return (orderById.get(left.id) ?? Number.MAX_SAFE_INTEGER) - (orderById.get(right.id) ?? Number.MAX_SAFE_INTEGER);
   });
 }

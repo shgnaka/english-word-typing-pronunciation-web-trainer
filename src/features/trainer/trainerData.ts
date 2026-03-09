@@ -1,11 +1,20 @@
 import { defaultWords } from "../../data/defaultWords";
 import { buildSessionQueue } from "../../domain/session";
-import type { BuiltinWordOverrides, DisplayLanguage, SessionConfig, WordEntry } from "../../domain/types";
-import { dedupeWords, resolveBuiltinWords } from "../../domain/words";
-import { defaultDisplayLanguage, loadBuiltinWordOverrides, loadCustomWords, loadDisplayLanguage, loadSessionConfig } from "../../infra/storage";
+import type { BuiltinWordOrder, BuiltinWordOverrides, DisplayLanguage, SessionConfig, WordEntry } from "../../domain/types";
+import { dedupeWords, orderBuiltinWords, resolveBuiltinWords, sanitizeBuiltinWordOrder } from "../../domain/words";
+import { defaultDisplayLanguage, loadBuiltinWordOrder, loadBuiltinWordOverrides, loadCustomWords, loadDisplayLanguage, loadSessionConfig } from "../../infra/storage";
 
-export function buildResolvedBuiltinWords(overrides: BuiltinWordOverrides): WordEntry[] {
-  return resolveBuiltinWords(defaultWords, overrides);
+export function buildResolvedBuiltinWords(overrides: BuiltinWordOverrides, order: BuiltinWordOrder): WordEntry[] {
+  return orderBuiltinWords(resolveBuiltinWords(defaultWords, overrides), order);
+}
+
+export function buildResolvedHiddenBuiltinWords(overrides: BuiltinWordOverrides, order: BuiltinWordOrder): WordEntry[] {
+  const hiddenWords = defaultWords.filter((word) => overrides[word.id]?.status === "deleted");
+  return orderBuiltinWords(hiddenWords, order);
+}
+
+export function buildBuiltinWordOrder(order: BuiltinWordOrder): BuiltinWordOrder {
+  return sanitizeBuiltinWordOrder(defaultWords, order);
 }
 
 export function buildAvailableWords(builtinWords: WordEntry[], customWords: WordEntry[]): WordEntry[] {
@@ -17,12 +26,14 @@ export function buildTrainerQueue(words: WordEntry[], config: SessionConfig): Wo
 }
 
 export function loadTrainerPreferences(): {
+  builtinWordOrder: BuiltinWordOrder;
   builtinWordOverrides: BuiltinWordOverrides;
   customWords: WordEntry[];
   config: SessionConfig;
   displayLanguage: DisplayLanguage;
 } {
   return {
+    builtinWordOrder: buildBuiltinWordOrder(loadBuiltinWordOrder()),
     builtinWordOverrides: loadBuiltinWordOverrides(),
     customWords: loadCustomWords(),
     config: loadSessionConfig(),
