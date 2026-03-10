@@ -477,14 +477,43 @@ export function useTrainer() {
 
   function handleRemoveWordsFromPractice(wordIds: string[]) {
     const builtinWordIds = wordIds.filter((wordId) => activeWords.some((word) => word.id === wordId && word.source === "builtin"));
-    const customWordIds = wordIds.filter((wordId) => activeWords.some((word) => word.id === wordId && word.source === "custom"));
-
-    if (builtinWordIds.length > 0) {
-      handleRemoveBuiltinWords(builtinWordIds);
+    const removableCustomWordIds = new Set(wordIds.filter((wordId) => activeWords.some((word) => word.id === wordId && word.source === "custom")));
+    if (builtinWordIds.length === 0 && removableCustomWordIds.size === 0) {
+      return;
     }
 
-    if (customWordIds.length > 0) {
-      removeCustomWordsFromPractice(customWordIds);
+    const nextBuiltinWordOverrides =
+      builtinWordIds.length === 0
+        ? builtinWordOverrides
+        : builtinWordIds.reduce<BuiltinWordOverrides>(
+            (overrides, wordId) => ({
+              ...overrides,
+              [wordId]: {
+                status: "deleted",
+                updatedAt: new Date().toISOString()
+              }
+            }),
+            { ...builtinWordOverrides }
+          );
+    const nextWordOrder =
+      removableCustomWordIds.size === 0
+        ? sanitizedWordOrder
+        : sanitizedWordOrder.filter((currentWordId) => !removableCustomWordIds.has(currentWordId));
+
+    if (builtinWordIds.length > 0) {
+      setBuiltinWordOverrides(nextBuiltinWordOverrides);
+      saveBuiltinWordOverrides(nextBuiltinWordOverrides);
+    }
+
+    if (removableCustomWordIds.size > 0) {
+      setWordOrder(nextWordOrder);
+      saveBuiltinWordOrder(nextWordOrder);
+    }
+
+    syncSession(nextBuiltinWordOverrides, customWords, nextWordOrder);
+
+    if (editingWordId && (builtinWordIds.includes(editingWordId) || removableCustomWordIds.has(editingWordId))) {
+      cancelEditingWord();
     }
   }
 
