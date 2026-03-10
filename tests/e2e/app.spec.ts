@@ -102,12 +102,26 @@ test("adds a custom word and rejects duplicates", async ({ page }) => {
   await expect(page.getByTestId("add-word-error")).toHaveText("That word already exists.");
 });
 
+test("keeps the search input value visible after clearing and typing again", async ({ page }) => {
+  await page.getByTestId("tab-words").click();
+
+  const searchInput = page.getByTestId("word-search-input");
+  await searchInput.fill("app");
+  await expect(searchInput).toHaveValue("app");
+
+  await searchInput.clear();
+  await expect(searchInput).toHaveValue("");
+
+  await searchInput.fill("ban");
+  await expect(searchInput).toHaveValue("ban");
+});
+
 test("rebuilds the active session after deleting a custom word", async ({ page }) => {
   await page.getByTestId("tab-words").click();
   await page.getByTestId("new-word-input").fill("banana");
   await page.getByTestId("add-word-button").click();
 
-  await page.getByTestId("tab-settings").click();
+  await page.getByTestId("tab-words").click();
   await page.evaluate(() => {
     let randomCallCount = 0;
     Math.random = () => {
@@ -222,7 +236,10 @@ test("uses reordered mixed words for non-shuffled practice and reset restores sh
 test("persists settings after reload", async ({ page }) => {
   await page.getByTestId("tab-settings").click();
   await page.getByTestId("language-ja-hira").click();
+  await page.getByTestId("tab-words").click();
   await page.getByTestId("word-count-input").fill("1");
+  await page.getByTestId("apply-settings-button").click();
+  await page.getByTestId("tab-settings").click();
   await page.getByTestId("browser-tts-toggle").check();
   await page.getByTestId("speech-toggle").uncheck();
   await page.getByTestId("keyboard-hint-toggle").uncheck();
@@ -233,35 +250,39 @@ test("persists settings after reload", async ({ page }) => {
   await page.getByTestId("tab-settings").click();
 
   await expect(page.getByTestId("tab-practice")).toHaveText("れんしゅう");
-  await expect(page.getByTestId("word-count-input")).toHaveValue("1");
   await expect(page.getByTestId("browser-tts-toggle")).toBeChecked();
   await expect(page.getByTestId("speech-toggle")).not.toBeChecked();
   await expect(page.getByTestId("keyboard-hint-toggle")).not.toBeChecked();
   await expect(page.getByTestId("finger-guide-toggle")).not.toBeChecked();
+  await page.getByTestId("tab-words").click();
+  await expect(page.getByTestId("word-count-input")).toHaveValue("1");
 });
 
 test("shows pending settings until they are applied", async ({ page }) => {
-  await page.getByTestId("tab-settings").click();
+  await page.getByTestId("tab-words").click();
   await page.getByTestId("word-count-input").fill("1");
 
-  await expect(page.getByTestId("settings-status")).toContainText("You have unapplied changes.");
+  await expect(page.getByTestId("words-session-config-status")).toContainText("You have unapplied changes.");
 
   await page.getByTestId("tab-practice").click();
   await expect(page.getByTestId("progress-count")).toHaveText("0 / 10 words");
 
-  await page.getByTestId("tab-settings").click();
+  await page.getByTestId("tab-words").click();
   await page.getByTestId("apply-settings-button").click();
   await expect(page.getByTestId("progress-count")).toHaveText("0 / 1 words");
 });
 
 test("can discard pending settings changes", async ({ page }) => {
-  await page.getByTestId("tab-settings").click();
+  await page.getByTestId("tab-words").click();
   await page.getByTestId("shuffle-toggle").check();
-  await expect(page.getByTestId("settings-status")).toContainText("You have unapplied changes.");
+  await expect(page.getByTestId("words-session-config-status")).toContainText("You have unapplied changes.");
 
+  await page.getByTestId("tab-settings").click();
   await page.getByTestId("discard-settings-button").click();
 
+  await page.getByTestId("tab-words").click();
   await expect(page.getByTestId("shuffle-toggle")).not.toBeChecked();
+  await page.getByTestId("tab-settings").click();
   await expect(page.getByTestId("settings-status")).toContainText("Current session already matches these settings.");
 });
 
@@ -361,7 +382,7 @@ test("resumes typing after a practice action button is clicked", async ({ page }
 });
 
 test("completes a single-word session and shows results", async ({ page }) => {
-  await page.getByTestId("tab-settings").click();
+  await page.getByTestId("tab-words").click();
   await page.getByTestId("word-count-input").fill("1");
   await page.getByTestId("apply-settings-button").click();
 
@@ -377,7 +398,7 @@ test("completes a single-word session and shows results", async ({ page }) => {
 });
 
 test("clamps an oversized word count before saving", async ({ page }) => {
-  await page.getByTestId("tab-settings").click();
+  await page.getByTestId("tab-words").click();
   await page.getByTestId("word-count-input").fill("99");
 
   await expect(page.getByTestId("word-count-input")).toHaveValue("20");

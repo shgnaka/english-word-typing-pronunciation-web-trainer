@@ -717,7 +717,7 @@ describe("App", () => {
       await user.type(screen.getByLabelText("New word"), "banana");
       await user.click(screen.getByRole("button", { name: "Add word" }));
 
-      await user.click(screen.getByRole("button", { name: "Settings" }));
+      await user.click(screen.getByRole("button", { name: "Words" }));
       fireEvent.change(screen.getByTestId("word-count-input"), { target: { value: "20" } });
       await user.click(screen.getByTestId("shuffle-toggle"));
       await user.click(screen.getByTestId("apply-settings-button"));
@@ -894,15 +894,13 @@ describe("App", () => {
     const user = userEvent.setup();
     render(<App />);
 
-    await user.click(screen.getByRole("button", { name: "Settings" }));
-    expect(screen.getByTestId("settings-immediate-group")).toHaveTextContent("Applies now");
-    expect(screen.getByTestId("settings-next-session-group")).toHaveTextContent("Starts next session");
-    expect(screen.getByTestId("settings-audio-tools-group")).toHaveTextContent("Audio tools");
+    await user.click(screen.getByRole("button", { name: "Words" }));
+    expect(screen.getByTestId("words-session-config")).toHaveTextContent("Session word setup");
     fireEvent.change(screen.getByLabelText("Words per session"), { target: { value: "1" } });
 
-    expect(screen.getByTestId("settings-status")).toHaveTextContent("You have unapplied changes.");
-    expect(screen.getByTestId("settings-status-summary")).toHaveTextContent("Pending changes");
-    expect(screen.getByTestId("settings-status-summary")).toHaveTextContent("Words per session: 10 -> 1");
+    expect(screen.getByTestId("words-session-config-status")).toHaveTextContent("You have unapplied changes.");
+    expect(screen.getByTestId("words-session-config-summary")).toHaveTextContent("Pending changes");
+    expect(screen.getByTestId("words-session-config-summary")).toHaveTextContent("Words per session: 10 -> 1");
 
     await user.click(screen.getByTestId("apply-settings-button"));
 
@@ -913,13 +911,15 @@ describe("App", () => {
     const user = userEvent.setup();
     render(<App />);
 
-    await user.click(screen.getByRole("button", { name: "Settings" }));
+    await user.click(screen.getByRole("button", { name: "Words" }));
     await user.click(screen.getByTestId("shuffle-toggle"));
+    await user.click(screen.getByRole("button", { name: "Settings" }));
     await user.click(screen.getByTestId("discard-settings-button"));
 
+    await user.click(screen.getByRole("button", { name: "Words" }));
     expect(screen.getByTestId("shuffle-toggle")).not.toBeChecked();
-    expect(screen.getByTestId("settings-status")).toHaveTextContent("Current session already matches these settings.");
-    expect(screen.queryByTestId("settings-status-summary")).not.toBeInTheDocument();
+    expect(screen.getByTestId("words-session-config-status")).toHaveTextContent("Current session already matches this word setup.");
+    expect(screen.queryByTestId("words-session-config-summary")).not.toBeInTheDocument();
   });
 
   it("applies visual assistance toggles immediately without pending session changes", async () => {
@@ -934,6 +934,30 @@ describe("App", () => {
     await user.click(screen.getByRole("button", { name: "Practice" }));
 
     expect(screen.queryByTestId("keyboard-guide-slot")).not.toBeInTheDocument();
+  });
+
+  it("shows all pending session changes on the settings page", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.click(screen.getByRole("button", { name: "Words" }));
+    fireEvent.change(screen.getByLabelText("Words per session"), { target: { value: "1" } });
+    await user.click(screen.getByTestId("shuffle-toggle"));
+    await user.click(screen.getByRole("button", { name: "Settings" }));
+
+    expect(screen.getByTestId("settings-status-summary")).toHaveTextContent("Words per session: 10 -> 1");
+    expect(screen.getByTestId("settings-status-summary")).toHaveTextContent("Shuffle words: Off -> On");
+  });
+
+  it("renders only two settings groups and keeps cache tools in the immediate group", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.click(screen.getByRole("button", { name: "Settings" }));
+
+    expect(screen.getAllByTestId(/settings-.*-group/)).toHaveLength(2);
+    expect(screen.getByTestId("settings-immediate-group")).toContainElement(screen.getByTestId("clear-browser-tts-cache-button"));
+    expect(screen.getByTestId("settings-next-session-group")).toContainElement(screen.getByTestId("apply-settings-button"));
   });
 
   it("updates the finger button guide as typing advances", () => {
@@ -982,7 +1006,7 @@ describe("App", () => {
     const user = userEvent.setup();
     render(<App />);
 
-    await user.click(screen.getByRole("button", { name: "Settings" }));
+    await user.click(screen.getByRole("button", { name: "Words" }));
     fireEvent.change(screen.getByLabelText("Words per session"), { target: { value: "99" } });
 
     expect(screen.getByLabelText("Words per session")).toHaveValue(20);
@@ -996,7 +1020,7 @@ describe("App", () => {
     const user = userEvent.setup();
     render(<App />);
 
-    await user.click(screen.getByRole("button", { name: "Settings" }));
+    await user.click(screen.getByRole("button", { name: "Words" }));
     fireEvent.change(screen.getByLabelText("Words per session"), { target: { value: "1" } });
     await user.click(screen.getByTestId("apply-settings-button"));
 
@@ -1018,7 +1042,7 @@ describe("App", () => {
     const user = userEvent.setup();
     render(<App />);
 
-    await user.click(screen.getByRole("button", { name: "Settings" }));
+    await user.click(screen.getByRole("button", { name: "Words" }));
     fireEvent.change(screen.getByLabelText("Words per session"), { target: { value: "3" } });
     await user.click(screen.getByTestId("apply-settings-button"));
 
@@ -1226,7 +1250,7 @@ describe("App", () => {
     await user.click(screen.getByTestId("language-ja"));
 
     expect(screen.getByRole("button", { name: "練習" })).toBeInTheDocument();
-    expect(screen.getByText("表示言語")).toBeInTheDocument();
+    expect(screen.getByTestId("language-toggle")).toHaveTextContent("English");
     await user.click(screen.getByRole("button", { name: "練習" }));
     expect(screen.getByTestId("finger-button-label")).toHaveTextContent("左小指");
     expect(screen.getByTestId("active-finger-button")).toHaveTextContent("左小");
