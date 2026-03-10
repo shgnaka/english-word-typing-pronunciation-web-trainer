@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import type { BuiltinWordOverrides, DisplayLanguage, SessionConfig, WordEntry, WordOrder } from "../../domain/types";
-import { createWordEntry, dedupeWords } from "../../domain/words";
+import { createWordEntry, dedupeWords, normalizeWord } from "../../domain/words";
 import { clearBrowserTtsCache } from "../../infra/browserTts";
 import {
   clearBuiltinWordOrder,
@@ -43,6 +43,17 @@ export function useTrainer() {
   const builtinWords = activeWords.filter((word) => word.source === "builtin");
   const hiddenBuiltinWords = buildResolvedHiddenBuiltinWords(builtinWordOverrides, wordOrder);
   const managedWords = dedupeWords([...resolvedBuiltinWords, ...customWords]);
+  const normalizedInputValue = normalizeWord(inputValue);
+  const trimmedInputValue = inputValue.trim();
+  const duplicateInputMatch = normalizedInputValue ? managedWords.find((word) => word.normalizedText === normalizedInputValue) ?? null : null;
+  const addWordPreview = trimmedInputValue
+    ? {
+        normalizedValue: normalizedInputValue,
+        willNormalize: normalizedInputValue.length > 0 && normalizedInputValue !== trimmedInputValue.toLowerCase(),
+        isInvalid: normalizedInputValue.length === 0,
+        duplicateMatch: duplicateInputMatch
+      }
+    : null;
   const editedBuiltinWordIds = Object.entries(builtinWordOverrides)
     .filter(([, override]) => override.status === "edited")
     .map(([wordId]) => wordId);
@@ -627,6 +638,7 @@ export function useTrainer() {
     editingWordSource,
     editingWordId,
     editingWordValue,
+    addWordPreview,
     reorderFeedbackToken,
     inputValue,
     setInputValue: handleAddWordInputChange,

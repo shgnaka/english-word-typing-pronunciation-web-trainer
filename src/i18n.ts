@@ -47,6 +47,7 @@ type MessageKey =
   | "words.placeholder"
   | "words.newWord"
   | "words.add"
+  | "words.addRules"
   | "words.searchLabel"
   | "words.searchPlaceholder"
   | "words.clearSearch"
@@ -58,6 +59,9 @@ type MessageKey =
   | "words.deselectVisible"
   | "words.clearSelection"
   | "words.moreActions"
+  | "words.inputPreview"
+  | "words.inputDuplicate"
+  | "words.inputInvalidPreview"
   | "words.selectedCount"
   | "words.bulkHint"
   | "words.bulkRemoveFromPractice"
@@ -203,6 +207,7 @@ const messages: Record<DisplayLanguage, Record<MessageKey, string>> = {
     "words.placeholder": "Enter an English word",
     "words.newWord": "New word",
     "words.add": "Add word",
+    "words.addRules": "Letters A-Z are kept. Spaces, numbers, and symbols are removed before saving.",
     "words.searchLabel": "Find words",
     "words.searchPlaceholder": "Search your word lists",
     "words.clearSearch": "Clear search",
@@ -214,6 +219,9 @@ const messages: Record<DisplayLanguage, Record<MessageKey, string>> = {
     "words.deselectVisible": "Deselect visible",
     "words.clearSelection": "Clear selection",
     "words.moreActions": "More actions",
+    "words.inputPreview": "Will save as: {word}",
+    "words.inputDuplicate": "Already exists in {source}: {word}",
+    "words.inputInvalidPreview": "This entry becomes empty after removing non-letters.",
     "words.selectedCount": "{count} selected",
     "words.bulkHint": "Select words below to unlock bulk actions for this section.",
     "words.bulkRemoveFromPractice": "Remove selected",
@@ -358,6 +366,7 @@ const messages: Record<DisplayLanguage, Record<MessageKey, string>> = {
     "words.placeholder": "英単語を入力",
     "words.newWord": "新しい単語",
     "words.add": "追加",
+    "words.addRules": "保存時には A-Z の英字だけを使います。空白、数字、記号は取り除かれます。",
     "words.searchLabel": "単語を探す",
     "words.searchPlaceholder": "単語リストを検索",
     "words.clearSearch": "検索をクリア",
@@ -369,6 +378,9 @@ const messages: Record<DisplayLanguage, Record<MessageKey, string>> = {
     "words.deselectVisible": "表示中の選択を外す",
     "words.clearSelection": "選択を解除",
     "words.moreActions": "その他の操作",
+    "words.inputPreview": "保存される単語: {word}",
+    "words.inputDuplicate": "{source} に同じ単語があります: {word}",
+    "words.inputInvalidPreview": "英字以外を取り除くと空になるため、追加できません。",
     "words.selectedCount": "{count} 件選択中",
     "words.bulkHint": "このセクションで一括操作を使うには、下の単語を選択してください。",
     "words.bulkRemoveFromPractice": "選択した項目を練習順から外す",
@@ -513,6 +525,7 @@ const messages: Record<DisplayLanguage, Record<MessageKey, string>> = {
     "words.placeholder": "えいたんごを にゅうりょく",
     "words.newWord": "あたらしい たんご",
     "words.add": "ついか",
+    "words.addRules": "ほぞんするときは A-Z の えいじだけを つかいます。スペース、すうじ、きごうは とりのぞかれます。",
     "words.searchLabel": "たんごを さがす",
     "words.searchPlaceholder": "たんごリストを けんさく",
     "words.clearSearch": "けんさくを クリア",
@@ -524,6 +537,9 @@ const messages: Record<DisplayLanguage, Record<MessageKey, string>> = {
     "words.deselectVisible": "ひょうじちゅうの えらびを はずす",
     "words.clearSelection": "えらんだ ものを はずす",
     "words.moreActions": "そのほかの そうさ",
+    "words.inputPreview": "ほぞんされる たんご: {word}",
+    "words.inputDuplicate": "{source} に おなじ たんごが あります: {word}",
+    "words.inputInvalidPreview": "えいじいがいを とりのぞくと からになるため、ついかできません。",
     "words.selectedCount": "{count} けん えらんでいます",
     "words.bulkHint": "この セクションで まとめて そうさするには、したの たんごを えらんでください。",
     "words.bulkRemoveFromPractice": "えらんだ ものを れんしゅうじゅんから はずす",

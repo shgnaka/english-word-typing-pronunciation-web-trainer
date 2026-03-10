@@ -81,6 +81,21 @@ describe("App", () => {
     expect(screen.getByTestId("custom-word-list")).toHaveTextContent("banana");
   });
 
+  it("shows normalization and duplicate guidance before adding a custom word", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.click(screen.getByRole("button", { name: "Words" }));
+    expect(screen.getByTestId("add-word-rules")).toHaveTextContent("Letters A-Z are kept.");
+
+    await user.type(screen.getByLabelText("New word"), "Hello-123");
+    expect(screen.getByTestId("add-word-normalized-preview")).toHaveTextContent("Will save as: hello");
+
+    await user.clear(screen.getByLabelText("New word"));
+    await user.type(screen.getByLabelText("New word"), "apple");
+    expect(screen.getByTestId("add-word-duplicate-preview")).toHaveTextContent("Already exists in Built-in: apple");
+  });
+
   it("shows actionable empty states on the words page", async () => {
     const user = userEvent.setup();
     render(<App />);
