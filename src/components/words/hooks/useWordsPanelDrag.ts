@@ -1,0 +1,43 @@
+import { useState } from "react";
+import type { TrainerState } from "../../../features/trainer/useTrainer";
+import type { ActiveDragControls } from "../shared";
+
+export function useWordsPanelDrag(trainer: TrainerState): ActiveDragControls {
+  const [draggedWordId, setDraggedWordId] = useState<string | null>(null);
+  const [dropTargetWordId, setDropTargetWordId] = useState<string | null>(null);
+
+  function startWordDrag(wordId: string) {
+    setDraggedWordId(wordId);
+    setDropTargetWordId(wordId);
+  }
+
+  function dropWord(targetWordId: string) {
+    if (!draggedWordId || draggedWordId === targetWordId) {
+      setDraggedWordId(null);
+      setDropTargetWordId(null);
+      return;
+    }
+
+    const targetIndex = trainer.activeWords.findIndex((word) => word.id === targetWordId);
+    if (targetIndex !== -1) {
+      trainer.moveWordToIndex(draggedWordId, targetIndex);
+    }
+
+    setDraggedWordId(null);
+    setDropTargetWordId(null);
+  }
+
+  function clear() {
+    setDraggedWordId(null);
+    setDropTargetWordId(null);
+  }
+
+  return {
+    draggedWordId,
+    dropTargetWordId,
+    startWordDrag,
+    dropWord,
+    setDragTarget: setDropTargetWordId,
+    clear
+  };
+}

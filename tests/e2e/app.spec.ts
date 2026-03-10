@@ -169,27 +169,43 @@ test("deletes a builtin word and can reset builtin overrides", async ({ page }) 
   await expect(page.getByTestId("hidden-builtin-empty")).toHaveText("No hidden built-in words.");
 });
 
-test("reorders builtin words and persists the order after reload", async ({ page }) => {
+test("reorders builtin words in the mixed practice list and persists the order after reload", async ({ page }) => {
   await page.getByTestId("tab-words").click();
   await page.getByTestId("move-word-down-button-builtin-apple").click();
 
-  const builtinWordChips = page.getByTestId("builtin-word-chip");
-  await expect(builtinWordChips.nth(0)).toHaveText("book");
-  await expect(builtinWordChips.nth(1)).toHaveText("apple");
+  const activeWordChips = page.getByTestId("active-word-chip");
+  await expect(activeWordChips.nth(0)).toHaveText("book");
+  await expect(activeWordChips.nth(1)).toHaveText("apple");
 
   await page.reload();
   await page.getByTestId("tab-words").click();
 
-  await expect(builtinWordChips.nth(0)).toHaveText("book");
-  await expect(builtinWordChips.nth(1)).toHaveText("apple");
+  await expect(activeWordChips.nth(0)).toHaveText("book");
+  await expect(activeWordChips.nth(1)).toHaveText("apple");
 });
 
-test("uses reordered builtin words for non-shuffled practice and reset restores shipped order", async ({ page }) => {
+test("reorders mixed practice words with drag and drop", async ({ page }) => {
   await page.getByTestId("tab-words").click();
-  await page.getByTestId("move-word-down-button-builtin-apple").click();
+
+  const activeRows = page.getByTestId("active-word-row");
+  await activeRows.nth(0).dragTo(activeRows.nth(2));
+
+  const activeWordChips = page.getByTestId("active-word-chip");
+  await expect(activeWordChips.nth(0)).toHaveText("book");
+  await expect(activeWordChips.nth(1)).toHaveText("happy");
+  await expect(activeWordChips.nth(2)).toHaveText("apple");
+});
+
+test("uses reordered mixed words for non-shuffled practice and reset restores shipped builtin order", async ({ page }) => {
+  await page.getByTestId("tab-words").click();
+  await page.getByTestId("new-word-input").fill("banana");
+  await page.getByTestId("add-word-button").click();
+  for (let step = 0; step < 20; step += 1) {
+    await page.getByTestId("move-word-up-button-custom-banana").click();
+  }
 
   await page.getByTestId("tab-practice").click();
-  await expect(page.getByTestId("current-word")).toHaveText("book");
+  await expect(page.getByTestId("current-word")).toHaveText("banana");
 
   await page.getByTestId("tab-words").click();
   await page.getByTestId("reset-builtin-words-button").click();

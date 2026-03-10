@@ -40,24 +40,72 @@ type MessageKey =
   | "practice.a11y.target"
   | "words.title"
   | "words.subtitle"
+  | "words.collectionLabel"
+  | "words.collectionTitle"
+  | "words.addHint"
+  | "words.manageHint"
   | "words.placeholder"
   | "words.newWord"
   | "words.add"
+  | "words.searchLabel"
+  | "words.searchPlaceholder"
+  | "words.clearSearch"
+  | "words.sortAlpha"
+  | "words.sortNewest"
+  | "words.sortOldest"
+  | "words.selectWord"
+  | "words.selectVisible"
+  | "words.deselectVisible"
+  | "words.clearSelection"
+  | "words.selectedCount"
+  | "words.bulkHint"
+  | "words.bulkRemoveFromPractice"
+  | "words.bulkRestore"
+  | "words.bulkDelete"
   | "words.edit"
   | "words.save"
   | "words.cancel"
   | "words.delete"
   | "words.moveUp"
   | "words.moveDown"
+  | "words.moveToTop"
+  | "words.moveToBottom"
   | "words.builtinTitle"
   | "words.builtinHint"
+  | "words.activeTitle"
+  | "words.activeHint"
+  | "words.sourceBuiltin"
+  | "words.sourceCustom"
   | "words.builtinEdited"
+  | "words.stateActive"
+  | "words.stateHidden"
+  | "words.stateLocalOnly"
   | "words.hiddenBuiltinTitle"
   | "words.hiddenBuiltinEmpty"
   | "words.restore"
   | "words.resetBuiltin"
   | "words.customTitle"
+  | "words.customHint"
+  | "words.inactiveCustomTitle"
+  | "words.inactiveCustomHint"
+  | "words.inactiveCustomEmpty"
+  | "words.removeFromPractice"
   | "words.empty"
+  | "words.noMatches"
+  | "words.searchEmptyAction"
+  | "words.emptyCustomAction"
+  | "words.hiddenBuiltinAction"
+  | "words.hiddenCustomAction"
+  | "words.emptyCustomCta"
+  | "words.hiddenBuiltinCta"
+  | "words.hiddenCustomCta"
+  | "words.stats.available"
+  | "words.stats.builtin"
+  | "words.stats.custom"
+  | "words.stats.hidden"
+  | "words.minimizeSection"
+  | "words.expandSection"
+  | "words.minimizedSummary"
   | "words.error.invalid"
   | "words.error.duplicate"
   | "settings.title"
@@ -141,24 +189,72 @@ const messages: Record<DisplayLanguage, Record<MessageKey, string>> = {
     "practice.a11y.target": "Current target letter {char}. Use key {key} with {finger}.",
     "words.title": "Custom vocabulary",
     "words.subtitle": "Add your own practice words",
+    "words.collectionLabel": "Word collection",
+    "words.collectionTitle": "Shape a word list that matches what you want to practice.",
+    "words.addHint": "Add words for spelling drills, job vocabulary, or pronunciation practice.",
+    "words.manageHint": "Search, reorder, edit, hide, and restore words from one place.",
     "words.placeholder": "Enter an English word",
     "words.newWord": "New word",
     "words.add": "Add word",
+    "words.searchLabel": "Find words",
+    "words.searchPlaceholder": "Search your word lists",
+    "words.clearSearch": "Clear search",
+    "words.sortAlpha": "Sort A-Z",
+    "words.sortNewest": "Newest first",
+    "words.sortOldest": "Oldest first",
+    "words.selectWord": "Select word",
+    "words.selectVisible": "Select visible",
+    "words.deselectVisible": "Deselect visible",
+    "words.clearSelection": "Clear selection",
+    "words.selectedCount": "{count} selected",
+    "words.bulkHint": "Select words below to unlock bulk actions for this section.",
+    "words.bulkRemoveFromPractice": "Remove selected",
+    "words.bulkRestore": "Restore selected",
+    "words.bulkDelete": "Delete selected",
     "words.edit": "Edit",
     "words.save": "Save",
     "words.cancel": "Cancel",
     "words.delete": "Delete",
     "words.moveUp": "Move up",
     "words.moveDown": "Move down",
+    "words.moveToTop": "Move to top",
+    "words.moveToBottom": "Move to bottom",
     "words.builtinTitle": "Built-in words",
     "words.builtinHint": "Built-in word changes are stored only in this browser.",
+    "words.activeTitle": "Practice order",
+    "words.activeHint": "Reorder all active words here, including built-in and custom words together.",
+    "words.sourceBuiltin": "Built-in",
+    "words.sourceCustom": "Custom",
     "words.builtinEdited": "Edited locally",
+    "words.stateActive": "Active",
+    "words.stateHidden": "Hidden",
+    "words.stateLocalOnly": "Saved locally",
     "words.hiddenBuiltinTitle": "Hidden built-in words",
     "words.hiddenBuiltinEmpty": "No hidden built-in words.",
     "words.restore": "Restore",
     "words.resetBuiltin": "Reset built-in words",
     "words.customTitle": "Custom words",
+    "words.customHint": "These custom words are saved locally and currently active in practice.",
+    "words.inactiveCustomTitle": "Hidden custom words",
+    "words.inactiveCustomHint": "These custom words are still saved in this browser, but they are hidden from the practice order.",
+    "words.inactiveCustomEmpty": "No hidden custom words.",
+    "words.removeFromPractice": "Remove from practice",
     "words.empty": "No custom words yet.",
+    "words.noMatches": "No words match that search.",
+    "words.searchEmptyAction": "Try a shorter search or clear the filter to see every word again.",
+    "words.emptyCustomAction": "Add a custom word above to build your own practice list.",
+    "words.hiddenBuiltinAction": "Remove a built-in word from practice to keep it here for quick restore.",
+    "words.hiddenCustomAction": "Remove a custom word from practice to hide it here without deleting it.",
+    "words.emptyCustomCta": "Add your first custom word",
+    "words.hiddenBuiltinCta": "Go to built-in words",
+    "words.hiddenCustomCta": "Go to custom words",
+    "words.stats.available": "Ready to practice",
+    "words.stats.builtin": "Built-in active",
+    "words.stats.custom": "Custom added",
+    "words.stats.hidden": "Built-in hidden",
+    "words.minimizeSection": "Minimize",
+    "words.expandSection": "Expand",
+    "words.minimizedSummary": "Section minimized. Expand to manage the full list.",
     "words.error.invalid": "Enter letters only.",
     "words.error.duplicate": "That word already exists.",
     "settings.title": "Session settings",
@@ -241,24 +337,72 @@ const messages: Record<DisplayLanguage, Record<MessageKey, string>> = {
     "practice.a11y.target": "現在のターゲット文字は {char}。押すキーは {key}、推奨する指は {finger} です。",
     "words.title": "カスタム単語",
     "words.subtitle": "練習したい単語を追加できます",
+    "words.collectionLabel": "単語コレクション",
+    "words.collectionTitle": "練習したい内容に合わせて単語リストを整えましょう。",
+    "words.addHint": "つづり、仕事で使う語彙、発音練習用の単語を追加できます。",
+    "words.manageHint": "検索、並び替え、編集、非表示、復元をこの画面でまとめて行えます。",
     "words.placeholder": "英単語を入力",
     "words.newWord": "新しい単語",
     "words.add": "追加",
+    "words.searchLabel": "単語を探す",
+    "words.searchPlaceholder": "単語リストを検索",
+    "words.clearSearch": "検索をクリア",
+    "words.sortAlpha": "A-Z で並べ替え",
+    "words.sortNewest": "新しい順",
+    "words.sortOldest": "古い順",
+    "words.selectWord": "単語を選択",
+    "words.selectVisible": "表示中を選択",
+    "words.deselectVisible": "表示中の選択を外す",
+    "words.clearSelection": "選択を解除",
+    "words.selectedCount": "{count} 件選択中",
+    "words.bulkHint": "このセクションで一括操作を使うには、下の単語を選択してください。",
+    "words.bulkRemoveFromPractice": "選択した項目を練習順から外す",
+    "words.bulkRestore": "選択した項目を復元",
+    "words.bulkDelete": "選択した項目を削除",
     "words.edit": "編集",
     "words.save": "保存",
     "words.cancel": "キャンセル",
     "words.delete": "削除",
     "words.moveUp": "上へ移動",
     "words.moveDown": "下へ移動",
+    "words.moveToTop": "一番上へ移動",
+    "words.moveToBottom": "一番下へ移動",
     "words.builtinTitle": "標準単語",
     "words.builtinHint": "標準単語の変更はこのブラウザにだけ保存されます。",
+    "words.activeTitle": "練習順",
+    "words.activeHint": "ここでは標準単語とカスタム単語をまとめて並び替えできます。",
+    "words.sourceBuiltin": "標準",
+    "words.sourceCustom": "カスタム",
     "words.builtinEdited": "このブラウザで編集済み",
+    "words.stateActive": "有効",
+    "words.stateHidden": "非表示",
+    "words.stateLocalOnly": "ローカル保存",
     "words.hiddenBuiltinTitle": "非表示の標準単語",
     "words.hiddenBuiltinEmpty": "非表示の標準単語はありません。",
     "words.restore": "元に戻す",
     "words.resetBuiltin": "標準単語をリセット",
     "words.customTitle": "カスタム単語",
+    "words.customHint": "ここにあるカスタム単語はローカルに保存され、現在の練習順に入っています。",
+    "words.inactiveCustomTitle": "非表示のカスタム単語",
+    "words.inactiveCustomHint": "これらのカスタム単語はこのブラウザに保存されたまま、練習順から非表示になっています。",
+    "words.inactiveCustomEmpty": "非表示のカスタム単語はありません。",
+    "words.removeFromPractice": "練習順から外す",
     "words.empty": "カスタム単語はまだありません。",
+    "words.noMatches": "検索条件に一致する単語はありません。",
+    "words.searchEmptyAction": "検索語を短くするか、検索をクリアしてすべての単語をもう一度表示してください。",
+    "words.emptyCustomAction": "上の入力欄からカスタム単語を追加すると、自分用の練習リストを作れます。",
+    "words.hiddenBuiltinAction": "標準単語を練習順から外すと、ここからすぐに復元できます。",
+    "words.hiddenCustomAction": "カスタム単語を練習順から外すと、削除せずにここへ隠しておけます。",
+    "words.emptyCustomCta": "最初のカスタム単語を追加",
+    "words.hiddenBuiltinCta": "標準単語へ移動",
+    "words.hiddenCustomCta": "カスタム単語へ移動",
+    "words.stats.available": "練習に使える単語",
+    "words.stats.builtin": "有効な標準単語",
+    "words.stats.custom": "追加した単語",
+    "words.stats.hidden": "非表示の標準単語",
+    "words.minimizeSection": "小さく表示",
+    "words.expandSection": "広げて表示",
+    "words.minimizedSummary": "このセクションは小さく表示されています。広げると一覧を管理できます。",
     "words.error.invalid": "英字のみ入力してください。",
     "words.error.duplicate": "その単語はすでにあります。",
     "settings.title": "セッション設定",
@@ -341,24 +485,72 @@ const messages: Record<DisplayLanguage, Record<MessageKey, string>> = {
     "practice.a11y.target": "いまの ターゲットもじは {char}。おすキーは {key}、おすすめの ゆびは {finger} です。",
     "words.title": "カスタムたんご",
     "words.subtitle": "れんしゅうしたい たんごを ついかできます",
+    "words.collectionLabel": "たんご コレクション",
+    "words.collectionTitle": "れんしゅうしたい ないように あわせて たんごリストを ととのえましょう。",
+    "words.addHint": "つづり れんしゅうや しごとの ことば、はつおん れんしゅうの たんごを ついかできます。",
+    "words.manageHint": "けんさく、ならびかえ、へんしゅう、ひひょうじ、ふっかつを ここで できます。",
     "words.placeholder": "えいたんごを にゅうりょく",
     "words.newWord": "あたらしい たんご",
     "words.add": "ついか",
+    "words.searchLabel": "たんごを さがす",
+    "words.searchPlaceholder": "たんごリストを けんさく",
+    "words.clearSearch": "けんさくを クリア",
+    "words.sortAlpha": "A-Z で ならびかえ",
+    "words.sortNewest": "あたらしい じゅん",
+    "words.sortOldest": "ふるい じゅん",
+    "words.selectWord": "たんごを えらぶ",
+    "words.selectVisible": "ひょうじちゅうを えらぶ",
+    "words.deselectVisible": "ひょうじちゅうの えらびを はずす",
+    "words.clearSelection": "えらんだ ものを はずす",
+    "words.selectedCount": "{count} けん えらんでいます",
+    "words.bulkHint": "この セクションで まとめて そうさするには、したの たんごを えらんでください。",
+    "words.bulkRemoveFromPractice": "えらんだ ものを れんしゅうじゅんから はずす",
+    "words.bulkRestore": "えらんだ ものを もどす",
+    "words.bulkDelete": "えらんだ ものを さくじょ",
     "words.edit": "へんしゅう",
     "words.save": "ほぞん",
     "words.cancel": "キャンセル",
     "words.delete": "さくじょ",
     "words.moveUp": "うえへ いどう",
     "words.moveDown": "したへ いどう",
+    "words.moveToTop": "いちばん うえへ いどう",
+    "words.moveToBottom": "いちばん したへ いどう",
     "words.builtinTitle": "はじめからある たんご",
     "words.builtinHint": "はじめからある たんごの へんこうは このブラウザだけに ほぞんされます。",
+    "words.activeTitle": "れんしゅう じゅん",
+    "words.activeHint": "ここで はじめからある たんごと カスタムたんごを いっしょに ならびかえできます。",
+    "words.sourceBuiltin": "はじめからある",
+    "words.sourceCustom": "カスタム",
     "words.builtinEdited": "このブラウザで へんこうずみ",
+    "words.stateActive": "つかう",
+    "words.stateHidden": "ひひょうじ",
+    "words.stateLocalOnly": "ローカルほぞん",
     "words.hiddenBuiltinTitle": "ひょうじしていない はじめからある たんご",
     "words.hiddenBuiltinEmpty": "ひょうじしていない はじめからある たんごは ありません。",
     "words.restore": "もとに もどす",
     "words.resetBuiltin": "はじめからある たんごを リセット",
     "words.customTitle": "カスタムたんご",
+    "words.customHint": "ここにある カスタムたんごは ローカルに ほぞんされ、いま れんしゅうじゅんに はいっています。",
+    "words.inactiveCustomTitle": "ひょうじしていない カスタムたんご",
+    "words.inactiveCustomHint": "これらの カスタムたんごは このブラウザに ほぞんされたまま、れんしゅうじゅんから ひょうじされていません。",
+    "words.inactiveCustomEmpty": "ひょうじしていない カスタムたんごは ありません。",
+    "words.removeFromPractice": "れんしゅうじゅんから はずす",
     "words.empty": "カスタムたんごは まだ ありません。",
+    "words.noMatches": "けんさくに あう たんごは ありません。",
+    "words.searchEmptyAction": "けんさくごを みじかくするか、けんさくを クリアして すべての たんごを もういちど ひょうじしてください。",
+    "words.emptyCustomAction": "うえの にゅうりょくらんから カスタムたんごを ついかすると、じぶんようの れんしゅうリストを つくれます。",
+    "words.hiddenBuiltinAction": "はじめからある たんごを れんしゅうじゅんから はずすと、ここから すぐに もどせます。",
+    "words.hiddenCustomAction": "カスタムたんごを れんしゅうじゅんから はずすと、さくじょせずに ここへ かくしておけます。",
+    "words.emptyCustomCta": "さいしょの カスタムたんごを ついか",
+    "words.hiddenBuiltinCta": "はじめからある たんごへ いどう",
+    "words.hiddenCustomCta": "カスタムたんごへ いどう",
+    "words.stats.available": "れんしゅうできる たんご",
+    "words.stats.builtin": "つかえる はじめからある たんご",
+    "words.stats.custom": "ついかした たんご",
+    "words.stats.hidden": "ひょうじしていない たんご",
+    "words.minimizeSection": "ちいさく ひょうじ",
+    "words.expandSection": "ひろげて ひょうじ",
+    "words.minimizedSummary": "この セクションは ちいさく ひょうじされています。ひろげると いちらんを かんりできます。",
     "words.error.invalid": "えいじのみ にゅうりょくしてください。",
     "words.error.duplicate": "その たんごは すでに あります。",
     "settings.title": "セッションせってい",

@@ -1,4 +1,4 @@
-import type { BuiltinWordOrder, BuiltinWordOverrides, WordEntry } from "./types";
+import type { BuiltinWordOverrides, WordEntry, WordOrder } from "./types";
 
 export function normalizeWord(input: string): string {
   return input.trim().toLowerCase().replace(/[^a-z]/g, "");
@@ -51,7 +51,7 @@ export function resolveBuiltinWords(words: WordEntry[], overrides: BuiltinWordOv
   });
 }
 
-export function sanitizeBuiltinWordOrder(words: WordEntry[], order: BuiltinWordOrder): BuiltinWordOrder {
+export function sanitizeWordOrder(words: WordEntry[], order: WordOrder): WordOrder {
   const validIds = new Set(words.map((word) => word.id));
   const sanitizedOrder = order.filter((wordId) => validIds.has(wordId));
   const seen = new Set(sanitizedOrder);
@@ -66,8 +66,8 @@ export function sanitizeBuiltinWordOrder(words: WordEntry[], order: BuiltinWordO
   return sanitizedOrder;
 }
 
-export function orderBuiltinWords(words: WordEntry[], order: BuiltinWordOrder): WordEntry[] {
-  const sanitizedOrder = sanitizeBuiltinWordOrder(words, order);
+export function orderWords(words: WordEntry[], order: WordOrder): WordEntry[] {
+  const sanitizedOrder = sanitizeWordOrder(words, order);
   const orderById = new Map(sanitizedOrder.map((wordId, index) => [wordId, index]));
 
   return [...words].sort((left, right) => {

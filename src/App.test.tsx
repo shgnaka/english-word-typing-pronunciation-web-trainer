@@ -43,7 +43,7 @@ describe("App", () => {
     await user.type(screen.getByLabelText("New word"), "banana");
     await user.click(screen.getByRole("button", { name: "Add word" }));
 
-    expect(screen.getByText("banana")).toBeInTheDocument();
+    expect(screen.getByTestId("custom-word-list")).toHaveTextContent("banana");
   });
 
   it("shows key guidance on the practice screen", () => {
@@ -78,7 +78,254 @@ describe("App", () => {
     await user.click(screen.getByRole("button", { name: "Words" }));
     await user.type(screen.getByLabelText("New word"), "banana{enter}");
 
-    expect(screen.getByText("banana")).toBeInTheDocument();
+    expect(screen.getByTestId("custom-word-list")).toHaveTextContent("banana");
+  });
+
+  it("shows actionable empty states on the words page", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.click(screen.getByRole("button", { name: "Words" }));
+
+    expect(screen.getByTestId("hidden-builtin-empty")).toHaveTextContent("No hidden built-in words.");
+    expect(screen.getByTestId("hidden-builtin-empty")).toHaveTextContent("Remove a built-in word from practice");
+    expect(screen.getByTestId("hidden-builtin-empty-cta")).toHaveTextContent("Go to built-in words");
+    expect(screen.getByTestId("custom-word-list")).toHaveTextContent("No custom words yet.");
+    expect(screen.getByTestId("custom-word-list")).toHaveTextContent("Add a custom word above");
+    expect(screen.getByTestId("empty-custom-cta")).toHaveTextContent("Add your first custom word");
+  });
+
+  it("uses empty-state ctas to guide the next action", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.click(screen.getByRole("button", { name: "Words" }));
+    await user.click(screen.getByTestId("empty-custom-cta"));
+
+    expect(screen.getByTestId("new-word-input")).toHaveFocus();
+  });
+
+  it("shows visual state labels for active, hidden, local-only, and edited words", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.click(screen.getByRole("button", { name: "Words" }));
+    expect(screen.getByTestId("active-state-pill")).toHaveTextContent("Active");
+    expect(screen.getByTestId("builtin-state-pill")).toHaveTextContent("Active");
+    expect(screen.getByTestId("custom-state-pill")).toHaveTextContent("Saved locally");
+
+    await user.click(screen.getByTestId("delete-word-button-builtin-apple"));
+    expect(screen.getByTestId("hidden-builtin-state-pill")).toHaveTextContent("Hidden");
+
+    await user.type(screen.getByLabelText("New word"), "banana");
+    await user.click(screen.getByRole("button", { name: "Add word" }));
+    await user.click(screen.getByTestId("remove-from-practice-button-custom-banana"));
+    expect(screen.getByTestId("hidden-custom-state-pill")).toHaveTextContent("Hidden");
+    expect(screen.getByTestId("hidden-custom-local-state-pill")).toHaveTextContent("Saved locally");
+
+    await user.click(screen.getByTestId("edit-word-button-builtin-book"));
+    await user.clear(screen.getByTestId("edit-word-input-builtin-book"));
+    await user.type(screen.getByTestId("edit-word-input-builtin-book"), "books");
+    await user.click(screen.getByTestId("save-word-button-builtin-book"));
+    expect(screen.getByTestId("builtin-word-state-builtin-book")).toHaveTextContent("Edited locally");
+  });
+
+  it("persists words section minimization after reload", async () => {
+    const user = userEvent.setup();
+    const { unmount } = render(<App />);
+
+    await user.click(screen.getByRole("button", { name: "Words" }));
+    await user.click(screen.getByTestId("toggle-builtin-section-button"));
+    expect(screen.getByTestId("builtin-section-summary")).toBeInTheDocument();
+
+    unmount();
+    render(<App />);
+
+    await user.click(screen.getByRole("button", { name: "Words" }));
+    expect(screen.getByTestId("builtin-section-summary")).toBeInTheDocument();
+  });
+
+  it("sorts custom words alphabetically from the custom words section", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.click(screen.getByRole("button", { name: "Words" }));
+    await user.type(screen.getByLabelText("New word"), "pear");
+    await user.click(screen.getByRole("button", { name: "Add word" }));
+    await user.type(screen.getByLabelText("New word"), "banana");
+    await user.click(screen.getByRole("button", { name: "Add word" }));
+    await user.type(screen.getByLabelText("New word"), "mango");
+    await user.click(screen.getByRole("button", { name: "Add word" }));
+
+    await user.click(screen.getByTestId("sort-custom-alpha-button"));
+
+    const customWordChips = screen.getAllByTestId("word-chip");
+    expect(customWordChips[0]).toHaveTextContent("banana");
+    expect(customWordChips[1]).toHaveTextContent("mango");
+    expect(customWordChips[2]).toHaveTextContent("pear");
+  });
+
+  it("moves a practice-order word to the top and keeps that order after reload", async () => {
+    const user = userEvent.setup();
+    const { unmount } = render(<App />);
+
+    await user.click(screen.getByRole("button", { name: "Words" }));
+    await user.click(screen.getByTestId("move-word-top-button-builtin-language"));
+
+    let activeWordChips = screen.getAllByTestId("active-word-chip");
+    expect(activeWordChips[0]).toHaveTextContent("language");
+
+    unmount();
+    render(<App />);
+    await user.click(screen.getByRole("button", { name: "Words" }));
+
+    activeWordChips = screen.getAllByTestId("active-word-chip");
+    expect(activeWordChips[0]).toHaveTextContent("language");
+  });
+
+  it("moves a practice-order word to the bottom", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.click(screen.getByRole("button", { name: "Words" }));
+    await user.click(screen.getByTestId("move-word-bottom-button-builtin-apple"));
+
+    const activeWordChips = screen.getAllByTestId("active-word-chip");
+    expect(activeWordChips[activeWordChips.length - 1]).toHaveTextContent("apple");
+  });
+
+  it("reorders practice-order words with drag and drop", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.click(screen.getByRole("button", { name: "Words" }));
+
+    const rows = screen.getAllByTestId("active-word-row");
+    const draggedRow = rows[0];
+    const targetRow = rows[2];
+    const dataTransfer = {
+      effectAllowed: "move",
+      dropEffect: "move",
+      setData: vi.fn(),
+      getData: vi.fn(() => "builtin-apple")
+    };
+
+    fireEvent.dragStart(draggedRow, { dataTransfer });
+    fireEvent.dragOver(targetRow, { dataTransfer });
+    fireEvent.drop(targetRow, { dataTransfer });
+    fireEvent.dragEnd(draggedRow, { dataTransfer });
+
+    const activeWordChips = screen.getAllByTestId("active-word-chip");
+    expect(activeWordChips[0]).toHaveTextContent("book");
+    expect(activeWordChips[1]).toHaveTextContent("happy");
+    expect(activeWordChips[2]).toHaveTextContent("apple");
+  });
+
+  it("supports bulk remove and restore for custom words", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.click(screen.getByRole("button", { name: "Words" }));
+    await user.type(screen.getByLabelText("New word"), "banana");
+    await user.click(screen.getByRole("button", { name: "Add word" }));
+    await user.type(screen.getByLabelText("New word"), "grape");
+    await user.click(screen.getByRole("button", { name: "Add word" }));
+
+    await user.click(screen.getByTestId("select-custom-word-checkbox-custom-banana"));
+    await user.click(screen.getByTestId("select-custom-word-checkbox-custom-grape"));
+    await user.click(screen.getByTestId("bulk-remove-custom-words-button"));
+
+    expect(screen.getByTestId("inactive-custom-word-list")).toHaveTextContent("banana");
+    expect(screen.getByTestId("inactive-custom-word-list")).toHaveTextContent("grape");
+
+    await user.click(screen.getByTestId("select-hidden-custom-word-checkbox-custom-banana"));
+    await user.click(screen.getByTestId("select-hidden-custom-word-checkbox-custom-grape"));
+    await user.click(screen.getByTestId("bulk-restore-hidden-custom-words-button"));
+
+    expect(screen.getByTestId("custom-word-list")).toHaveTextContent("banana");
+    expect(screen.getByTestId("custom-word-list")).toHaveTextContent("grape");
+  });
+
+  it("keeps bulk action controls visible and returns focus after a bulk action", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.click(screen.getByRole("button", { name: "Words" }));
+    await user.type(screen.getByLabelText("New word"), "banana");
+    await user.click(screen.getByRole("button", { name: "Add word" }));
+
+    expect(screen.getByTestId("bulk-selected-count-custom")).toHaveTextContent("0 selected");
+    expect(screen.getByTestId("bulk-remove-custom-words-button")).toBeDisabled();
+    expect(screen.getByTestId("bulk-delete-custom-words-button")).toBeDisabled();
+
+    await user.click(screen.getByTestId("select-custom-word-checkbox-custom-banana"));
+    expect(screen.getByTestId("bulk-selected-count-custom")).toHaveTextContent("1 selected");
+
+    await user.click(screen.getByTestId("bulk-remove-custom-words-button"));
+
+    expect(screen.getByTestId("bulk-select-visible-custom-button")).not.toHaveFocus();
+    expect(screen.getByTestId("bulk-select-visible-custom-button").closest(".bulk-action-bar")).toHaveFocus();
+    expect(screen.getByTestId("bulk-selected-count-custom")).toHaveTextContent("0 selected");
+    expect(screen.getByTestId("bulk-remove-custom-words-button")).toBeDisabled();
+    expect(screen.getByTestId("bulk-delete-custom-words-button")).toBeDisabled();
+  });
+
+  it("toggles visible bulk selection for custom words", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.click(screen.getByRole("button", { name: "Words" }));
+    await user.type(screen.getByLabelText("New word"), "banana");
+    await user.click(screen.getByRole("button", { name: "Add word" }));
+    await user.type(screen.getByLabelText("New word"), "grape");
+    await user.click(screen.getByRole("button", { name: "Add word" }));
+
+    await user.click(screen.getByTestId("bulk-select-visible-custom-button"));
+    expect(screen.getByTestId("select-custom-word-checkbox-custom-banana")).toBeChecked();
+    expect(screen.getByTestId("select-custom-word-checkbox-custom-grape")).toBeChecked();
+
+    await user.click(screen.getByTestId("bulk-select-visible-custom-button"));
+    expect(screen.getByTestId("select-custom-word-checkbox-custom-banana")).not.toBeChecked();
+    expect(screen.getByTestId("select-custom-word-checkbox-custom-grape")).not.toBeChecked();
+  });
+
+  it("supports bulk delete for hidden custom words", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.click(screen.getByRole("button", { name: "Words" }));
+    await user.type(screen.getByLabelText("New word"), "banana");
+    await user.click(screen.getByRole("button", { name: "Add word" }));
+    await user.type(screen.getByLabelText("New word"), "grape");
+    await user.click(screen.getByRole("button", { name: "Add word" }));
+    await user.click(screen.getByTestId("remove-from-practice-button-custom-banana"));
+    await user.click(screen.getByTestId("remove-from-practice-button-custom-grape"));
+
+    await user.click(screen.getByTestId("select-hidden-custom-word-checkbox-custom-banana"));
+    await user.click(screen.getByTestId("select-hidden-custom-word-checkbox-custom-grape"));
+    await user.click(screen.getByTestId("bulk-delete-hidden-custom-words-button"));
+
+    expect(screen.getByTestId("inactive-custom-word-list")).not.toHaveTextContent("banana");
+    expect(screen.getByTestId("inactive-custom-word-list")).not.toHaveTextContent("grape");
+  });
+
+  it("highlights search matches and lets the user clear an empty search result", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.click(screen.getByRole("button", { name: "Words" }));
+    await user.type(screen.getByTestId("word-search-input"), "app");
+
+    expect(document.querySelectorAll("mark.word-match-highlight").length).toBeGreaterThan(0);
+
+    await user.clear(screen.getByTestId("word-search-input"));
+    await user.type(screen.getByTestId("word-search-input"), "zzz");
+
+    expect(screen.getByTestId("clear-word-search-button")).toBeInTheDocument();
+    await user.click(screen.getByTestId("clear-word-search-button"));
+
+    expect(screen.getByTestId("word-search-input")).toHaveValue("");
+    expect(screen.queryByTestId("clear-word-search-button")).not.toBeInTheDocument();
   });
 
   it("edits a builtin word", async () => {
@@ -142,24 +389,24 @@ describe("App", () => {
     expect(screen.getByTestId("hidden-builtin-empty")).toHaveTextContent("No hidden built-in words.");
   });
 
-  it("reorders builtin words and keeps the order after reload", async () => {
+  it("reorders builtin words in the mixed practice list and keeps the order after reload", async () => {
     const user = userEvent.setup();
     const { unmount } = render(<App />);
 
     await user.click(screen.getByRole("button", { name: "Words" }));
     await user.click(screen.getByTestId("move-word-down-button-builtin-apple"));
 
-    let builtinWordChips = screen.getAllByTestId("builtin-word-chip");
-    expect(builtinWordChips[0]).toHaveTextContent("book");
-    expect(builtinWordChips[1]).toHaveTextContent("apple");
+    let activeWordChips = screen.getAllByTestId("active-word-chip");
+    expect(activeWordChips[0]).toHaveTextContent("book");
+    expect(activeWordChips[1]).toHaveTextContent("apple");
 
     unmount();
     render(<App />);
     await user.click(screen.getByRole("button", { name: "Words" }));
 
-    builtinWordChips = screen.getAllByTestId("builtin-word-chip");
-    expect(builtinWordChips[0]).toHaveTextContent("book");
-    expect(builtinWordChips[1]).toHaveTextContent("apple");
+    activeWordChips = screen.getAllByTestId("active-word-chip");
+    expect(activeWordChips[0]).toHaveTextContent("book");
+    expect(activeWordChips[1]).toHaveTextContent("apple");
   });
 
   it("deletes a custom word", async () => {
@@ -174,6 +421,46 @@ describe("App", () => {
     expect(screen.queryByText("banana")).not.toBeInTheDocument();
   });
 
+  it("can remove a custom word from practice without deleting it locally", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.click(screen.getByRole("button", { name: "Words" }));
+    await user.type(screen.getByLabelText("New word"), "banana");
+    await user.click(screen.getByRole("button", { name: "Add word" }));
+    await user.click(screen.getByTestId("remove-from-practice-button-custom-banana"));
+
+    expect(screen.getByTestId("inactive-custom-word-list")).toHaveTextContent("banana");
+    expect(screen.getByTestId("custom-word-list")).not.toHaveTextContent("banana");
+    expect(screen.getByTestId("active-word-list")).not.toHaveTextContent("banana");
+  });
+
+  it("can add a saved custom word back into practice", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.click(screen.getByRole("button", { name: "Words" }));
+    await user.type(screen.getByLabelText("New word"), "banana");
+    await user.click(screen.getByRole("button", { name: "Add word" }));
+    await user.click(screen.getByTestId("remove-from-practice-button-custom-banana"));
+    await user.click(screen.getByTestId("add-to-practice-button-custom-banana"));
+
+    expect(screen.getByTestId("custom-word-list")).toHaveTextContent("banana");
+    expect(screen.getByTestId("active-word-list")).toHaveTextContent("banana");
+    expect(screen.getByTestId("inactive-custom-word-list")).not.toHaveTextContent("banana");
+  });
+
+  it("can remove a builtin word from practice order from the mixed list", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.click(screen.getByRole("button", { name: "Words" }));
+    await user.click(screen.getByTestId("remove-from-practice-button-builtin-apple"));
+
+    expect(screen.getByTestId("active-word-list")).not.toHaveTextContent("apple");
+    expect(screen.getByTestId("hidden-builtin-word-list")).toHaveTextContent("apple");
+  });
+
   it("edits a custom word", async () => {
     const user = userEvent.setup();
     render(<App />);
@@ -186,7 +473,7 @@ describe("App", () => {
     await user.type(screen.getByTestId("edit-word-input-custom-banana"), "grape");
     await user.click(screen.getByTestId("save-word-button-custom-banana"));
 
-    expect(screen.getByText("grape")).toBeInTheDocument();
+    expect(screen.getByTestId("custom-word-list")).toHaveTextContent("grape");
     expect(screen.queryByText("banana")).not.toBeInTheDocument();
   });
 
@@ -209,29 +496,29 @@ describe("App", () => {
     expect(screen.getByTestId("edit-word-input-custom-banana")).toHaveValue("grape");
   });
 
-  it("reorders custom words and keeps the order after reload", async () => {
+  it("reorders custom words among builtin words and keeps the order after reload", async () => {
     const user = userEvent.setup();
     const { unmount } = render(<App />);
 
     await user.click(screen.getByRole("button", { name: "Words" }));
     await user.type(screen.getByLabelText("New word"), "banana");
     await user.click(screen.getByRole("button", { name: "Add word" }));
-    await user.clear(screen.getByLabelText("New word"));
-    await user.type(screen.getByLabelText("New word"), "grape");
-    await user.click(screen.getByRole("button", { name: "Add word" }));
-    await user.click(screen.getByTestId("move-word-up-button-custom-grape"));
+    await user.click(screen.getByTestId("move-word-up-button-custom-banana"));
+    await user.click(screen.getByTestId("move-word-up-button-custom-banana"));
 
-    let customWordChips = screen.getAllByTestId("word-chip");
-    expect(customWordChips[customWordChips.length - 2]).toHaveTextContent("grape");
-    expect(customWordChips[customWordChips.length - 1]).toHaveTextContent("banana");
+    let activeWordChips = screen.getAllByTestId("active-word-chip");
+    expect(activeWordChips[activeWordChips.length - 3]).toHaveTextContent("banana");
+    expect(activeWordChips[activeWordChips.length - 2]).toHaveTextContent("keyboard");
+    expect(activeWordChips[activeWordChips.length - 1]).toHaveTextContent("language");
 
     unmount();
     render(<App />);
     await user.click(screen.getByRole("button", { name: "Words" }));
 
-    customWordChips = screen.getAllByTestId("word-chip");
-    expect(customWordChips[customWordChips.length - 2]).toHaveTextContent("grape");
-    expect(customWordChips[customWordChips.length - 1]).toHaveTextContent("banana");
+    activeWordChips = screen.getAllByTestId("active-word-chip");
+    expect(activeWordChips[activeWordChips.length - 3]).toHaveTextContent("banana");
+    expect(activeWordChips[activeWordChips.length - 2]).toHaveTextContent("keyboard");
+    expect(activeWordChips[activeWordChips.length - 1]).toHaveTextContent("language");
   });
 
   it("rebuilds the active session when a custom word is deleted", async () => {
@@ -286,15 +573,19 @@ describe("App", () => {
     expect(screen.getByTestId("current-word")).toHaveTextContent("book");
   });
 
-  it("uses the reordered builtin order for practice when shuffle is off", async () => {
+  it("uses the reordered mixed word order for practice when shuffle is off", async () => {
     const user = userEvent.setup();
     render(<App />);
 
     await user.click(screen.getByRole("button", { name: "Words" }));
-    await user.click(screen.getByTestId("move-word-down-button-builtin-apple"));
+    await user.type(screen.getByLabelText("New word"), "banana");
+    await user.click(screen.getByRole("button", { name: "Add word" }));
+    for (let step = 0; step < 20; step += 1) {
+      await user.click(screen.getByTestId("move-word-up-button-custom-banana"));
+    }
     await user.click(screen.getByRole("button", { name: "Practice" }));
 
-    expect(screen.getByTestId("current-word")).toHaveTextContent("book");
+    expect(screen.getByTestId("current-word")).toHaveTextContent("banana");
   });
 
   it("reset builtin words restores the shipped builtin order", async () => {

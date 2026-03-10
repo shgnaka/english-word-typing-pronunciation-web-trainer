@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { createWordEntry, orderBuiltinWords, resolveBuiltinWords, sanitizeBuiltinWordOrder } from "./words";
+import { createWordEntry, orderWords, resolveBuiltinWords, sanitizeWordOrder } from "./words";
 
 describe("words", () => {
   it("applies builtin edit overrides when resolving words", () => {
@@ -30,21 +30,21 @@ describe("words", () => {
     expect(resolved.map((word) => word.text)).toEqual(["book"]);
   });
 
-  it("sanitizes builtin word order by removing stale ids and appending missing ids", () => {
-    const builtinWords = [createWordEntry("apple", "builtin")!, createWordEntry("book", "builtin")!, createWordEntry("chair", "builtin")!];
+  it("sanitizes word order by removing stale ids and appending missing ids", () => {
+    const words = [createWordEntry("apple", "builtin")!, createWordEntry("book", "builtin")!, createWordEntry("chair", "custom")!];
 
-    expect(sanitizeBuiltinWordOrder(builtinWords, ["builtin-book", "builtin-stale"])).toEqual([
+    expect(sanitizeWordOrder(words, ["builtin-book", "builtin-stale"])).toEqual([
       "builtin-book",
       "builtin-apple",
-      "builtin-chair"
+      "custom-chair"
     ]);
   });
 
-  it("orders builtin words using the sanitized persisted order", () => {
-    const builtinWords = [createWordEntry("apple", "builtin")!, createWordEntry("book", "builtin")!, createWordEntry("chair", "builtin")!];
+  it("orders mixed words using the sanitized persisted order", () => {
+    const words = [createWordEntry("apple", "builtin")!, createWordEntry("book", "builtin")!, createWordEntry("chair", "custom")!];
 
-    const ordered = orderBuiltinWords(builtinWords, ["builtin-book"]);
+    const ordered = orderWords(words, ["custom-chair"]);
 
-    expect(ordered.map((word) => word.text)).toEqual(["book", "apple", "chair"]);
+    expect(ordered.map((word) => word.text)).toEqual(["chair", "apple", "book"]);
   });
 });

@@ -3,21 +3,25 @@ import {
   clearBuiltinWordOrder,
   clearBuiltinWordOverrides,
   defaultSessionConfig,
+  defaultWordsPanelState,
   loadBuiltinWordOrder,
   loadBuiltinWordOverrides,
   loadCustomWords,
   loadSessionConfig,
+  loadWordsPanelState,
   saveBuiltinWordOrder,
   saveBuiltinWordOverrides,
   saveCustomWords,
-  saveSessionConfig
+  saveSessionConfig,
+  saveWordsPanelState
 } from "./storage";
-import type { BuiltinWordOrder, BuiltinWordOverrides, WordEntry } from "../domain/types";
+import type { BuiltinWordOverrides, WordEntry, WordOrder } from "../domain/types";
 
 const customWordsKey = "wordbeat.customWords";
 const builtinWordOrderKey = "wordbeat.builtinWordOrder";
 const builtinWordOverridesKey = "wordbeat.builtinWordOverrides";
 const sessionConfigKey = "wordbeat.sessionConfig";
+const wordsPanelStateKey = "wordbeat.wordsPanelState";
 
 describe("storage", () => {
   beforeEach(() => {
@@ -161,7 +165,7 @@ describe("storage", () => {
   });
 
   it("loads legacy builtin word order and migrates it to the versioned format", () => {
-    const legacyOrder: BuiltinWordOrder = ["builtin-book", "builtin-apple"];
+    const legacyOrder: WordOrder = ["builtin-book", "builtin-apple"];
     window.localStorage.setItem(builtinWordOrderKey, JSON.stringify(legacyOrder));
 
     expect(loadBuiltinWordOrder()).toEqual(legacyOrder);
@@ -172,7 +176,7 @@ describe("storage", () => {
   });
 
   it("saves builtin word order in a versioned format", () => {
-    const order: BuiltinWordOrder = ["builtin-book", "builtin-apple"];
+    const order: WordOrder = ["builtin-book", "builtin-apple"];
 
     saveBuiltinWordOrder(order);
 
@@ -190,6 +194,45 @@ describe("storage", () => {
     expect(JSON.parse(window.localStorage.getItem(builtinWordOrderKey) ?? "null")).toEqual({
       version: 1,
       value: []
+    });
+  });
+
+  it("loads legacy words panel state and migrates it to the versioned format", () => {
+    window.localStorage.setItem(
+      wordsPanelStateKey,
+      JSON.stringify({
+        builtinMinimized: true,
+        inactiveCustomMinimized: true
+      })
+    );
+
+    expect(loadWordsPanelState()).toEqual({
+      ...defaultWordsPanelState,
+      builtinMinimized: true,
+      inactiveCustomMinimized: true
+    });
+    expect(JSON.parse(window.localStorage.getItem(wordsPanelStateKey) ?? "null")).toEqual({
+      version: 1,
+      value: {
+        ...defaultWordsPanelState,
+        builtinMinimized: true,
+        inactiveCustomMinimized: true
+      }
+    });
+  });
+
+  it("saves words panel state in a versioned format", () => {
+    saveWordsPanelState({
+      ...defaultWordsPanelState,
+      customMinimized: true
+    });
+
+    expect(JSON.parse(window.localStorage.getItem(wordsPanelStateKey) ?? "null")).toEqual({
+      version: 1,
+      value: {
+        ...defaultWordsPanelState,
+        customMinimized: true
+      }
     });
   });
 });

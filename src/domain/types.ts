@@ -10,7 +10,7 @@ export interface BuiltinWordOverride {
 }
 
 export type BuiltinWordOverrides = Record<string, BuiltinWordOverride>;
-export type BuiltinWordOrder = string[];
+export type WordOrder = string[];
 
 export interface WordEntry {
   id: string;

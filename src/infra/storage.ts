@@ -1,10 +1,11 @@
-import type { BuiltinWordOrder, BuiltinWordOverrides, DisplayLanguage, SessionConfig, WordEntry } from "../domain/types";
+import type { BuiltinWordOverrides, DisplayLanguage, SessionConfig, WordEntry, WordOrder } from "../domain/types";
 
 const customWordsKey = "wordbeat.customWords";
 const builtinWordOverridesKey = "wordbeat.builtinWordOverrides";
 const builtinWordOrderKey = "wordbeat.builtinWordOrder";
 const sessionConfigKey = "wordbeat.sessionConfig";
 const displayLanguageKey = "wordbeat.displayLanguage";
+const wordsPanelStateKey = "wordbeat.wordsPanelState";
 const storageSchemaVersion = 1;
 
 interface VersionedStorageRecord<T> {
@@ -22,6 +23,20 @@ export const defaultSessionConfig: SessionConfig = {
 };
 
 export const defaultDisplayLanguage: DisplayLanguage = "en";
+
+export interface WordsPanelState {
+  builtinMinimized: boolean;
+  hiddenBuiltinMinimized: boolean;
+  customMinimized: boolean;
+  inactiveCustomMinimized: boolean;
+}
+
+export const defaultWordsPanelState: WordsPanelState = {
+  builtinMinimized: false,
+  hiddenBuiltinMinimized: false,
+  customMinimized: false,
+  inactiveCustomMinimized: false
+};
 
 export function sanitizeWordCount(value: number): number {
   if (!Number.isFinite(value)) {
@@ -51,6 +66,17 @@ function sanitizeSessionConfigValue(value: Partial<SessionConfig> | null | undef
     browserTtsEnabled: Boolean(parsed.browserTtsEnabled ?? defaultSessionConfig.browserTtsEnabled),
     showFingerGuide: Boolean(parsed.showFingerGuide ?? defaultSessionConfig.showFingerGuide),
     showKeyboardHint: Boolean(parsed.showKeyboardHint ?? defaultSessionConfig.showKeyboardHint)
+  };
+}
+
+function sanitizeWordsPanelStateValue(value: Partial<WordsPanelState> | null | undefined): WordsPanelState {
+  const parsed = value ?? {};
+
+  return {
+    builtinMinimized: Boolean(parsed.builtinMinimized ?? defaultWordsPanelState.builtinMinimized),
+    hiddenBuiltinMinimized: Boolean(parsed.hiddenBuiltinMinimized ?? defaultWordsPanelState.hiddenBuiltinMinimized),
+    customMinimized: Boolean(parsed.customMinimized ?? defaultWordsPanelState.customMinimized),
+    inactiveCustomMinimized: Boolean(parsed.inactiveCustomMinimized ?? defaultWordsPanelState.inactiveCustomMinimized)
   };
 }
 
@@ -119,17 +145,17 @@ export function clearBuiltinWordOverrides(): void {
   saveVersionedRecord(builtinWordOverridesKey, {});
 }
 
-export function loadBuiltinWordOrder(): BuiltinWordOrder {
+export function loadBuiltinWordOrder(): WordOrder {
   const raw = globalThis.localStorage?.getItem(builtinWordOrderKey);
   if (!raw) {
     return [];
   }
 
   try {
-    const parsed = JSON.parse(raw) as BuiltinWordOrder | VersionedStorageRecord<BuiltinWordOrder>;
+    const parsed = JSON.parse(raw) as WordOrder | VersionedStorageRecord<WordOrder>;
     const order = Array.isArray(parsed)
       ? parsed
-      : isVersionedStorageRecord<BuiltinWordOrder>(parsed) && Array.isArray(parsed.value)
+      : isVersionedStorageRecord<WordOrder>(parsed) && Array.isArray(parsed.value)
       ? parsed.value
       : [];
 
@@ -140,7 +166,7 @@ export function loadBuiltinWordOrder(): BuiltinWordOrder {
   }
 }
 
-export function saveBuiltinWordOrder(order: BuiltinWordOrder): void {
+export function saveBuiltinWordOrder(order: WordOrder): void {
   saveVersionedRecord(builtinWordOrderKey, order);
 }
 
@@ -168,6 +194,28 @@ export function loadSessionConfig(): SessionConfig {
 
 export function saveSessionConfig(config: SessionConfig): void {
   saveVersionedRecord(sessionConfigKey, sanitizeSessionConfigValue(config));
+}
+
+export function loadWordsPanelState(): WordsPanelState {
+  const raw = globalThis.localStorage?.getItem(wordsPanelStateKey);
+  if (!raw) {
+    return defaultWordsPanelState;
+  }
+
+  try {
+    const parsed = JSON.parse(raw) as Partial<WordsPanelState> | VersionedStorageRecord<Partial<WordsPanelState>>;
+    const wordsPanelState = isVersionedStorageRecord<Partial<WordsPanelState>>(parsed)
+      ? sanitizeWordsPanelStateValue(parsed.value)
+      : sanitizeWordsPanelStateValue(parsed);
+    saveVersionedRecord(wordsPanelStateKey, wordsPanelState);
+    return wordsPanelState;
+  } catch {
+    return defaultWordsPanelState;
+  }
+}
+
+export function saveWordsPanelState(state: WordsPanelState): void {
+  saveVersionedRecord(wordsPanelStateKey, sanitizeWordsPanelStateValue(state));
 }
 
 export function loadDisplayLanguage(): DisplayLanguage {
