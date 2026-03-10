@@ -108,6 +108,10 @@ type MessageKey =
   | "words.minimizeSection"
   | "words.expandSection"
   | "words.minimizedSummary"
+  | "words.builtinMinimizedSummary"
+  | "words.customMinimizedSummary"
+  | "words.hiddenBuiltinMinimizedSummary"
+  | "words.hiddenCustomMinimizedSummary"
   | "words.error.invalid"
   | "words.error.duplicate"
   | "settings.title"
@@ -259,6 +263,10 @@ const messages: Record<DisplayLanguage, Record<MessageKey, string>> = {
     "words.minimizeSection": "Minimize",
     "words.expandSection": "Expand",
     "words.minimizedSummary": "Section minimized. Expand to manage the full list.",
+    "words.builtinMinimizedSummary": "{activeCount} active built-in words, {hiddenCount} hidden",
+    "words.customMinimizedSummary": "{activeCount} active custom words, {hiddenCount} hidden",
+    "words.hiddenBuiltinMinimizedSummary": "{count} hidden built-in words",
+    "words.hiddenCustomMinimizedSummary": "{count} hidden custom words",
     "words.error.invalid": "Enter letters only.",
     "words.error.duplicate": "That word already exists.",
     "settings.title": "Session settings",
@@ -409,6 +417,10 @@ const messages: Record<DisplayLanguage, Record<MessageKey, string>> = {
     "words.minimizeSection": "小さく表示",
     "words.expandSection": "広げて表示",
     "words.minimizedSummary": "このセクションは小さく表示されています。広げると一覧を管理できます。",
+    "words.builtinMinimizedSummary": "有効な標準単語 {activeCount} 件、非表示 {hiddenCount} 件",
+    "words.customMinimizedSummary": "有効なカスタム単語 {activeCount} 件、非表示 {hiddenCount} 件",
+    "words.hiddenBuiltinMinimizedSummary": "非表示の標準単語 {count} 件",
+    "words.hiddenCustomMinimizedSummary": "非表示のカスタム単語 {count} 件",
     "words.error.invalid": "英字のみ入力してください。",
     "words.error.duplicate": "その単語はすでにあります。",
     "settings.title": "セッション設定",
@@ -559,6 +571,10 @@ const messages: Record<DisplayLanguage, Record<MessageKey, string>> = {
     "words.minimizeSection": "ちいさく ひょうじ",
     "words.expandSection": "ひろげて ひょうじ",
     "words.minimizedSummary": "この セクションは ちいさく ひょうじされています。ひろげると いちらんを かんりできます。",
+    "words.builtinMinimizedSummary": "つかえる はじめからある たんご {activeCount} けん、ひひょうじ {hiddenCount} けん",
+    "words.customMinimizedSummary": "つかえる カスタムたんご {activeCount} けん、ひひょうじ {hiddenCount} けん",
+    "words.hiddenBuiltinMinimizedSummary": "ひひょうじの はじめからある たんご {count} けん",
+    "words.hiddenCustomMinimizedSummary": "ひひょうじの カスタムたんご {count} けん",
     "words.error.invalid": "えいじのみ にゅうりょくしてください。",
     "words.error.duplicate": "その たんごは すでに あります。",
     "settings.title": "セッションせってい",

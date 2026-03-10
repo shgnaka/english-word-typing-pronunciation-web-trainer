@@ -37,6 +37,9 @@ export function BuiltinWordsSection({
   const allVisibleSelected =
     selection.active.selectableWordIds.length > 0 &&
     selection.active.selectableWordIds.every((wordId) => selection.active.selectedWordIds.includes(wordId));
+  const minimizedSummary = t(language, "words.builtinMinimizedSummary")
+    .replace("{activeCount}", String(trainer.builtinWords.length))
+    .replace("{hiddenCount}", String(trainer.hiddenBuiltinWords.length));
   return (
     <section ref={sectionRef} className={`word-section word-section-builtin ${wordsPanelState.builtinMinimized ? "word-section-minimized" : ""}`} data-testid="builtin-word-section">
       <div className="panel-header">
@@ -71,7 +74,7 @@ export function BuiltinWordsSection({
       </div>
       {wordsPanelState.builtinMinimized ? (
         <p className="word-section-summary" data-testid="builtin-section-summary">
-          {t(language, "words.minimizedSummary")}
+          {minimizedSummary}
         </p>
       ) : (
         <>

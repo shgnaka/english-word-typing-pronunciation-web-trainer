@@ -26,6 +26,7 @@ export function HiddenCustomWordsSection({
   const language = trainer.displayLanguage;
   const allHiddenVisibleSelected =
     selection.selectableWordIds.length > 0 && selection.selectableWordIds.every((wordId) => selection.selectedWordIds.includes(wordId));
+  const minimizedSummary = t(language, "words.hiddenCustomMinimizedSummary").replace("{count}", String(trainer.inactiveCustomWords.length));
 
   function confirmBulkDelete() {
     return window.confirm(t(language, "words.bulkDeleteConfirm"));
@@ -62,7 +63,7 @@ export function HiddenCustomWordsSection({
       </div>
       {inactiveCustomMinimized ? (
         <p className="word-section-summary" data-testid="inactive-custom-section-summary">
-          {t(language, "words.minimizedSummary")}
+          {minimizedSummary}
         </p>
       ) : (
         <>

@@ -24,6 +24,7 @@ export function HiddenBuiltinWordsSection({
   const language = trainer.displayLanguage;
   const allHiddenVisibleSelected =
     selection.selectableWordIds.length > 0 && selection.selectableWordIds.every((wordId) => selection.selectedWordIds.includes(wordId));
+  const minimizedSummary = t(language, "words.hiddenBuiltinMinimizedSummary").replace("{count}", String(trainer.hiddenBuiltinWords.length));
 
   return (
     <section className={`word-section word-section-hidden ${hiddenBuiltinMinimized ? "word-section-minimized" : ""}`} data-testid="hidden-builtin-word-section">
@@ -54,7 +55,7 @@ export function HiddenBuiltinWordsSection({
       </div>
       {hiddenBuiltinMinimized ? (
         <p className="word-section-summary" data-testid="hidden-builtin-section-summary">
-          {t(language, "words.minimizedSummary")}
+          {minimizedSummary}
         </p>
       ) : (
         <>

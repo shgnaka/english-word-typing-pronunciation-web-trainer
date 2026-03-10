@@ -38,6 +38,9 @@ export function CustomWordsSection({
     selection.active.selectableWordIds.length > 0 &&
     selection.active.selectableWordIds.every((wordId) => selection.active.selectedWordIds.includes(wordId));
   const activeCustomCount = trainer.customWords.length - trainer.inactiveCustomWords.length;
+  const minimizedSummary = t(language, "words.customMinimizedSummary")
+    .replace("{activeCount}", String(activeCustomCount))
+    .replace("{hiddenCount}", String(trainer.inactiveCustomWords.length));
 
   function confirmBulkDelete() {
     return window.confirm(t(language, "words.bulkDeleteConfirm"));
@@ -85,7 +88,7 @@ export function CustomWordsSection({
       </div>
       {wordsPanelState.customMinimized ? (
         <p className="word-section-summary" data-testid="custom-section-summary">
-          {t(language, "words.minimizedSummary")}
+          {minimizedSummary}
         </p>
       ) : (
         <>

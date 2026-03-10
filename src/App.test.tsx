@@ -136,13 +136,35 @@ describe("App", () => {
 
     await user.click(screen.getByRole("button", { name: "Words" }));
     await user.click(screen.getByTestId("toggle-builtin-section-button"));
-    expect(screen.getByTestId("builtin-section-summary")).toBeInTheDocument();
+    expect(screen.getByTestId("builtin-section-summary")).toHaveTextContent("20 active built-in words, 0 hidden");
 
     unmount();
     render(<App />);
 
     await user.click(screen.getByRole("button", { name: "Words" }));
-    expect(screen.getByTestId("builtin-section-summary")).toBeInTheDocument();
+    expect(screen.getByTestId("builtin-section-summary")).toHaveTextContent("20 active built-in words, 0 hidden");
+  });
+
+  it("shows count-based minimized summaries for custom and hidden word sections", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.click(screen.getByRole("button", { name: "Words" }));
+    await user.type(screen.getByLabelText("New word"), "banana");
+    await user.click(screen.getByRole("button", { name: "Add word" }));
+    await user.type(screen.getByLabelText("New word"), "mango");
+    await user.click(screen.getByRole("button", { name: "Add word" }));
+    await user.click(screen.getByTestId("remove-from-practice-button-custom-banana"));
+    await user.click(screen.getByTestId("delete-word-button-builtin-book"));
+
+    await user.click(screen.getByTestId("toggle-hidden-builtin-section-button"));
+    expect(screen.getByTestId("hidden-builtin-section-summary")).toHaveTextContent("1 hidden built-in words");
+
+    await user.click(screen.getByTestId("toggle-inactive-custom-section-button"));
+    expect(screen.getByTestId("inactive-custom-section-summary")).toHaveTextContent("1 hidden custom words");
+
+    await user.click(screen.getByTestId("toggle-custom-section-button"));
+    expect(screen.getByTestId("custom-section-summary")).toHaveTextContent("1 active custom words, 1 hidden");
   });
 
   it("sorts custom words alphabetically from the custom words section", async () => {
