@@ -57,6 +57,7 @@ type MessageKey =
   | "words.selectVisible"
   | "words.deselectVisible"
   | "words.clearSelection"
+  | "words.moreActions"
   | "words.selectedCount"
   | "words.bulkHint"
   | "words.bulkRemoveFromPractice"
@@ -207,6 +208,7 @@ const messages: Record<DisplayLanguage, Record<MessageKey, string>> = {
     "words.selectVisible": "Select visible",
     "words.deselectVisible": "Deselect visible",
     "words.clearSelection": "Clear selection",
+    "words.moreActions": "More actions",
     "words.selectedCount": "{count} selected",
     "words.bulkHint": "Select words below to unlock bulk actions for this section.",
     "words.bulkRemoveFromPractice": "Remove selected",
@@ -356,6 +358,7 @@ const messages: Record<DisplayLanguage, Record<MessageKey, string>> = {
     "words.selectVisible": "表示中を選択",
     "words.deselectVisible": "表示中の選択を外す",
     "words.clearSelection": "選択を解除",
+    "words.moreActions": "その他の操作",
     "words.selectedCount": "{count} 件選択中",
     "words.bulkHint": "このセクションで一括操作を使うには、下の単語を選択してください。",
     "words.bulkRemoveFromPractice": "選択した項目を練習順から外す",
@@ -505,6 +508,7 @@ const messages: Record<DisplayLanguage, Record<MessageKey, string>> = {
     "words.selectVisible": "ひょうじちゅうを えらぶ",
     "words.deselectVisible": "ひょうじちゅうの えらびを はずす",
     "words.clearSelection": "えらんだ ものを はずす",
+    "words.moreActions": "そのほかの そうさ",
     "words.selectedCount": "{count} けん えらんでいます",
     "words.bulkHint": "この セクションで まとめて そうさするには、したの たんごを えらんでください。",
     "words.bulkRemoveFromPractice": "えらんだ ものを れんしゅうじゅんから はずす",

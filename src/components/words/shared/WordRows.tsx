@@ -1,4 +1,35 @@
-import type { DragEvent, ReactNode } from "react";
+import { Children, isValidElement, useEffect, useState, type DragEvent, type ReactNode } from "react";
+import { IconButtonSpacer } from "./WordControls";
+
+function useCompactWordRowActions() {
+  const [isCompact, setIsCompact] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === "undefined" || typeof window.matchMedia !== "function") {
+      return;
+    }
+
+    const mediaQuery = window.matchMedia("(max-width: 760px)");
+    const update = (matches: boolean) => setIsCompact(matches);
+
+    update(mediaQuery.matches);
+
+    const listener = (event: MediaQueryListEvent) => update(event.matches);
+    if (typeof mediaQuery.addEventListener === "function") {
+      mediaQuery.addEventListener("change", listener);
+      return () => mediaQuery.removeEventListener("change", listener);
+    }
+
+    mediaQuery.addListener(listener);
+    return () => mediaQuery.removeListener(listener);
+  }, []);
+
+  return isCompact;
+}
+
+function isSpacerAction(node: ReactNode) {
+  return isValidElement(node) && node.type === IconButtonSpacer;
+}
 
 function renderHighlightedText(text: string, searchValue: string) {
   const normalizedSearchValue = searchValue.trim().toLowerCase();
@@ -98,6 +129,7 @@ export function ReadonlyWordRow({
   onToggleSelected,
   sourceTag,
   badge,
+  moreActionsLabel,
   draggable = false,
   dragStateClassName = "",
   onDragStart,
@@ -117,6 +149,7 @@ export function ReadonlyWordRow({
   onToggleSelected?: () => void;
   sourceTag?: ReactNode;
   badge?: ReactNode;
+  moreActionsLabel?: string;
   draggable?: boolean;
   dragStateClassName?: string;
   onDragStart?: (event: DragEvent<HTMLDivElement>) => void;
@@ -124,6 +157,11 @@ export function ReadonlyWordRow({
   onDrop?: (event: DragEvent<HTMLDivElement>) => void;
   onDragEnd?: () => void;
 }) {
+  const isCompact = useCompactWordRowActions();
+  const normalizedActions = Children.toArray(actions).filter((action) => !isCompact || !isSpacerAction(action));
+  const primaryActions = isCompact ? normalizedActions.slice(0, 2) : normalizedActions;
+  const secondaryActions = isCompact ? normalizedActions.slice(2) : [];
+
   return (
     <div
       className={`word-chip-row ${selected ? "word-chip-row-selected" : ""} ${draggable ? "word-chip-row-draggable" : ""} ${dragStateClassName}`.trim()}
@@ -145,7 +183,24 @@ export function ReadonlyWordRow({
       </span>
       {sourceTag ?? null}
       {badge ?? null}
-      <div className="word-row-actions">{actions}</div>
+      <div className="word-row-actions">
+        <div className="word-row-actions-primary">{primaryActions}</div>
+        {secondaryActions.length > 0 ? (
+          <details className="word-row-actions-overflow">
+            <summary
+              className="secondary icon-button word-row-actions-overflow-toggle"
+              data-testid={`more-row-actions-button-${wordId}`}
+              aria-label={moreActionsLabel}
+              title={moreActionsLabel}
+            >
+              <span aria-hidden="true" className="icon-glyph">
+                ⋯
+              </span>
+            </summary>
+            <div className="word-row-actions-overflow-menu">{secondaryActions}</div>
+          </details>
+        ) : null}
+      </div>
     </div>
   );
 }

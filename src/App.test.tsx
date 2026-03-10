@@ -1,4 +1,4 @@
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { fireEvent } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -350,6 +350,42 @@ describe("App", () => {
 
     expect(screen.getByTestId("word-search-input")).toHaveValue("");
     expect(screen.queryByTestId("clear-word-search-button")).not.toBeInTheDocument();
+  });
+
+  it("moves secondary row actions into an overflow menu on compact layouts", async () => {
+    const originalMatchMedia = window.matchMedia;
+    Object.defineProperty(window, "matchMedia", {
+      writable: true,
+      value: vi.fn().mockImplementation(() => ({
+        matches: true,
+        media: "(max-width: 760px)",
+        onchange: null,
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+        addListener: vi.fn(),
+        removeListener: vi.fn(),
+        dispatchEvent: vi.fn()
+      }))
+    });
+
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.click(screen.getByRole("button", { name: "Words" }));
+    await user.type(screen.getByLabelText("New word"), "banana");
+    await user.click(screen.getByRole("button", { name: "Add word" }));
+
+    const customWordsSection = screen.getByTestId("custom-word-section");
+    const customWordsSectionQueries = within(customWordsSection);
+
+    expect(customWordsSectionQueries.getByTestId("more-row-actions-button-custom-banana")).toBeInTheDocument();
+    await user.click(customWordsSectionQueries.getByTestId("more-row-actions-button-custom-banana"));
+    expect(customWordsSectionQueries.getByTestId("delete-word-button-custom-banana")).toBeInTheDocument();
+
+    Object.defineProperty(window, "matchMedia", {
+      writable: true,
+      value: originalMatchMedia
+    });
   });
 
   it("edits a builtin word", async () => {

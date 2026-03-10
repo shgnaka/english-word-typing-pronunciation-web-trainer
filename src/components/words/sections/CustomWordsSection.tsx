@@ -169,16 +169,17 @@ export function CustomWordsSection({
                       selectTestId={`select-custom-word-checkbox-${word.id}`}
                       selected={selection.active.selectedWordIds.includes(word.id)}
                       onToggleSelected={() => selection.active.toggleWord(word.id)}
+                      moreActionsLabel={t(language, "words.moreActions")}
                       actions={[
                         <IconButton key="edit" label={t(language, "words.edit")} icon="✎" testId={`edit-word-button-${word.id}`} onClick={() => trainer.startEditingWord(word.id, "custom")} />,
-                        <IconButton key="delete" label={t(language, "words.delete")} icon="🗑" testId={`delete-word-button-${word.id}`} onClick={() => trainer.handleRemoveWord(word.id)} />,
                         <IconButton
                           key="remove"
                           label={t(language, "words.removeFromPractice")}
                           icon="−"
                           testId={`remove-from-practice-manage-button-${word.id}`}
                           onClick={() => trainer.removeCustomWordFromPractice(word.id)}
-                        />
+                        />,
+                        <IconButton key="delete" label={t(language, "words.delete")} icon="🗑" testId={`delete-word-button-${word.id}`} onClick={() => trainer.handleRemoveWord(word.id)} />
                       ]}
                     />
                   )}

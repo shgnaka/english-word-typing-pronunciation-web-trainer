@@ -130,13 +130,14 @@ export function BuiltinWordsSection({
                       selectTestId={`select-builtin-word-checkbox-${word.id}`}
                       selected={selection.active.selectedWordIds.includes(word.id)}
                       onToggleSelected={() => selection.active.toggleWord(word.id)}
+                      moreActionsLabel={t(language, "words.moreActions")}
                       badge={editedBuiltinWordIds.has(word.id) ? <StatePill label={t(language, "words.builtinEdited")} tone="edited" testId={`builtin-word-state-${word.id}`} /> : null}
                       actions={[
+                        <IconButton key="edit" label={t(language, "words.edit")} icon="✎" testId={`edit-word-button-${word.id}`} onClick={() => trainer.startEditingWord(word.id, "builtin")} />,
+                        <IconButton key="remove" label={t(language, "words.removeFromPractice")} icon="−" testId={`delete-word-button-${word.id}`} onClick={() => trainer.handleRemoveBuiltinWord(word.id)} />,
                         editedBuiltinWordIds.has(word.id) ? (
                           <IconButton key="restore" label={t(language, "words.restore")} icon="↺" testId={`restore-word-button-${word.id}`} onClick={() => trainer.restoreBuiltinWord(word.id)} />
                         ) : null,
-                        <IconButton key="edit" label={t(language, "words.edit")} icon="✎" testId={`edit-word-button-${word.id}`} onClick={() => trainer.startEditingWord(word.id, "builtin")} />,
-                        <IconButton key="remove" label={t(language, "words.removeFromPractice")} icon="−" testId={`delete-word-button-${word.id}`} onClick={() => trainer.handleRemoveBuiltinWord(word.id)} />
                       ].filter(Boolean)}
                     />
                   )}

@@ -81,17 +81,20 @@ export function ActiveWordsSection({
                 selectTestId={`select-active-word-checkbox-${word.id}`}
                 selected={selection.selectedWordIds.includes(word.id)}
                 onToggleSelected={() => selection.toggleWord(word.id)}
+                moreActionsLabel={t(language, "words.moreActions")}
                 sourceTag={
                   <span className={`word-source-tag ${word.source === "builtin" ? "word-source-tag-builtin" : "word-source-tag-custom"}`}>
                     {t(language, word.source === "builtin" ? "words.sourceBuiltin" : "words.sourceCustom")}
                   </span>
                 }
                 actions={[
-                  activeWordIndex > 0 ? (
-                    <IconButton key="top" label={t(language, "words.moveToTop")} icon="⇡" testId={`move-word-top-button-${word.id}`} onClick={() => trainer.moveWordToEdge(word.id, "top")} />
-                  ) : (
-                    <IconButtonSpacer key="top-spacer" />
-                  ),
+                  <IconButton
+                    key="remove"
+                    label={t(language, "words.removeFromPractice")}
+                    icon="−"
+                    testId={`remove-from-practice-button-${word.id}`}
+                    onClick={() => (word.source === "builtin" ? trainer.handleRemoveBuiltinWord(word.id) : trainer.removeCustomWordFromPractice(word.id))}
+                  />,
                   activeWordIndex > 0 ? (
                     <IconButton key="up" label={t(language, "words.moveUp")} icon="↑" testId={`move-word-up-button-${word.id}`} onClick={() => trainer.moveWord(word.id, "up")} />
                   ) : (
@@ -102,18 +105,16 @@ export function ActiveWordsSection({
                   ) : (
                     <IconButtonSpacer key="down-spacer" />
                   ),
+                  activeWordIndex > 0 ? (
+                    <IconButton key="top" label={t(language, "words.moveToTop")} icon="⇡" testId={`move-word-top-button-${word.id}`} onClick={() => trainer.moveWordToEdge(word.id, "top")} />
+                  ) : (
+                    <IconButtonSpacer key="top-spacer" />
+                  ),
                   activeWordIndex < dragControls.lastActiveWordIndex ? (
                     <IconButton key="bottom" label={t(language, "words.moveToBottom")} icon="⇣" testId={`move-word-bottom-button-${word.id}`} onClick={() => trainer.moveWordToEdge(word.id, "bottom")} />
                   ) : (
                     <IconButtonSpacer key="bottom-spacer" />
-                  ),
-                  <IconButton
-                    key="remove"
-                    label={t(language, "words.removeFromPractice")}
-                    icon="−"
-                    testId={`remove-from-practice-button-${word.id}`}
-                    onClick={() => (word.source === "builtin" ? trainer.handleRemoveBuiltinWord(word.id) : trainer.removeCustomWordFromPractice(word.id))}
-                  />
+                  )
                 ]}
                 draggable
                 dragStateClassName={`${dragControls.draggedWordId === word.id ? "word-chip-row-dragging" : ""} ${dragControls.dropTargetWordId === word.id && dragControls.draggedWordId !== word.id ? "word-chip-row-drop-target" : ""}`.trim()}

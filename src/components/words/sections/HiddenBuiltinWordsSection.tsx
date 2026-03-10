@@ -100,6 +100,7 @@ export function HiddenBuiltinWordsSection({
                   selectTestId={`select-hidden-builtin-word-checkbox-${word.id}`}
                   selected={selection.selectedWordIds.includes(word.id)}
                   onToggleSelected={() => selection.toggleWord(word.id)}
+                  moreActionsLabel={t(language, "words.moreActions")}
                   actions={<IconButton label={t(language, "words.restore")} icon="↺" testId={`restore-word-button-${word.id}`} onClick={() => trainer.restoreBuiltinWord(word.id)} />}
                 />
               ))

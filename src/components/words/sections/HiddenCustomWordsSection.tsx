@@ -146,10 +146,11 @@ export function HiddenCustomWordsSection({
                       selectTestId={`select-hidden-custom-word-checkbox-${word.id}`}
                       selected={selection.selectedWordIds.includes(word.id)}
                       onToggleSelected={() => selection.toggleWord(word.id)}
+                      moreActionsLabel={t(language, "words.moreActions")}
                       badge={<StatePill label={t(language, "words.stateLocalOnly")} tone="local" />}
                       actions={[
-                        <IconButton key="edit" label={t(language, "words.edit")} icon="✎" testId={`edit-word-button-${word.id}`} onClick={() => trainer.startEditingWord(word.id, "custom")} />,
                         <IconButton key="restore" label={t(language, "words.restore")} icon="+" testId={`add-to-practice-button-${word.id}`} onClick={() => trainer.addCustomWordToPractice(word.id)} />,
+                        <IconButton key="edit" label={t(language, "words.edit")} icon="✎" testId={`edit-word-button-${word.id}`} onClick={() => trainer.startEditingWord(word.id, "custom")} />,
                         <IconButton key="delete" label={t(language, "words.delete")} icon="🗑" testId={`delete-word-button-${word.id}`} onClick={() => trainer.handleRemoveWord(word.id)} />
                       ]}
                     />
