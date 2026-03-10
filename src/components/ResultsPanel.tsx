@@ -9,7 +9,7 @@ interface ResultsPanelProps {
 function buildResultsFeedback(trainer: TrainerState, language: TrainerState["displayLanguage"]) {
   const completedWords = trainer.session.completedWords;
   if (completedWords.length === 0) {
-    return [];
+    return null;
   }
 
   const slowestWord = completedWords.reduce((currentSlowest, result) =>
@@ -20,28 +20,29 @@ function buildResultsFeedback(trainer: TrainerState, language: TrainerState["dis
   );
   const cleanWordsCount = completedWords.filter((result) => result.mistakes === 0).length;
 
-  const feedback = [
-    t(language, "results.feedbackSlowest")
-      .replace("{word}", slowestWord.word)
-      .replace("{time}", String(slowestWord.elapsedMs)),
-    t(language, "results.feedbackCleanWords")
+  const strength = t(language, "results.feedbackCleanWords")
       .replace("{count}", String(cleanWordsCount))
-      .replace("{total}", String(completedWords.length))
-  ];
+      .replace("{total}", String(completedWords.length));
+  const focus =
+    mostMistakesWord.mistakes > 0
+      ? t(language, "results.feedbackMostMistakes")
+          .replace("{word}", mostMistakesWord.word)
+          .replace("{mistakes}", String(mostMistakesWord.mistakes))
+      : t(language, "results.feedbackSlowest")
+          .replace("{word}", slowestWord.word)
+          .replace("{time}", String(slowestWord.elapsedMs));
+  const supporting =
+    mostMistakesWord.mistakes > 0
+      ? t(language, "results.feedbackSlowest")
+          .replace("{word}", slowestWord.word)
+          .replace("{time}", String(slowestWord.elapsedMs))
+      : t(language, "results.feedbackNoMistakes");
 
-  if (mostMistakesWord.mistakes > 0) {
-    feedback.splice(
-      1,
-      0,
-      t(language, "results.feedbackMostMistakes")
-        .replace("{word}", mostMistakesWord.word)
-        .replace("{mistakes}", String(mostMistakesWord.mistakes))
-    );
-  } else {
-    feedback.splice(1, 0, t(language, "results.feedbackNoMistakes"));
-  }
-
-  return feedback;
+  return {
+    strength,
+    focus,
+    supporting
+  };
 }
 
 export function ResultsPanel({ trainer }: ResultsPanelProps) {
@@ -99,14 +100,26 @@ export function ResultsPanel({ trainer }: ResultsPanelProps) {
         {t(language, "results.summary")}
       </p>
 
-      {feedbackItems.length > 0 ? (
+      {feedbackItems ? (
         <section className="results-feedback" data-testid="results-feedback">
           <p className="label">{t(language, "results.feedbackTitle")}</p>
-          {feedbackItems.map((item) => (
-            <p key={item} className="results-feedback-item" data-testid="results-feedback-item">
-              {item}
-            </p>
-          ))}
+          <div className="results-feedback-grid">
+            <article className="results-feedback-card" data-testid="results-strength-card">
+              <p className="label">{t(language, "results.coachingStrength")}</p>
+              <p className="results-feedback-item" data-testid="results-feedback-item">
+                {feedbackItems.strength}
+              </p>
+            </article>
+            <article className="results-feedback-card" data-testid="results-focus-card">
+              <p className="label">{t(language, "results.coachingFocus")}</p>
+              <p className="results-feedback-item" data-testid="results-feedback-item">
+                {feedbackItems.focus}
+              </p>
+              <p className="results-feedback-supporting" data-testid="results-feedback-supporting">
+                {feedbackItems.supporting}
+              </p>
+            </article>
+          </div>
         </section>
       ) : null}
 
@@ -130,6 +143,15 @@ export function ResultsPanel({ trainer }: ResultsPanelProps) {
 
       <div className="cta-row">
         <button onClick={(event) => blurButtonAfterAction(event, () => trainer.restartSession())}>{t(language, "results.startNew")}</button>
+        {trainer.session.completedWords.length > 0 ? (
+          <button
+            className="secondary"
+            data-testid="retry-focused-results-button"
+            onClick={(event) => blurButtonAfterAction(event, () => trainer.retryFocusedWords())}
+          >
+            {t(language, "results.retryFocused")}
+          </button>
+        ) : null}
       </div>
     </>
   );

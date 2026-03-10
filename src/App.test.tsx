@@ -62,7 +62,11 @@ describe("App", () => {
     vi.useFakeTimers();
     render(<App />);
 
-    expect(screen.getByTestId("countdown-banner")).toHaveTextContent("Start in 3");
+    expect(screen.getByTestId("practice-primary-status")).toHaveTextContent("Start in 3");
+    expect(screen.getByTestId("practice-primary-status")).toHaveTextContent("Get ready. Press Enter or Start now to begin immediately.");
+    expect(screen.getByTestId("practice-step-hint")).toHaveTextContent(
+      "Watch the highlighted letter, then start typing as soon as the countdown ends."
+    );
     expect(screen.getByTestId("progress-count")).toHaveTextContent("0 / 10 words");
     expect(screen.getByTestId("remaining-words")).toHaveTextContent("10");
     expect(screen.getByTestId("practice-status-message")).toHaveTextContent("Typing will start in 3.");
@@ -207,7 +211,9 @@ describe("App", () => {
     const { unmount } = render(<App />);
 
     await user.click(screen.getByRole("button", { name: "Words" }));
-    await user.click(screen.getByTestId("move-word-top-button-builtin-language"));
+    const activeWordsList = within(screen.getByTestId("active-word-list"));
+    await user.click(activeWordsList.getByTestId("more-row-actions-button-builtin-language"));
+    await user.click(activeWordsList.getByTestId("move-word-top-button-builtin-language"));
     expect(screen.getByTestId("word-order-feedback")).toHaveTextContent("Practice order saved.");
 
     let activeWordChips = screen.getAllByTestId("active-word-chip");
@@ -226,7 +232,9 @@ describe("App", () => {
     render(<App />);
 
     await user.click(screen.getByRole("button", { name: "Words" }));
-    await user.click(screen.getByTestId("move-word-bottom-button-builtin-apple"));
+    const activeWordsList = within(screen.getByTestId("active-word-list"));
+    await user.click(activeWordsList.getByTestId("more-row-actions-button-builtin-apple"));
+    await user.click(activeWordsList.getByTestId("move-word-bottom-button-builtin-apple"));
 
     const activeWordChips = screen.getAllByTestId("active-word-chip");
     expect(activeWordChips[activeWordChips.length - 1]).toHaveTextContent("apple");
@@ -421,6 +429,43 @@ describe("App", () => {
     expect(scrollIntoViewMock).toHaveBeenCalled();
   });
 
+  it("prioritizes primary words-page actions and jumps to the practice order", async () => {
+    const scrollIntoViewMock = vi.fn();
+    Object.defineProperty(HTMLElement.prototype, "scrollIntoView", {
+      configurable: true,
+      value: scrollIntoViewMock
+    });
+
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.click(screen.getByRole("button", { name: "Words" }));
+
+    expect(screen.getByTestId("words-hero")).toBeInTheDocument();
+    expect(screen.getByTestId("words-stats")).toHaveTextContent("Practice order");
+    expect(screen.getByTestId("new-word-input")).toBeInTheDocument();
+    expect(screen.getByTestId("word-search-input")).toBeInTheDocument();
+
+    await user.click(screen.getByTestId("jump-to-active-words-button"));
+
+    expect(scrollIntoViewMock).toHaveBeenCalled();
+  });
+
+  it("moves secondary row actions into an overflow menu on regular layouts", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.click(screen.getByRole("button", { name: "Words" }));
+    const activeWordsList = within(screen.getByTestId("active-word-list"));
+
+    expect(activeWordsList.getByTestId("more-row-actions-button-builtin-apple")).toBeInTheDocument();
+    expect(activeWordsList.queryByTestId("move-word-down-button-builtin-apple")).not.toBeVisible();
+
+    await user.click(activeWordsList.getByTestId("more-row-actions-button-builtin-apple"));
+
+    expect(activeWordsList.getByTestId("move-word-down-button-builtin-apple")).toBeVisible();
+  });
+
   it("moves secondary row actions into an overflow menu on compact layouts", async () => {
     const originalMatchMedia = window.matchMedia;
     Object.defineProperty(window, "matchMedia", {
@@ -523,7 +568,9 @@ describe("App", () => {
     const { unmount } = render(<App />);
 
     await user.click(screen.getByRole("button", { name: "Words" }));
-    await user.click(screen.getByTestId("move-word-down-button-builtin-apple"));
+    const activeWordsList = within(screen.getByTestId("active-word-list"));
+    await user.click(activeWordsList.getByTestId("more-row-actions-button-builtin-apple"));
+    await user.click(activeWordsList.getByTestId("move-word-down-button-builtin-apple"));
 
     let activeWordChips = screen.getAllByTestId("active-word-chip");
     expect(activeWordChips[0]).toHaveTextContent("book");
@@ -545,7 +592,9 @@ describe("App", () => {
     await user.click(screen.getByRole("button", { name: "Words" }));
     await user.type(screen.getByLabelText("New word"), "banana");
     await user.click(screen.getByRole("button", { name: "Add word" }));
-    await user.click(screen.getByTestId("delete-word-button-custom-banana"));
+    const customWordsList = within(screen.getByTestId("custom-word-list"));
+    await user.click(customWordsList.getByTestId("more-row-actions-button-custom-banana"));
+    await user.click(customWordsList.getByTestId("delete-word-button-custom-banana"));
 
     expect(screen.queryByText("banana")).not.toBeInTheDocument();
   });
@@ -632,8 +681,11 @@ describe("App", () => {
     await user.click(screen.getByRole("button", { name: "Words" }));
     await user.type(screen.getByLabelText("New word"), "banana");
     await user.click(screen.getByRole("button", { name: "Add word" }));
-    await user.click(screen.getByTestId("move-word-up-button-custom-banana"));
-    await user.click(screen.getByTestId("move-word-up-button-custom-banana"));
+    const activeWordsList = within(screen.getByTestId("active-word-list"));
+    await user.click(activeWordsList.getByTestId("more-row-actions-button-custom-banana"));
+    await user.click(activeWordsList.getByTestId("move-word-up-button-custom-banana"));
+    await user.click(activeWordsList.getByTestId("more-row-actions-button-custom-banana"));
+    await user.click(activeWordsList.getByTestId("move-word-up-button-custom-banana"));
 
     let activeWordChips = screen.getAllByTestId("active-word-chip");
     expect(activeWordChips[activeWordChips.length - 3]).toHaveTextContent("banana");
@@ -673,7 +725,9 @@ describe("App", () => {
       expect(screen.getByTestId("current-word")).toHaveTextContent("banana");
 
       await user.click(screen.getByRole("button", { name: "Words" }));
-      await user.click(screen.getByTestId("delete-word-button-custom-banana"));
+      const customWordsList = within(screen.getByTestId("custom-word-list"));
+      await user.click(customWordsList.getByTestId("more-row-actions-button-custom-banana"));
+      await user.click(customWordsList.getByTestId("delete-word-button-custom-banana"));
       await user.click(screen.getByRole("button", { name: "Practice" }));
 
       expect(screen.getByTestId("current-word")).toHaveTextContent("language");
@@ -709,8 +763,10 @@ describe("App", () => {
     await user.click(screen.getByRole("button", { name: "Words" }));
     await user.type(screen.getByLabelText("New word"), "banana");
     await user.click(screen.getByRole("button", { name: "Add word" }));
+    const activeWordsList = within(screen.getByTestId("active-word-list"));
     for (let step = 0; step < 20; step += 1) {
-      await user.click(screen.getByTestId("move-word-up-button-custom-banana"));
+      await user.click(activeWordsList.getByTestId("more-row-actions-button-custom-banana"));
+      await user.click(activeWordsList.getByTestId("move-word-up-button-custom-banana"));
     }
     await user.click(screen.getByRole("button", { name: "Practice" }));
 
@@ -722,7 +778,9 @@ describe("App", () => {
     render(<App />);
 
     await user.click(screen.getByRole("button", { name: "Words" }));
-    await user.click(screen.getByTestId("move-word-down-button-builtin-apple"));
+    const activeWordsList = within(screen.getByTestId("active-word-list"));
+    await user.click(activeWordsList.getByTestId("more-row-actions-button-builtin-apple"));
+    await user.click(activeWordsList.getByTestId("move-word-down-button-builtin-apple"));
     await user.click(screen.getByTestId("reset-builtin-words-button"));
 
     const builtinWordChips = screen.getAllByTestId("builtin-word-chip");
@@ -736,8 +794,10 @@ describe("App", () => {
 
     fireEvent.keyDown(practicePanel, { key: "Enter" });
 
-    expect(screen.queryByTestId("countdown-banner")).not.toBeInTheDocument();
-    expect(screen.getByTestId("feedback")).toHaveTextContent("Keep typing.");
+    expect(screen.getByTestId("practice-primary-status")).toHaveTextContent("Keep typing.");
+    expect(screen.getByTestId("practice-step-hint")).toHaveTextContent(
+      "Type the highlighted letter. Use Pronounce or the guides if you need help."
+    );
   });
 
   it("auto pronounces the first word when typing becomes available", async () => {
@@ -780,7 +840,7 @@ describe("App", () => {
     await user.click(screen.getByTestId("skip-countdown-button"));
     await user.click(screen.getByRole("button", { name: "Pronounce" }));
 
-    expect(screen.getByTestId("pronunciation-status")).toHaveTextContent("system pronunciation was used");
+    expect(screen.getByTestId("practice-primary-status")).toHaveTextContent("system pronunciation was used");
   });
 
   it("shows an error status when no pronunciation backend is available", async () => {
@@ -798,7 +858,7 @@ describe("App", () => {
     await user.click(screen.getByTestId("skip-countdown-button"));
     await user.click(screen.getByRole("button", { name: "Pronounce" }));
 
-    expect(screen.getByTestId("pronunciation-status")).toHaveTextContent("Pronunciation was unavailable in this browser.");
+    expect(screen.getByTestId("practice-primary-status")).toHaveTextContent("Pronunciation was unavailable in this browser.");
   });
 
   it("persists the browser pronunciation toggle after reload", async () => {
@@ -835,9 +895,14 @@ describe("App", () => {
     render(<App />);
 
     await user.click(screen.getByRole("button", { name: "Settings" }));
+    expect(screen.getByTestId("settings-immediate-group")).toHaveTextContent("Applies now");
+    expect(screen.getByTestId("settings-next-session-group")).toHaveTextContent("Starts next session");
+    expect(screen.getByTestId("settings-audio-tools-group")).toHaveTextContent("Audio tools");
     fireEvent.change(screen.getByLabelText("Words per session"), { target: { value: "1" } });
 
     expect(screen.getByTestId("settings-status")).toHaveTextContent("You have unapplied changes.");
+    expect(screen.getByTestId("settings-status-summary")).toHaveTextContent("Pending changes");
+    expect(screen.getByTestId("settings-status-summary")).toHaveTextContent("Words per session: 10 -> 1");
 
     await user.click(screen.getByTestId("apply-settings-button"));
 
@@ -854,6 +919,7 @@ describe("App", () => {
 
     expect(screen.getByTestId("shuffle-toggle")).not.toBeChecked();
     expect(screen.getByTestId("settings-status")).toHaveTextContent("Current session already matches these settings.");
+    expect(screen.queryByTestId("settings-status-summary")).not.toBeInTheDocument();
   });
 
   it("applies visual assistance toggles immediately without pending session changes", async () => {
@@ -887,7 +953,7 @@ describe("App", () => {
     fireEvent.keyDown(practicePanel, { key: "Enter" });
     fireEvent.keyDown(practicePanel, { key: "z" });
 
-    expect(screen.getByTestId("feedback")).toHaveTextContent("Wrong key: Z. Keep aiming for the highlighted letter.");
+    expect(screen.getByTestId("practice-primary-status")).toHaveTextContent("Wrong key: Z. Keep aiming for the highlighted letter.");
     expect(screen.getByTestId("target-char")).toHaveClass("error");
     expect(screen.getByTestId("mistyped-keycap")).toHaveTextContent("Z");
     expect(screen.getByTestId("mistyped-keycap")).toHaveClass("mistyped");
@@ -905,7 +971,7 @@ describe("App", () => {
     fireEvent.keyDown(practicePanel, { key: "z" });
     fireEvent.keyDown(practicePanel, { key: "a" });
 
-    expect(screen.getByTestId("feedback")).toHaveTextContent("Keep typing.");
+    expect(screen.getByTestId("practice-primary-status")).toHaveTextContent("Keep typing.");
     expect(screen.getByTestId("target-char")).not.toHaveClass("error");
     expect(screen.queryByTestId("mistyped-keycap")).not.toBeInTheDocument();
     expect(screen.getByTestId("active-keycap")).not.toHaveClass("target-outline");
@@ -941,8 +1007,30 @@ describe("App", () => {
     expect(screen.getByTestId("completion-banner")).toHaveTextContent("Session complete");
     expect(screen.getByTestId("results-accessibility-summary")).toHaveTextContent("Completed 1 words.");
     expect(screen.getByTestId("results-feedback")).toHaveTextContent("Practice insights");
-    expect(screen.getByTestId("results-feedback")).toHaveTextContent("Slowest word: apple");
-    expect(screen.getByTestId("results-feedback")).toHaveTextContent("No mistakes this session");
+    expect(screen.getByTestId("results-strength-card")).toHaveTextContent("What went well");
+    expect(screen.getByTestId("results-strength-card")).toHaveTextContent("Clean words: 1 of 1");
+    expect(screen.getByTestId("results-focus-card")).toHaveTextContent("What to focus on next");
+    expect(screen.getByTestId("results-focus-card")).toHaveTextContent("Slowest word: apple");
+    expect(screen.getByTestId("results-feedback-supporting")).toHaveTextContent("No mistakes this session");
+  });
+
+  it("restarts a focused retry session from results", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.click(screen.getByRole("button", { name: "Settings" }));
+    fireEvent.change(screen.getByLabelText("Words per session"), { target: { value: "3" } });
+    await user.click(screen.getByTestId("apply-settings-button"));
+
+    fireEvent.keyDown(screen.getByTestId("primary-panel"), { key: "Enter" });
+    await user.keyboard("zapplebookhappy");
+
+    expect(screen.getByTestId("results-list")).toBeInTheDocument();
+    await user.click(screen.getByTestId("retry-focused-results-button"));
+
+    expect(screen.getByTestId("current-word")).toHaveTextContent("apple");
+    expect(screen.getByTestId("progress-count")).toHaveTextContent("0 / 1 words");
+    expect(screen.getByTestId("practice-primary-status")).toHaveTextContent("Start in 3");
   });
 
   it("announces add-word errors as alerts", async () => {
@@ -971,8 +1059,66 @@ describe("App", () => {
     expect(screen.getByTestId("practice-word-stage")).toBeInTheDocument();
     expect(screen.getByTestId("keyboard-guide-slot")).toBeInTheDocument();
     expect(screen.getByTestId("finger-guide-slot")).toBeInTheDocument();
-    expect(screen.getByTestId("feedback")).toHaveClass("persistent");
+    expect(screen.getByTestId("practice-primary-status")).toBeInTheDocument();
     expect(screen.getByTestId("practice-actions")).toBeInTheDocument();
+  });
+
+  it("collapses the finger guide by default on compact practice layouts", async () => {
+    const originalMatchMedia = window.matchMedia;
+    Object.defineProperty(window, "matchMedia", {
+      writable: true,
+      value: vi.fn().mockImplementation(() => ({
+        matches: true,
+        media: "(max-width: 720px)",
+        onchange: null,
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+        addListener: vi.fn(),
+        removeListener: vi.fn(),
+        dispatchEvent: vi.fn()
+      }))
+    });
+
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.click(screen.getByTestId("skip-countdown-button"));
+
+    expect(screen.getByTestId("keyboard-guide-toggle")).toHaveAttribute("aria-expanded", "true");
+    expect(screen.getByTestId("finger-guide-toggle")).toHaveAttribute("aria-expanded", "false");
+    expect(screen.getByTestId("keyboard-visual")).toBeInTheDocument();
+    expect(screen.queryByTestId("finger-button-visual")).not.toBeInTheDocument();
+
+    await user.click(screen.getByTestId("finger-guide-toggle"));
+
+    expect(screen.getByTestId("finger-guide-toggle")).toHaveAttribute("aria-expanded", "true");
+    expect(screen.getByTestId("finger-button-visual")).toBeInTheDocument();
+
+    Object.defineProperty(window, "matchMedia", {
+      writable: true,
+      value: originalMatchMedia
+    });
+  });
+
+  it("renders one primary practice status area and updates it by priority", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    expect(screen.getAllByTestId("practice-primary-status")).toHaveLength(1);
+    expect(screen.getByTestId("practice-primary-status")).toHaveTextContent("Start in 3");
+
+    await user.click(screen.getByTestId("skip-countdown-button"));
+
+    expect(screen.getAllByTestId("practice-primary-status")).toHaveLength(1);
+    expect(screen.getByTestId("practice-primary-status")).toHaveTextContent("Keep typing.");
+
+    await user.keyboard("z");
+
+    expect(screen.getAllByTestId("practice-primary-status")).toHaveLength(1);
+    expect(screen.getByTestId("practice-primary-status")).toHaveTextContent("Wrong key: Z. Keep aiming for the highlighted letter.");
+    expect(screen.getByTestId("practice-step-hint")).toHaveTextContent(
+      "Ignore the last key and press the highlighted letter to get back on track."
+    );
   });
 
   it("scrolls the primary panel into view when typing starts", async () => {
@@ -1024,11 +1170,11 @@ describe("App", () => {
 
     fireEvent.keyDown(window, { key: "Enter" });
 
-    expect(screen.getByTestId("countdown-banner")).toBeInTheDocument();
+    expect(screen.getByTestId("practice-primary-status")).toHaveTextContent("Start in 3");
 
     fireEvent.keyDown(screen.getByTestId("primary-panel"), { key: "Enter" });
 
-    expect(screen.queryByTestId("countdown-banner")).not.toBeInTheDocument();
+    expect(screen.getByTestId("practice-primary-status")).toHaveTextContent("Keep typing.");
   });
 
   it("does not scroll again while typing or when returning to practice", async () => {

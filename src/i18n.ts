@@ -33,6 +33,12 @@ type MessageKey =
   | "practice.viewResults"
   | "practice.emptyTitle"
   | "practice.emptyCopy"
+  | "practice.stepHintLabel"
+  | "practice.stepHint.countdown"
+  | "practice.stepHint.active"
+  | "practice.stepHint.incorrect"
+  | "practice.stepHint.complete"
+  | "practice.stepHint.empty"
   | "practice.a11y.status.countdown"
   | "practice.a11y.status.active"
   | "practice.a11y.status.complete"
@@ -44,6 +50,7 @@ type MessageKey =
   | "words.collectionTitle"
   | "words.addHint"
   | "words.manageHint"
+  | "words.jumpToActive"
   | "words.placeholder"
   | "words.newWord"
   | "words.add"
@@ -110,6 +117,7 @@ type MessageKey =
   | "words.stats.builtin"
   | "words.stats.custom"
   | "words.stats.hidden"
+  | "words.stats.hiddenTotal"
   | "words.minimizeSection"
   | "words.expandSection"
   | "words.minimizedSummary"
@@ -135,6 +143,14 @@ type MessageKey =
   | "settings.fingerGuide"
   | "settings.sessionGroup"
   | "settings.assistGroup"
+  | "settings.immediateGroup"
+  | "settings.nextSessionGroup"
+  | "settings.audioToolsGroup"
+  | "settings.appliesNow"
+  | "settings.appliesOnApply"
+  | "settings.pendingSummaryLabel"
+  | "settings.valueOn"
+  | "settings.valueOff"
   | "settings.pending"
   | "settings.synced"
   | "settings.sessionApplyHint"
@@ -150,6 +166,8 @@ type MessageKey =
   | "results.level"
   | "results.summary"
   | "results.feedbackTitle"
+  | "results.coachingStrength"
+  | "results.coachingFocus"
   | "results.feedbackSlowest"
   | "results.feedbackMostMistakes"
   | "results.feedbackCleanWords"
@@ -158,6 +176,7 @@ type MessageKey =
   | "results.mistakes"
   | "results.time"
   | "results.startNew"
+  | "results.retryFocused"
   | "results.a11y.summary";
 
 const messages: Record<DisplayLanguage, Record<MessageKey, string>> = {
@@ -193,6 +212,12 @@ const messages: Record<DisplayLanguage, Record<MessageKey, string>> = {
     "practice.viewResults": "View results",
     "practice.emptyTitle": "Practice words are not available.",
     "practice.emptyCopy": "Add a custom word or increase the session word count to continue.",
+    "practice.stepHintLabel": "Next step",
+    "practice.stepHint.countdown": "Watch the highlighted letter, then start typing as soon as the countdown ends.",
+    "practice.stepHint.active": "Type the highlighted letter. Use Pronounce or the guides if you need help.",
+    "practice.stepHint.incorrect": "Ignore the last key and press the highlighted letter to get back on track.",
+    "practice.stepHint.complete": "Open Results to review this round, or restart to practice again right away.",
+    "practice.stepHint.empty": "Open Words to add a custom word, or adjust Words per session in Settings.",
     "practice.a11y.status.countdown": "Typing will start in {count}.",
     "practice.a11y.status.active": "Typing is active.",
     "practice.a11y.status.complete": "Session complete. Results are ready.",
@@ -204,6 +229,7 @@ const messages: Record<DisplayLanguage, Record<MessageKey, string>> = {
     "words.collectionTitle": "Shape a word list that matches what you want to practice.",
     "words.addHint": "Add words for spelling drills, job vocabulary, or pronunciation practice.",
     "words.manageHint": "Search, reorder, edit, hide, and restore words from one place.",
+    "words.jumpToActive": "Go to practice order",
     "words.placeholder": "Enter an English word",
     "words.newWord": "New word",
     "words.add": "Add word",
@@ -270,6 +296,7 @@ const messages: Record<DisplayLanguage, Record<MessageKey, string>> = {
     "words.stats.builtin": "Built-in active",
     "words.stats.custom": "Custom added",
     "words.stats.hidden": "Built-in hidden",
+    "words.stats.hiddenTotal": "Hidden total",
     "words.minimizeSection": "Minimize",
     "words.expandSection": "Expand",
     "words.minimizedSummary": "Section minimized. Expand to manage the full list.",
@@ -295,6 +322,14 @@ const messages: Record<DisplayLanguage, Record<MessageKey, string>> = {
     "settings.fingerGuide": "Show finger guide",
     "settings.sessionGroup": "Session setup",
     "settings.assistGroup": "Visual assistance",
+    "settings.immediateGroup": "Applies now",
+    "settings.nextSessionGroup": "Starts next session",
+    "settings.audioToolsGroup": "Audio tools",
+    "settings.appliesNow": "Updates immediately",
+    "settings.appliesOnApply": "Waits for Apply",
+    "settings.pendingSummaryLabel": "Pending changes",
+    "settings.valueOn": "On",
+    "settings.valueOff": "Off",
     "settings.pending": "You have unapplied changes. Start a new session to use them.",
     "settings.synced": "Current session already matches these settings.",
     "settings.sessionApplyHint": "These settings apply when you start a new session.",
@@ -310,6 +345,8 @@ const messages: Record<DisplayLanguage, Record<MessageKey, string>> = {
     "results.level": "Level",
     "results.summary": "Score blends speed and accuracy across the whole session.",
     "results.feedbackTitle": "Practice insights",
+    "results.coachingStrength": "What went well",
+    "results.coachingFocus": "What to focus on next",
     "results.feedbackSlowest": "Slowest word: {word} ({time} ms)",
     "results.feedbackMostMistakes": "Most mistakes: {word} ({mistakes})",
     "results.feedbackCleanWords": "Clean words: {count} of {total}",
@@ -318,6 +355,7 @@ const messages: Record<DisplayLanguage, Record<MessageKey, string>> = {
     "results.mistakes": "mistakes",
     "results.time": "time",
     "results.startNew": "Start new session",
+    "results.retryFocused": "Retry focus words",
     "results.a11y.summary": "Completed {count} words. WPM {wpm}. Accuracy {accuracy} percent. Score {score}. Level {level}."
   },
   ja: {
@@ -352,6 +390,12 @@ const messages: Record<DisplayLanguage, Record<MessageKey, string>> = {
     "practice.viewResults": "結果を見る",
     "practice.emptyTitle": "練習できる単語がありません。",
     "practice.emptyCopy": "カスタム単語を追加するか、セッション単語数を見直してください。",
+    "practice.stepHintLabel": "次にすること",
+    "practice.stepHint.countdown": "ハイライトされた文字を確認して、カウントダウンが終わったらすぐ入力を始めてください。",
+    "practice.stepHint.active": "ハイライトされた文字を入力してください。必要なら発音やガイドを使えます。",
+    "practice.stepHint.incorrect": "直前のキーは気にせず、ハイライトされた文字を押して入力に戻りましょう。",
+    "practice.stepHint.complete": "結果を見て振り返るか、すぐにセッションをやり直してください。",
+    "practice.stepHint.empty": "単語タブでカスタム単語を追加するか、設定でセッション単語数を調整してください。",
     "practice.a11y.status.countdown": "{count} 秒後に入力を開始できます。",
     "practice.a11y.status.active": "入力を受け付けています。",
     "practice.a11y.status.complete": "セッション完了です。結果を確認できます。",
@@ -363,6 +407,7 @@ const messages: Record<DisplayLanguage, Record<MessageKey, string>> = {
     "words.collectionTitle": "練習したい内容に合わせて単語リストを整えましょう。",
     "words.addHint": "つづり、仕事で使う語彙、発音練習用の単語を追加できます。",
     "words.manageHint": "検索、並び替え、編集、非表示、復元をこの画面でまとめて行えます。",
+    "words.jumpToActive": "練習順へ移動",
     "words.placeholder": "英単語を入力",
     "words.newWord": "新しい単語",
     "words.add": "追加",
@@ -429,6 +474,7 @@ const messages: Record<DisplayLanguage, Record<MessageKey, string>> = {
     "words.stats.builtin": "有効な標準単語",
     "words.stats.custom": "追加した単語",
     "words.stats.hidden": "非表示の標準単語",
+    "words.stats.hiddenTotal": "非表示の合計",
     "words.minimizeSection": "小さく表示",
     "words.expandSection": "広げて表示",
     "words.minimizedSummary": "このセクションは小さく表示されています。広げると一覧を管理できます。",
@@ -454,6 +500,14 @@ const messages: Record<DisplayLanguage, Record<MessageKey, string>> = {
     "settings.fingerGuide": "指ガイドを表示",
     "settings.sessionGroup": "セッション条件",
     "settings.assistGroup": "表示補助",
+    "settings.immediateGroup": "すぐ反映",
+    "settings.nextSessionGroup": "次のセッションで反映",
+    "settings.audioToolsGroup": "音声ツール",
+    "settings.appliesNow": "今すぐ更新されます",
+    "settings.appliesOnApply": "適用後に反映されます",
+    "settings.pendingSummaryLabel": "未適用の変更",
+    "settings.valueOn": "オン",
+    "settings.valueOff": "オフ",
     "settings.pending": "未適用の変更があります。新しいセッションで反映されます。",
     "settings.synced": "現在のセッションはこの設定と一致しています。",
     "settings.sessionApplyHint": "この設定は新しいセッション開始時に反映されます。",
@@ -469,6 +523,8 @@ const messages: Record<DisplayLanguage, Record<MessageKey, string>> = {
     "results.level": "レベル",
     "results.summary": "スコアはセッション全体の速さと正確さをまとめて評価します。",
     "results.feedbackTitle": "練習の振り返り",
+    "results.coachingStrength": "よかった点",
+    "results.coachingFocus": "次に意識すること",
     "results.feedbackSlowest": "最も時間がかかった単語: {word} ({time} ms)",
     "results.feedbackMostMistakes": "最もミスが多かった単語: {word} ({mistakes})",
     "results.feedbackCleanWords": "ミスなしで終えた単語: {count} / {total}",
@@ -477,6 +533,7 @@ const messages: Record<DisplayLanguage, Record<MessageKey, string>> = {
     "results.mistakes": "ミス",
     "results.time": "時間",
     "results.startNew": "新しいセッションを開始",
+    "results.retryFocused": "苦手語をもう一度練習",
     "results.a11y.summary": "{count} 単語を完了しました。WPM は {wpm}、正確さは {accuracy} パーセント、スコアは {score}、レベルは {level} です。"
   },
   "ja-hira": {
@@ -511,6 +568,12 @@ const messages: Record<DisplayLanguage, Record<MessageKey, string>> = {
     "practice.viewResults": "けっかを みる",
     "practice.emptyTitle": "れんしゅうできる たんごが ありません。",
     "practice.emptyCopy": "カスタムたんごを ついかするか、セッションの たんごすうを みなおしてください。",
+    "practice.stepHintLabel": "つぎに すること",
+    "practice.stepHint.countdown": "ハイライトされた もじを みて、カウントダウンが おわったら すぐに にゅうりょくを はじめてください。",
+    "practice.stepHint.active": "ハイライトされた もじを にゅうりょくしてください。ひつようなら はつおんや ガイドを つかえます。",
+    "practice.stepHint.incorrect": "さっきの キーは きにせず、ハイライトされた もじを おして もどりましょう。",
+    "practice.stepHint.complete": "けっかを みて ふりかえるか、すぐに セッションを やりなおしてください。",
+    "practice.stepHint.empty": "たんごタブで カスタムたんごを ついかするか、せっていで セッションの たんごすうを ちょうせいしてください。",
     "practice.a11y.status.countdown": "{count} びょうごに にゅうりょくを かいしできます。",
     "practice.a11y.status.active": "にゅうりょくを うけつけています。",
     "practice.a11y.status.complete": "セッションかんりょうです。けっかを かくにんできます。",
@@ -522,6 +585,7 @@ const messages: Record<DisplayLanguage, Record<MessageKey, string>> = {
     "words.collectionTitle": "れんしゅうしたい ないように あわせて たんごリストを ととのえましょう。",
     "words.addHint": "つづり れんしゅうや しごとの ことば、はつおん れんしゅうの たんごを ついかできます。",
     "words.manageHint": "けんさく、ならびかえ、へんしゅう、ひひょうじ、ふっかつを ここで できます。",
+    "words.jumpToActive": "れんしゅう じゅんへ いどう",
     "words.placeholder": "えいたんごを にゅうりょく",
     "words.newWord": "あたらしい たんご",
     "words.add": "ついか",
@@ -588,6 +652,7 @@ const messages: Record<DisplayLanguage, Record<MessageKey, string>> = {
     "words.stats.builtin": "つかえる はじめからある たんご",
     "words.stats.custom": "ついかした たんご",
     "words.stats.hidden": "ひょうじしていない たんご",
+    "words.stats.hiddenTotal": "ひょうじしていない ごうけい",
     "words.minimizeSection": "ちいさく ひょうじ",
     "words.expandSection": "ひろげて ひょうじ",
     "words.minimizedSummary": "この セクションは ちいさく ひょうじされています。ひろげると いちらんを かんりできます。",
@@ -613,6 +678,14 @@ const messages: Record<DisplayLanguage, Record<MessageKey, string>> = {
     "settings.fingerGuide": "ゆびガイドを ひょうじ",
     "settings.sessionGroup": "セッションじょうけん",
     "settings.assistGroup": "ひょうじ ほじょ",
+    "settings.immediateGroup": "すぐ はんえい",
+    "settings.nextSessionGroup": "つぎの セッションで はんえい",
+    "settings.audioToolsGroup": "おんせい ツール",
+    "settings.appliesNow": "いま すぐ こうしんされます",
+    "settings.appliesOnApply": "てきようごに はんえいされます",
+    "settings.pendingSummaryLabel": "みてきようの へんこう",
+    "settings.valueOn": "オン",
+    "settings.valueOff": "オフ",
     "settings.pending": "みてきようの へんこうが あります。あたらしい セッションで はんえいされます。",
     "settings.synced": "いまの セッションは このせっていと いっちしています。",
     "settings.sessionApplyHint": "このせっていは あたらしい セッションかいしじに はんえいされます。",
@@ -628,6 +701,8 @@ const messages: Record<DisplayLanguage, Record<MessageKey, string>> = {
     "results.level": "レベル",
     "results.summary": "スコアは セッションぜんたいの はやさと せいかくさを まとめて ひょうかします。",
     "results.feedbackTitle": "れんしゅうの ふりかえり",
+    "results.coachingStrength": "よかった てん",
+    "results.coachingFocus": "つぎに いしきすること",
     "results.feedbackSlowest": "もっとも じかんが かかった たんご: {word} ({time} ms)",
     "results.feedbackMostMistakes": "もっとも ミスが おおかった たんご: {word} ({mistakes})",
     "results.feedbackCleanWords": "ミスなしで おえた たんご: {count} / {total}",
@@ -636,6 +711,7 @@ const messages: Record<DisplayLanguage, Record<MessageKey, string>> = {
     "results.mistakes": "ミス",
     "results.time": "じかん",
     "results.startNew": "あたらしい セッションを かいし",
+    "results.retryFocused": "にがてな たんごを もういちど れんしゅう",
     "results.a11y.summary": "{count} たんごを かんりょうしました。WPM は {wpm}、せいかくさは {accuracy} パーセント、スコアは {score}、レベルは {level} です。"
   }
 };

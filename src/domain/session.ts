@@ -30,8 +30,9 @@ export function getTargetCharacter(state: TypingSessionState): string {
   return state.currentWord?.text[state.charIndex] ?? "";
 }
 
-function buildResult(word: string, startedAt: number, endedAt: number, keystrokes: number, mistakes: number): TypingResult {
+function buildResult(wordId: string, word: string, startedAt: number, endedAt: number, keystrokes: number, mistakes: number): TypingResult {
   return {
+    wordId,
     word,
     elapsedMs: Math.max(endedAt - startedAt, 1),
     keystrokes,
@@ -83,7 +84,7 @@ export function applyKeystroke(
     };
   }
 
-  const result = buildResult(currentWord.text, startedAt, timestamp, nextKeystrokes, state.mistakes);
+  const result = buildResult(currentWord.id, currentWord.text, startedAt, timestamp, nextKeystrokes, state.mistakes);
   const remainingQueue = state.queue.slice(1);
 
   return {

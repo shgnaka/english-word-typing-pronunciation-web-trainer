@@ -107,6 +107,30 @@ export function useTrainer() {
     sessionControls.restartSession(activeWords, nextConfig);
   }
 
+  function retryFocusedWords() {
+    const completedWords = sessionControls.session.completedWords;
+    const prioritizedResults = [...completedWords].sort((left, right) => right.mistakes - left.mistakes || right.elapsedMs - left.elapsedMs);
+    const mistakeResults = prioritizedResults.filter((result) => result.mistakes > 0);
+    const fallbackResults = [...completedWords].sort((left, right) => right.elapsedMs - left.elapsedMs).slice(0, 3);
+    const sourceResults = mistakeResults.length > 0 ? mistakeResults : fallbackResults;
+    const selectedWordIds = Array.from(new Set(sourceResults.map((result) => result.wordId)));
+    const focusedWords = selectedWordIds
+      .map((wordId) => activeWords.find((word) => word.id === wordId) ?? null)
+      .filter((word): word is (typeof activeWords)[number] => word !== null);
+
+    if (focusedWords.length === 0) {
+      restartSession();
+      return;
+    }
+
+    pronunciation.resetAutoPronunciation();
+    sessionControls.restartSession(focusedWords, {
+      ...config,
+      shuffle: false,
+      wordCount: focusedWords.length
+    });
+  }
+
   function syncSession(
     nextBuiltinWordOverrides = builtinWordOverrides,
     nextCustomWords = customWords,
@@ -686,6 +710,7 @@ export function useTrainer() {
     clearBrowserTtsCache: handleClearBrowserTtsCache,
     setDisplayLanguage: handleDisplayLanguageChange,
     restartSession,
+    retryFocusedWords,
     skipCountdown() {
       sessionControls.skipCountdown();
     },

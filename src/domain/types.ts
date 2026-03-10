@@ -30,6 +30,7 @@ export interface SessionConfig {
 }
 
 export interface TypingResult {
+  wordId: string;
   word: string;
   elapsedMs: number;
   keystrokes: number;

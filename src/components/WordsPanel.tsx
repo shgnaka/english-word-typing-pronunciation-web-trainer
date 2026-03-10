@@ -82,17 +82,21 @@ export function WordsPanel({ trainer }: WordsPanelProps) {
         </div>
       </div>
 
-      <WordsHero trainer={trainer} />
+      <div className="words-workspace">
+        <div className="words-primary-column">
+          <AddWordSection trainer={trainer} inputRef={newWordInputRef} />
 
-      <AddWordSection trainer={trainer} inputRef={newWordInputRef} />
+          <WordsSearchToolbar
+            language={language}
+            searchInputId={searchInputId}
+            searchValue={searchValue}
+            onSearchValueChange={setSearchValue}
+            resultSummaries={searchResultSummaries}
+          />
+        </div>
 
-      <WordsSearchToolbar
-        language={language}
-        searchInputId={searchInputId}
-        searchValue={searchValue}
-        onSearchValueChange={setSearchValue}
-        resultSummaries={searchResultSummaries}
-      />
+        <WordsHero trainer={trainer} onJumpToActive={() => scrollToSection(activeSectionRef.current)} />
+      </div>
 
       <ActiveWordsSection
         trainer={trainer}

@@ -57,6 +57,7 @@ test("scrolls the primary panel into view when typing starts", async ({ page }) 
 test("shows the main practice guidance", async ({ page }) => {
   await expect(page.getByTestId("current-word")).toHaveText("apple");
   await expect(page.getByTestId("pronounce-button")).toBeVisible();
+  await expect(page.getByTestId("practice-step-hint")).toContainText("Watch the highlighted letter");
   await expect(page.getByTestId("active-keycap")).toHaveText("A");
   await expect(page.getByTestId("finger-button-label")).toHaveText("Left pinky");
   await expect(page.getByTestId("active-finger-button")).toHaveAttribute("data-finger-id", "left-pinky");
@@ -129,7 +130,8 @@ test("rebuilds the active session after deleting a custom word", async ({ page }
       return nextValue;
     };
   });
-  await page.getByTestId("delete-word-button-custom-banana").click();
+  await page.getByTestId("custom-word-list").getByTestId("more-row-actions-button-custom-banana").click();
+  await page.getByTestId("custom-word-list").getByTestId("delete-word-button-custom-banana").click();
   await page.getByTestId("tab-practice").click();
 
   await expect(page.getByTestId("current-word")).toHaveText("language");
@@ -171,7 +173,8 @@ test("deletes a builtin word and can reset builtin overrides", async ({ page }) 
 
 test("reorders builtin words in the mixed practice list and persists the order after reload", async ({ page }) => {
   await page.getByTestId("tab-words").click();
-  await page.getByTestId("move-word-down-button-builtin-apple").click();
+  await page.getByTestId("active-word-list").getByTestId("more-row-actions-button-builtin-apple").click();
+  await page.getByTestId("active-word-list").getByTestId("move-word-down-button-builtin-apple").click();
 
   const activeWordChips = page.getByTestId("active-word-chip");
   await expect(activeWordChips.nth(0)).toHaveText("book");
@@ -201,7 +204,8 @@ test("uses reordered mixed words for non-shuffled practice and reset restores sh
   await page.getByTestId("new-word-input").fill("banana");
   await page.getByTestId("add-word-button").click();
   for (let step = 0; step < 20; step += 1) {
-    await page.getByTestId("move-word-up-button-custom-banana").click();
+    await page.getByTestId("active-word-list").getByTestId("more-row-actions-button-custom-banana").click();
+    await page.getByTestId("active-word-list").getByTestId("move-word-up-button-custom-banana").click();
   }
 
   await page.getByTestId("tab-practice").click();
@@ -264,7 +268,7 @@ test("can discard pending settings changes", async ({ page }) => {
 test("shows feedback on incorrect input", async ({ page }) => {
   await page.getByTestId("skip-countdown-button").click();
   await page.keyboard.press("z");
-  await expect(page.getByTestId("feedback")).toHaveText("Wrong key: Z. Keep aiming for the highlighted letter.");
+  await expect(page.getByTestId("practice-primary-status")).toHaveText("Wrong key: Z. Keep aiming for the highlighted letter.");
   await expect(page.getByTestId("target-char")).toHaveClass(/error/);
   await expect(page.getByTestId("mistyped-keycap")).toHaveText("Z");
   await expect(page.getByTestId("mistyped-keycap")).toHaveClass(/mistyped/);
@@ -278,7 +282,7 @@ test("clears mistype emphasis after the next correct key", async ({ page }) => {
   await page.keyboard.press("z");
   await page.keyboard.press("a");
 
-  await expect(page.getByTestId("feedback")).toHaveText("Keep typing.");
+  await expect(page.getByTestId("practice-primary-status")).toContainText("Keep typing.");
   await expect(page.getByTestId("mistyped-keycap")).toHaveCount(0);
   await expect(page.getByTestId("active-keycap")).not.toHaveClass(/target-outline/);
   await expect(page.getByTestId("active-finger-button")).not.toHaveClass(/target-outline/);
@@ -292,7 +296,21 @@ test("enters the focused practice layout once typing starts", async ({ page }) =
   await expect(page.getByTestId("practice-word-stage")).toBeVisible();
   await expect(page.getByTestId("keyboard-guide-slot")).toBeVisible();
   await expect(page.getByTestId("finger-guide-slot")).toBeVisible();
-  await expect(page.getByTestId("feedback")).toHaveClass(/persistent/);
+  await expect(page.getByTestId("practice-primary-status")).toBeVisible();
+});
+
+test("collapses the finger guide by default on mobile typing layouts", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.getByTestId("skip-countdown-button").click();
+
+  await expect(page.getByTestId("keyboard-guide-toggle")).toHaveAttribute("aria-expanded", "true");
+  await expect(page.getByTestId("finger-guide-toggle")).toHaveAttribute("aria-expanded", "false");
+  await expect(page.getByTestId("keyboard-visual")).toBeVisible();
+  await expect(page.getByTestId("finger-button-visual")).toHaveCount(0);
+
+  await page.getByTestId("finger-guide-toggle").click();
+  await expect(page.getByTestId("finger-guide-toggle")).toHaveAttribute("aria-expanded", "true");
+  await expect(page.getByTestId("finger-button-visual")).toBeVisible();
 });
 
 test("keeps guides visible during typing even when assist settings are turned off", async ({ page }) => {
@@ -329,9 +347,9 @@ test("supports Enter to add words and skip countdown", async ({ page }) => {
   await expect(page.getByTestId("custom-word-list")).toContainText("banana");
 
   await page.getByTestId("tab-practice").click();
-  await expect(page.getByTestId("countdown-banner")).toContainText("Start in 3");
+  await expect(page.getByTestId("practice-primary-status")).toContainText("Start in 3");
   await page.keyboard.press("Enter");
-  await expect(page.getByTestId("countdown-banner")).toBeHidden({ timeout: 1000 });
+  await expect(page.getByTestId("practice-primary-status")).toContainText("Playing pronunciation...");
 });
 
 test("resumes typing after a practice action button is clicked", async ({ page }) => {

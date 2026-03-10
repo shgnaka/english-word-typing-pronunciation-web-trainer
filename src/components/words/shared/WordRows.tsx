@@ -159,8 +159,9 @@ export function ReadonlyWordRow({
 }) {
   const isCompact = useCompactWordRowActions();
   const normalizedActions = Children.toArray(actions).filter((action) => !isCompact || !isSpacerAction(action));
-  const primaryActions = isCompact ? normalizedActions.slice(0, 2) : normalizedActions;
-  const secondaryActions = isCompact ? normalizedActions.slice(2) : [];
+  const primaryActionCount = normalizedActions.length > 1 ? 1 : normalizedActions.length;
+  const primaryActions = normalizedActions.slice(0, primaryActionCount);
+  const secondaryActions = normalizedActions.slice(primaryActionCount);
 
   return (
     <div
