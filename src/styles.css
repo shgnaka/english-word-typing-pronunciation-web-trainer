@@ -107,6 +107,18 @@ input {
   margin-bottom: 1rem;
 }
 
+.tabs button {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--color-text-primary);
+  transition: background 140ms ease, color 140ms ease, box-shadow 140ms ease;
+}
+
+.tabs button.active {
+  background: linear-gradient(135deg, var(--color-accent-fill-start), var(--color-accent-fill-end));
+  color: var(--color-text-on-accent);
+  box-shadow: 0 12px 28px var(--color-accent-shadow);
+}
+
 .grid {
   display: grid;
   gap: 1rem;
