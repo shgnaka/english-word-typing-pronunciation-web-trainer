@@ -31,6 +31,7 @@ export function useTrainer() {
   const [editingWordSource, setEditingWordSource] = useState<WordEntry["source"] | null>(null);
   const [editingWordId, setEditingWordId] = useState<string | null>(null);
   const [editingWordValue, setEditingWordValue] = useState("");
+  const [reorderFeedbackToken, setReorderFeedbackToken] = useState(0);
   const [browserTtsCacheMessage, setBrowserTtsCacheMessage] = useState<"" | "cleared" | "failed">("");
   const [isClearingBrowserTtsCache, setIsClearingBrowserTtsCache] = useState(false);
   const sessionControls = useTrainerSession();
@@ -235,6 +236,7 @@ export function useTrainer() {
     setWordOrder(nextWordOrder);
     saveBuiltinWordOrder(nextWordOrder);
     syncSession(builtinWordOverrides, customWords, nextWordOrder);
+    setReorderFeedbackToken((current) => current + 1);
   }
 
   function moveWordToIndex(wordId: string, targetIndex: number) {
@@ -254,6 +256,7 @@ export function useTrainer() {
     setWordOrder(nextWordOrder);
     saveBuiltinWordOrder(nextWordOrder);
     syncSession(builtinWordOverrides, customWords, nextWordOrder);
+    setReorderFeedbackToken((current) => current + 1);
   }
 
   function moveWordToEdge(wordId: string, edge: "top" | "bottom") {
@@ -273,6 +276,11 @@ export function useTrainer() {
     setWordOrder(nextWordOrder);
     saveBuiltinWordOrder(nextWordOrder);
     syncSession(builtinWordOverrides, customWords, nextWordOrder);
+    setReorderFeedbackToken((current) => current + 1);
+  }
+
+  function clearReorderFeedback() {
+    setReorderFeedbackToken(0);
   }
 
   function sortCustomWords(mode: "alphabetical" | "newest" | "oldest") {
@@ -619,6 +627,7 @@ export function useTrainer() {
     editingWordSource,
     editingWordId,
     editingWordValue,
+    reorderFeedbackToken,
     inputValue,
     setInputValue: handleAddWordInputChange,
     addWordError,
@@ -647,6 +656,7 @@ export function useTrainer() {
     moveWord,
     moveWordToIndex,
     moveWordToEdge,
+    clearReorderFeedback,
     sortCustomWords,
     handleRemoveBuiltinWord,
     handleRemoveBuiltinWords,

@@ -1063,6 +1063,20 @@ input {
   color: var(--color-text-muted);
 }
 
+.word-section-feedback {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-top: 1rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 14px;
+  background: rgba(124, 199, 144, 0.12);
+  border: 1px solid rgba(124, 199, 144, 0.22);
+  color: #d9ffe3;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
 .word-section-sort {
   max-width: min(100%, 26rem);
 }

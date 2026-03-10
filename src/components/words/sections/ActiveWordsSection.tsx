@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import type { DragEvent, Ref } from "react";
 import { t } from "../../../i18n";
 import type { TrainerState } from "../../../features/trainer/useTrainer";
@@ -25,6 +26,21 @@ export function ActiveWordsSection({
   const language = trainer.displayLanguage;
   const allVisibleSelected =
     selection.selectableWordIds.length > 0 && selection.selectableWordIds.every((wordId) => selection.selectedWordIds.includes(wordId));
+  const reorderFeedbackMessage = t(language, "words.reorderSaved");
+  const reorderFeedbackToken = trainer.reorderFeedbackToken;
+  const clearReorderFeedback = trainer.clearReorderFeedback;
+
+  useEffect(() => {
+    if (reorderFeedbackToken === 0) {
+      return;
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      clearReorderFeedback();
+    }, 2200);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [clearReorderFeedback, reorderFeedbackToken]);
 
   return (
     <section ref={sectionRef} className="word-section word-section-active" data-testid="active-word-section">
@@ -64,6 +80,11 @@ export function ActiveWordsSection({
           {t(language, "words.bulkRemoveFromPractice")}
         </button>
       </BulkActionBar>
+      {reorderFeedbackToken > 0 ? (
+        <div key={reorderFeedbackToken} className="word-section-feedback" data-testid="word-order-feedback" role="status" aria-live="polite">
+          {reorderFeedbackMessage}
+        </div>
+      ) : null}
       <div className="word-list" data-testid="active-word-list" aria-label={t(language, "words.activeTitle")}>
         {filteredActiveWords.length === 0 ? (
           <p className="word-list-empty">{t(language, "words.noMatches")}</p>

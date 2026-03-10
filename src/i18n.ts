@@ -72,6 +72,7 @@ type MessageKey =
   | "words.moveDown"
   | "words.moveToTop"
   | "words.moveToBottom"
+  | "words.reorderSaved"
   | "words.builtinTitle"
   | "words.builtinHint"
   | "words.activeTitle"
@@ -227,6 +228,7 @@ const messages: Record<DisplayLanguage, Record<MessageKey, string>> = {
     "words.moveDown": "Move down",
     "words.moveToTop": "Move to top",
     "words.moveToBottom": "Move to bottom",
+    "words.reorderSaved": "Practice order saved.",
     "words.builtinTitle": "Built-in words",
     "words.builtinHint": "Built-in word changes are stored only in this browser.",
     "words.activeTitle": "Practice order",
@@ -381,6 +383,7 @@ const messages: Record<DisplayLanguage, Record<MessageKey, string>> = {
     "words.moveDown": "下へ移動",
     "words.moveToTop": "一番上へ移動",
     "words.moveToBottom": "一番下へ移動",
+    "words.reorderSaved": "練習順を保存しました。",
     "words.builtinTitle": "標準単語",
     "words.builtinHint": "標準単語の変更はこのブラウザにだけ保存されます。",
     "words.activeTitle": "練習順",
@@ -535,6 +538,7 @@ const messages: Record<DisplayLanguage, Record<MessageKey, string>> = {
     "words.moveDown": "したへ いどう",
     "words.moveToTop": "いちばん うえへ いどう",
     "words.moveToBottom": "いちばん したへ いどう",
+    "words.reorderSaved": "れんしゅうじゅんを ほぞんしました。",
     "words.builtinTitle": "はじめからある たんご",
     "words.builtinHint": "はじめからある たんごの へんこうは このブラウザだけに ほぞんされます。",
     "words.activeTitle": "れんしゅう じゅん",

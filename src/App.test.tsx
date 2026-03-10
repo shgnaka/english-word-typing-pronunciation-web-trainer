@@ -193,6 +193,7 @@ describe("App", () => {
 
     await user.click(screen.getByRole("button", { name: "Words" }));
     await user.click(screen.getByTestId("move-word-top-button-builtin-language"));
+    expect(screen.getByTestId("word-order-feedback")).toHaveTextContent("Practice order saved.");
 
     let activeWordChips = screen.getAllByTestId("active-word-chip");
     expect(activeWordChips[0]).toHaveTextContent("language");
@@ -241,6 +242,7 @@ describe("App", () => {
     expect(activeWordChips[0]).toHaveTextContent("book");
     expect(activeWordChips[1]).toHaveTextContent("happy");
     expect(activeWordChips[2]).toHaveTextContent("apple");
+    expect(screen.getByTestId("word-order-feedback")).toHaveTextContent("Practice order saved.");
   });
 
   it("supports bulk remove and restore for custom words", async () => {
