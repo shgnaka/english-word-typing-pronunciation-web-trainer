@@ -139,7 +139,7 @@ export function CustomWordsSection({
           </BulkActionBar>
           <div className="word-list" data-testid="custom-word-list" aria-label={t(language, "words.customTitle")}>
             {activeCustomCount === 0 ? (
-              <div className="empty-state">
+              <div className="empty-state word-section-empty">
                 <strong>{t(language, "words.empty")}</strong>
                 <p>{t(language, "words.emptyCustomAction")}</p>
                 <button type="button" className="secondary inline-action" data-testid="empty-custom-cta" onClick={onFocusNewWordInput}>

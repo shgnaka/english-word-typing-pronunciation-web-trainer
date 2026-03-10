@@ -10,7 +10,6 @@ export function WordsHero({ trainer, onJumpToActive }: { trainer: TrainerState; 
       <div className="words-hero-copy">
         <p className="label">{t(language, "words.collectionLabel")}</p>
         <h3>{t(language, "words.collectionTitle")}</h3>
-        <p>{t(language, "words.manageHint")}</p>
         <div className="words-hero-actions">
           <button type="button" data-testid="jump-to-active-words-button" onClick={onJumpToActive}>
             {t(language, "words.jumpToActive")}
@@ -24,8 +23,8 @@ export function WordsHero({ trainer, onJumpToActive }: { trainer: TrainerState; 
           <span className="word-stat-label">{t(language, "words.stats.available")}</span>
         </article>
         <article className="word-stat-card">
-          <span className="word-stat-value">{trainer.builtinWords.length + trainer.customWords.length}</span>
-          <span className="word-stat-label">{t(language, "words.stats.available")}</span>
+          <span className="word-stat-value">{trainer.builtinWords.length}</span>
+          <span className="word-stat-label">{t(language, "words.stats.builtin")}</span>
         </article>
         <article className="word-stat-card">
           <span className="word-stat-value">{trainer.customWords.length}</span>

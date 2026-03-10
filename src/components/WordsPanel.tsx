@@ -1,6 +1,7 @@
 import { useId, useRef } from "react";
 import { t } from "../i18n";
 import type { TrainerState } from "../features/trainer/useTrainer";
+import type { SessionConfig } from "../domain/types";
 import { ActiveWordsSection } from "./words/sections/ActiveWordsSection";
 import { BuiltinWordsSection } from "./words/sections/BuiltinWordsSection";
 import { CustomWordsSection } from "./words/sections/CustomWordsSection";
@@ -11,6 +12,10 @@ import { WordsSearchToolbar } from "./words/layout/WordsSearchToolbar";
 
 interface WordsPanelProps {
   trainer: TrainerState;
+}
+
+function formatPendingValue(language: TrainerState["displayLanguage"], value: SessionConfig["wordCount" | "shuffle"]) {
+  return typeof value === "boolean" ? t(language, value ? "settings.valueOn" : "settings.valueOff") : String(value);
 }
 
 export function WordsPanel({ trainer }: WordsPanelProps) {
@@ -72,6 +77,10 @@ export function WordsPanel({ trainer }: WordsPanelProps) {
       onClick: () => scrollToSection(hiddenCustomSectionRef.current)
     }
   ].filter((summary) => summary.count > 0);
+  const sessionPendingSummaryItems = ([
+    { key: "wordCount" as const, label: t(language, "settings.wordsPerSession") },
+    { key: "shuffle" as const, label: t(language, "settings.shuffle") }
+  ]).filter(({ key }) => trainer.config[key] !== trainer.draftConfig[key]);
 
   return (
     <div className="words-page">
@@ -82,7 +91,7 @@ export function WordsPanel({ trainer }: WordsPanelProps) {
         </div>
       </div>
 
-      <div className="words-workspace">
+      <div className="words-top-grid">
         <div className="words-primary-column">
           <AddWordSection trainer={trainer} inputRef={newWordInputRef} />
 
@@ -93,9 +102,61 @@ export function WordsPanel({ trainer }: WordsPanelProps) {
             onSearchValueChange={setSearchValue}
             resultSummaries={searchResultSummaries}
           />
+
+          <section className="settings-group words-session-config" data-testid="words-session-config">
+            <div className="settings-group-header">
+              <span className="label">{t(language, "words.sessionSetupTitle")}</span>
+              <span className="settings-timing-pill">{t(language, "settings.appliesOnApply")}</span>
+            </div>
+            <div className="words-session-config-controls">
+              <label className="words-session-config-field">
+                <span>{t(language, "settings.wordsPerSession")}</span>
+                <input
+                  aria-label={t(language, "settings.wordsPerSession")}
+                  data-testid="word-count-input"
+                  type="number"
+                  min={1}
+                  max={20}
+                  value={trainer.draftConfig.wordCount}
+                  onChange={(event) => trainer.handleConfigChange("wordCount", Number(event.target.value))}
+                />
+              </label>
+              <label className="toggle words-session-config-toggle">
+                <input
+                  data-testid="shuffle-toggle"
+                  type="checkbox"
+                  checked={trainer.draftConfig.shuffle}
+                  onChange={(event) => trainer.handleConfigChange("shuffle", event.target.checked)}
+                />
+                <span>{t(language, "settings.shuffle")}</span>
+              </label>
+            </div>
+            <div className="words-session-config-footer">
+              <div className={`settings-status ${sessionPendingSummaryItems.length > 0 ? "pending" : ""}`} data-testid="words-session-config-status">
+                {sessionPendingSummaryItems.length > 0 ? t(language, "settings.pending") : t(language, "words.sessionSetupSynced")}
+                {sessionPendingSummaryItems.length > 0 ? (
+                  <div className="settings-status-summary" data-testid="words-session-config-summary">
+                    <strong>{t(language, "settings.pendingSummaryLabel")}</strong>
+                    <ul>
+                      {sessionPendingSummaryItems.map(({ key, label }) => (
+                        <li key={key}>
+                          {label}: {formatPendingValue(language, trainer.config[key])} {"->"} {formatPendingValue(language, trainer.draftConfig[key])}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ) : null}
+              </div>
+              <button data-testid="apply-settings-button" onClick={trainer.applyConfigChanges} disabled={!trainer.hasPendingConfigChanges}>
+                {t(language, "words.applySessionSettings")}
+              </button>
+            </div>
+          </section>
         </div>
 
-        <WordsHero trainer={trainer} onJumpToActive={() => scrollToSection(activeSectionRef.current)} />
+        <div className="words-secondary-column">
+          <WordsHero trainer={trainer} onJumpToActive={() => scrollToSection(activeSectionRef.current)} />
+        </div>
       </div>
 
       <ActiveWordsSection

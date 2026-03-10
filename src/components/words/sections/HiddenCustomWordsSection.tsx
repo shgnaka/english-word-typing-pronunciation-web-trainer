@@ -115,7 +115,7 @@ export function HiddenCustomWordsSection({
           </BulkActionBar>
           <div className="word-list" data-testid="inactive-custom-word-list" aria-label={t(language, "words.inactiveCustomTitle")}>
             {trainer.inactiveCustomWords.length === 0 ? (
-              <div className="empty-state">
+              <div className="empty-state word-section-empty">
                 <strong>{t(language, "words.inactiveCustomEmpty")}</strong>
                 <p>{t(language, "words.hiddenCustomAction")}</p>
                 <button type="button" className="secondary inline-action" data-testid="hidden-custom-empty-cta" onClick={onScrollToSelf}>

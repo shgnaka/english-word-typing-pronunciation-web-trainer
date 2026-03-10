@@ -662,24 +662,31 @@ input {
 
 .words-page {
   display: grid;
-  gap: 1.25rem;
+  gap: 1.5rem;
 }
 
-.words-workspace,
+.words-top-grid,
 .words-primary-column {
   display: grid;
   gap: 1rem;
 }
 
-.words-workspace {
-  grid-template-columns: minmax(0, 1.15fr) minmax(18rem, 0.85fr);
+.words-top-grid {
+  grid-template-columns: minmax(0, 1.05fr) minmax(20rem, 0.95fr);
   align-items: start;
+  gap: 1.25rem;
+}
+
+.words-secondary-column {
+  display: grid;
+  gap: 1rem;
+  align-content: start;
 }
 
 .words-hero {
   display: grid;
-  gap: 1rem;
-  padding: 1.1rem 1.15rem;
+  gap: 0.9rem;
+  padding: 0.95rem 1rem;
   border-radius: 24px;
   background:
     linear-gradient(135deg, rgba(255, 191, 105, 0.12), rgba(124, 199, 144, 0.1)),
@@ -692,6 +699,10 @@ input {
 .search-field {
   display: grid;
   gap: 0.55rem;
+}
+
+.words-hero-copy {
+  gap: 0.4rem;
 }
 
 .words-hero-actions {
@@ -747,7 +758,7 @@ input {
 .words-toolbar {
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: end;
-  padding: 0.95rem 1rem;
+  padding: 1rem 1.05rem;
   border-radius: 22px;
   background: rgba(255, 255, 255, 0.04);
   border: 1px solid rgba(255, 255, 255, 0.08);
@@ -763,37 +774,58 @@ input {
   display: flex;
   flex-wrap: wrap;
   justify-content: flex-end;
-  gap: 0.5rem;
+  gap: 0.4rem;
 }
 
 .search-summary-chip {
   display: inline-flex;
   align-items: center;
-  gap: 0.55rem;
-  padding: 0.5rem 0.75rem;
+  gap: 0.45rem;
+  padding: 0.38rem 0.62rem;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  color: inherit;
-  font-size: 0.85rem;
+  background: rgba(255, 255, 255, 0.025);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  color: rgba(246, 244, 239, 0.82);
+  font-size: 0.8rem;
   white-space: nowrap;
+  box-shadow: none;
 }
 
 .search-summary-chip strong {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 1.6rem;
-  min-height: 1.6rem;
-  padding: 0 0.4rem;
+  min-width: 1.35rem;
+  min-height: 1.35rem;
+  padding: 0 0.32rem;
   border-radius: 999px;
-  background: rgba(255, 191, 105, 0.14);
-  color: #ffe2b7;
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(246, 244, 239, 0.78);
+  font-size: 0.74rem;
+  font-weight: 700;
+}
+
+.search-summary-chip:hover:not(:disabled),
+.search-summary-chip:focus-visible:not(:disabled) {
+  background: rgba(255, 255, 255, 0.045);
+  border-color: rgba(255, 255, 255, 0.11);
+  color: rgba(246, 244, 239, 0.94);
+  box-shadow: none;
 }
 
 .search-field input,
 .add-word-row input {
   width: 100%;
+}
+
+.search-field input {
+  color: var(--color-text-primary);
+  caret-color: var(--color-accent-outline);
+  font-weight: 500;
+}
+
+.search-field input::placeholder {
+  color: var(--color-text-faint);
 }
 
 .panel-header-compact {
@@ -828,6 +860,11 @@ input {
   flex-wrap: wrap;
   gap: 0.35rem;
   justify-content: flex-end;
+}
+
+.word-section-tools .inline-action,
+.word-section-tools .compact-toggle {
+  min-height: 2.25rem;
 }
 
 .word-section > .panel-header,
@@ -952,12 +989,17 @@ input {
 .results-list,
 .settings-grid {
   display: grid;
-  gap: 1rem;
-  margin-top: 1.5rem;
+  gap: 0.85rem;
+  margin-top: 1rem;
 }
 
 .settings-grid {
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+}
+
+.settings-page {
+  display: grid;
+  gap: 1rem;
 }
 
 .settings-group {
@@ -967,6 +1009,46 @@ input {
   border-radius: 20px;
   background: rgba(255, 255, 255, 0.04);
   border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.words-session-config {
+  max-width: none;
+  justify-self: stretch;
+  align-content: start;
+  padding: 1rem 1.1rem;
+  background:
+    linear-gradient(180deg, rgba(255, 191, 105, 0.07), rgba(255, 255, 255, 0.03)),
+    rgba(255, 255, 255, 0.04);
+}
+
+.words-session-config-controls {
+  display: grid;
+  grid-template-columns: minmax(10rem, 12rem) auto;
+  gap: 1rem 1.25rem;
+  align-items: end;
+}
+
+.words-session-config-field,
+.words-session-config-field span {
+  display: grid;
+}
+
+.words-session-config-field {
+  gap: 0.45rem;
+}
+
+.words-session-config-toggle {
+  min-height: 100%;
+  align-self: end;
+}
+
+.words-session-config-footer {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.words-session-config .settings-status {
+  margin-top: 0;
 }
 
 .settings-group-header {
@@ -990,6 +1072,21 @@ input {
   white-space: nowrap;
 }
 
+.settings-inline-tools,
+.settings-group-actions {
+  display: grid;
+  gap: 0.9rem;
+}
+
+.settings-inline-tools {
+  padding-top: 0.25rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.settings-group-actions {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
 .empty-state {
   margin: 2rem 0;
   padding: 1rem 1.1rem;
@@ -1000,6 +1097,14 @@ input {
 .empty-state strong {
   display: block;
   margin-bottom: 0.4rem;
+}
+
+.word-section-empty {
+  margin: 0.25rem 0 0;
+  border: 1px dashed rgba(255, 255, 255, 0.12);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(15, 23, 39, 0.06)),
+    rgba(255, 255, 255, 0.03);
 }
 
 .word-chip {
@@ -1133,7 +1238,7 @@ input {
   align-items: center;
   gap: 0.6rem;
   flex-wrap: wrap;
-  padding: 0.85rem 0.95rem;
+  padding: 0.8rem 0.9rem;
   margin-bottom: 0;
   border-radius: 18px;
   background: rgba(255, 255, 255, 0.03);
@@ -1169,7 +1274,7 @@ input {
 
 .word-section {
   margin-top: 0;
-  padding: 0.95rem 1rem 1.05rem;
+  padding: 1rem 1.05rem 1.05rem;
   border-radius: 24px;
   background: rgba(255, 255, 255, 0.03);
   border: 1px solid rgba(255, 255, 255, 0.08);
@@ -1253,6 +1358,7 @@ input {
 }
 
 @media (max-width: 760px) {
+  .words-top-grid,
   .words-toolbar {
     grid-template-columns: 1fr;
     align-items: stretch;
@@ -1396,9 +1502,25 @@ input {
     padding: 1rem;
   }
 
-  .words-workspace,
+  .words-top-grid,
   .words-hero,
   .words-toolbar {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .words-session-config {
+    justify-self: stretch;
+  }
+
+  .settings-group-actions {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .settings-group-actions button {
+    flex: 1 1 0;
+  }
+
+  .words-session-config-controls {
     grid-template-columns: minmax(0, 1fr);
   }
 

@@ -46,12 +46,7 @@ function formatSettingValue(language: TrainerState["displayLanguage"], key: keyo
 
 export function SettingsPanel({ trainer }: SettingsPanelProps) {
   const language = trainer.displayLanguage;
-  const pendingSummaryItems = ([
-    "wordCount",
-    "shuffle",
-    "speechEnabled",
-    "browserTtsEnabled"
-  ] as const)
+  const pendingSummaryItems = (["wordCount", "shuffle", "speechEnabled", "browserTtsEnabled"] as const)
     .filter((key) => trainer.config[key] !== trainer.draftConfig[key])
     .map((key) => ({
       key,
@@ -68,9 +63,8 @@ export function SettingsPanel({ trainer }: SettingsPanelProps) {
       before: formatSettingValue(language, key, trainer.config[key]),
       after: formatSettingValue(language, key, trainer.draftConfig[key])
     }));
-
   return (
-    <>
+    <div className="settings-page">
       <div className="panel-header">
         <div>
           <p className="label">{t(language, "settings.title")}</p>
@@ -119,6 +113,25 @@ export function SettingsPanel({ trainer }: SettingsPanelProps) {
             />
             <span>{t(language, "settings.fingerGuide")}</span>
           </label>
+          <div className="settings-inline-tools">
+            <p className="setting-hint">{t(language, "settings.browserTtsCachePolicy")}</p>
+            <button
+              type="button"
+              className="secondary"
+              data-testid="clear-browser-tts-cache-button"
+              onClick={() => trainer.clearBrowserTtsCache()}
+              disabled={trainer.isClearingBrowserTtsCache}
+            >
+              {t(language, "settings.browserTtsClear")}
+            </button>
+            {trainer.browserTtsCacheMessage ? (
+              <p className="setting-hint" data-testid="browser-tts-cache-status" role="status" aria-live="polite">
+                {trainer.browserTtsCacheMessage === "cleared"
+                  ? t(language, "settings.browserTtsCacheCleared")
+                  : t(language, "settings.browserTtsCacheClearFailed")}
+              </p>
+            ) : null}
+          </div>
         </SettingsGroupCard>
 
         <SettingsGroupCard
@@ -127,27 +140,6 @@ export function SettingsPanel({ trainer }: SettingsPanelProps) {
           hint={t(language, "settings.sessionApplyHint")}
           testId="settings-next-session-group"
         >
-          <label>
-            <span>{t(language, "settings.wordsPerSession")}</span>
-            <input
-              aria-label={t(language, "settings.wordsPerSession")}
-              data-testid="word-count-input"
-              type="number"
-              min={1}
-              max={20}
-              value={trainer.draftConfig.wordCount}
-              onChange={(event) => trainer.handleConfigChange("wordCount", Number(event.target.value))}
-            />
-          </label>
-          <label className="toggle">
-            <input
-              data-testid="shuffle-toggle"
-              type="checkbox"
-              checked={trainer.draftConfig.shuffle}
-              onChange={(event) => trainer.handleConfigChange("shuffle", event.target.checked)}
-            />
-            <span>{t(language, "settings.shuffle")}</span>
-          </label>
           <label className="toggle">
             <input
               data-testid="speech-toggle"
@@ -168,62 +160,36 @@ export function SettingsPanel({ trainer }: SettingsPanelProps) {
             <span>{t(language, "settings.browserTts")}</span>
           </label>
           <p className="setting-hint">{t(language, "settings.browserTtsHelp")}</p>
-        </SettingsGroupCard>
-
-        <SettingsGroupCard
-          title={t(language, "settings.audioToolsGroup")}
-          timing={t(language, "settings.appliesNow")}
-          hint={t(language, "settings.browserTtsCachePolicy")}
-          testId="settings-audio-tools-group"
-        >
-          <button
-            type="button"
-            className="secondary"
-            data-testid="clear-browser-tts-cache-button"
-            onClick={() => trainer.clearBrowserTtsCache()}
-            disabled={trainer.isClearingBrowserTtsCache}
-          >
-            {t(language, "settings.browserTtsClear")}
-          </button>
-          {trainer.browserTtsCacheMessage ? (
-            <p className="setting-hint" data-testid="browser-tts-cache-status" role="status" aria-live="polite">
-              {trainer.browserTtsCacheMessage === "cleared"
-                ? t(language, "settings.browserTtsCacheCleared")
-                : t(language, "settings.browserTtsCacheClearFailed")}
-            </p>
-          ) : null}
-        </SettingsGroupCard>
-      </div>
-
-      <div className={`settings-status ${trainer.hasPendingConfigChanges ? "pending" : ""}`} data-testid="settings-status">
-        {trainer.hasPendingConfigChanges ? t(language, "settings.pending") : t(language, "settings.synced")}
-        {trainer.hasPendingConfigChanges && pendingSummaryItems.length > 0 ? (
-          <div className="settings-status-summary" data-testid="settings-status-summary">
-            <strong>{t(language, "settings.pendingSummaryLabel")}</strong>
-            <ul>
-              {pendingSummaryItems.map((item) => (
-                <li key={item.key}>
-                  {item.label}: {item.before} {"->"} {item.after}
-                </li>
-              ))}
-            </ul>
+          <div className={`settings-status ${trainer.hasPendingConfigChanges ? "pending" : ""}`} data-testid="settings-status">
+            {trainer.hasPendingConfigChanges ? t(language, "settings.pending") : t(language, "settings.synced")}
+            {trainer.hasPendingConfigChanges && pendingSummaryItems.length > 0 ? (
+              <div className="settings-status-summary" data-testid="settings-status-summary">
+                <strong>{t(language, "settings.pendingSummaryLabel")}</strong>
+                <ul>
+                  {pendingSummaryItems.map((item) => (
+                    <li key={item.key}>
+                      {item.label}: {item.before} {"->"} {item.after}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ) : null}
           </div>
-        ) : null}
+          <div className="cta-row settings-group-actions">
+            <button data-testid="apply-settings-button" onClick={trainer.applyConfigChanges} disabled={!trainer.hasPendingConfigChanges}>
+              {t(language, "settings.apply")}
+            </button>
+            <button
+              className="secondary"
+              data-testid="discard-settings-button"
+              onClick={trainer.discardConfigChanges}
+              disabled={!trainer.hasPendingConfigChanges}
+            >
+              {t(language, "settings.discard")}
+            </button>
+          </div>
+        </SettingsGroupCard>
       </div>
-
-      <div className="cta-row">
-        <button data-testid="apply-settings-button" onClick={trainer.applyConfigChanges} disabled={!trainer.hasPendingConfigChanges}>
-          {t(language, "settings.apply")}
-        </button>
-        <button
-          className="secondary"
-          data-testid="discard-settings-button"
-          onClick={trainer.discardConfigChanges}
-          disabled={!trainer.hasPendingConfigChanges}
-        >
-          {t(language, "settings.discard")}
-        </button>
-      </div>
-    </>
+    </div>
   );
 }

@@ -163,7 +163,7 @@ export function BuiltinWordsSection({
               selectedCountLabel={selectedCountLabel}
             />
           ) : (
-            <div className="empty-state" data-testid="hidden-builtin-empty">
+            <div className="empty-state word-section-empty" data-testid="hidden-builtin-empty">
               <strong>{t(language, "words.hiddenBuiltinEmpty")}</strong>
               <p>{t(language, "words.hiddenBuiltinAction")}</p>
               <button type="button" className="secondary inline-action" data-testid="hidden-builtin-empty-cta" onClick={onScrollToSelf}>
