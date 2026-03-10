@@ -1,4 +1,4 @@
-import type { DragEvent } from "react";
+import type { DragEvent, Ref } from "react";
 import { t } from "../../../i18n";
 import type { TrainerState } from "../../../features/trainer/useTrainer";
 import { BulkActionBar, IconButton, IconButtonSpacer, ReadonlyWordRow, SectionHeaderMeta, StatePill, type ActiveDragControls, type BulkActionFocusRefs, type SectionSelectionControls } from "../shared";
@@ -11,6 +11,7 @@ export function ActiveWordsSection({
   bulkFocusRefs,
   dragControls,
   selectedCountLabel,
+  sectionRef
 }: {
   trainer: TrainerState;
   searchValue: string;
@@ -19,13 +20,14 @@ export function ActiveWordsSection({
   bulkFocusRefs: BulkActionFocusRefs;
   dragControls: ActiveDragControls;
   selectedCountLabel: string;
+  sectionRef?: Ref<HTMLElement>;
 }) {
   const language = trainer.displayLanguage;
   const allVisibleSelected =
     selection.selectableWordIds.length > 0 && selection.selectableWordIds.every((wordId) => selection.selectedWordIds.includes(wordId));
 
   return (
-    <section className="word-section word-section-active" data-testid="active-word-section">
+    <section ref={sectionRef} className="word-section word-section-active" data-testid="active-word-section">
       <div className="panel-header">
         <div>
           <p className="label">{t(language, "words.activeTitle")}</p>

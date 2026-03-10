@@ -374,6 +374,36 @@ describe("App", () => {
     expect(screen.queryByTestId("clear-word-search-button")).not.toBeInTheDocument();
   });
 
+  it("shows per-section search result counts and jumps to a matching section", async () => {
+    const scrollIntoViewMock = vi.fn();
+    Object.defineProperty(HTMLElement.prototype, "scrollIntoView", {
+      configurable: true,
+      value: scrollIntoViewMock
+    });
+
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.click(screen.getByRole("button", { name: "Words" }));
+    await user.type(screen.getByLabelText("New word"), "banana");
+    await user.click(screen.getByRole("button", { name: "Add word" }));
+    await user.type(screen.getByLabelText("New word"), "band");
+    await user.click(screen.getByRole("button", { name: "Add word" }));
+    await user.click(screen.getByTestId("remove-from-practice-button-custom-banana"));
+    await user.type(screen.getByTestId("word-search-input"), "ban");
+
+    expect(screen.getByTestId("word-search-summary")).toBeInTheDocument();
+    expect(screen.getByTestId("search-result-count-chip-active")).toHaveTextContent("Practice order");
+    expect(screen.getByTestId("search-result-count-chip-active")).toHaveTextContent("1");
+    expect(screen.getByTestId("search-result-count-chip-custom")).toHaveTextContent("Custom words");
+    expect(screen.getByTestId("search-result-count-chip-custom")).toHaveTextContent("1");
+    expect(screen.getByTestId("search-result-count-chip-hidden-custom")).toHaveTextContent("Hidden custom words");
+    expect(screen.getByTestId("search-result-count-chip-hidden-custom")).toHaveTextContent("1");
+
+    await user.click(screen.getByTestId("search-result-count-chip-hidden-custom"));
+    expect(scrollIntoViewMock).toHaveBeenCalled();
+  });
+
   it("moves secondary row actions into an overflow menu on compact layouts", async () => {
     const originalMatchMedia = window.matchMedia;
     Object.defineProperty(window, "matchMedia", {

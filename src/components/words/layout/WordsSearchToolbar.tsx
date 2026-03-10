@@ -5,12 +5,14 @@ export function WordsSearchToolbar({
   language,
   searchInputId,
   searchValue,
-  onSearchValueChange
+  onSearchValueChange,
+  resultSummaries
 }: {
   language: DisplayLanguage;
   searchInputId: string;
   searchValue: string;
   onSearchValueChange: (value: string) => void;
+  resultSummaries?: Array<{ id: string; label: string; count: number; onClick: () => void }>;
 }) {
   return (
     <section className="words-toolbar" aria-label={t(language, "words.searchLabel")}>
@@ -25,7 +27,26 @@ export function WordsSearchToolbar({
           aria-label={t(language, "words.searchLabel")}
         />
       </label>
-      <p className="words-toolbar-hint">{t(language, "words.manageHint")}</p>
+      <div className="words-toolbar-meta">
+        <p className="words-toolbar-hint">{t(language, "words.manageHint")}</p>
+        {searchValue.trim() && resultSummaries && resultSummaries.length > 0 ? (
+          <div className="words-search-summary" data-testid="word-search-summary">
+            {resultSummaries.map((summary) => (
+              <button
+                key={summary.id}
+                type="button"
+                className="secondary search-summary-chip"
+                data-testid={`search-result-count-chip-${summary.id}`}
+                onClick={summary.onClick}
+                aria-label={`${summary.label}: ${summary.count}`}
+              >
+                <span>{summary.label}</span>
+                <strong>{summary.count}</strong>
+              </button>
+            ))}
+          </div>
+        ) : null}
+      </div>
     </section>
   );
 }

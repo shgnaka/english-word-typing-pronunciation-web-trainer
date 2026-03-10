@@ -19,8 +19,11 @@ export function WordsPanel({ trainer }: WordsPanelProps) {
   const editedBuiltinWordIds = new Set(trainer.editedBuiltinWordIds);
   const searchInputId = useId();
   const newWordInputRef = useRef<HTMLInputElement | null>(null);
+  const activeSectionRef = useRef<HTMLElement | null>(null);
   const builtinSectionRef = useRef<HTMLElement | null>(null);
+  const hiddenBuiltinSectionRef = useRef<HTMLElement | null>(null);
   const customSectionRef = useRef<HTMLElement | null>(null);
+  const hiddenCustomSectionRef = useRef<HTMLElement | null>(null);
   const {
     searchValue,
     setSearchValue,
@@ -52,6 +55,23 @@ export function WordsPanel({ trainer }: WordsPanelProps) {
   const hiddenBuiltinSelection = createSectionSelection("hiddenBuiltin");
   const customSelection = createSectionSelection("custom");
   const hiddenCustomSelection = createSectionSelection("hiddenCustom");
+  const searchResultSummaries = [
+    { id: "active", label: t(language, "words.activeTitle"), count: filteredActiveWords.length, onClick: () => scrollToSection(activeSectionRef.current) },
+    { id: "builtin", label: t(language, "words.builtinTitle"), count: filteredBuiltinWords.length, onClick: () => scrollToSection(builtinSectionRef.current) },
+    {
+      id: "hidden-builtin",
+      label: t(language, "words.hiddenBuiltinTitle"),
+      count: filteredHiddenBuiltinWords.length,
+      onClick: () => scrollToSection(hiddenBuiltinSectionRef.current)
+    },
+    { id: "custom", label: t(language, "words.customTitle"), count: filteredCustomWords.length, onClick: () => scrollToSection(customSectionRef.current) },
+    {
+      id: "hidden-custom",
+      label: t(language, "words.inactiveCustomTitle"),
+      count: filteredInactiveCustomWords.length,
+      onClick: () => scrollToSection(hiddenCustomSectionRef.current)
+    }
+  ].filter((summary) => summary.count > 0);
 
   return (
     <div className="words-page">
@@ -66,7 +86,13 @@ export function WordsPanel({ trainer }: WordsPanelProps) {
 
       <AddWordSection trainer={trainer} inputRef={newWordInputRef} />
 
-      <WordsSearchToolbar language={language} searchInputId={searchInputId} searchValue={searchValue} onSearchValueChange={setSearchValue} />
+      <WordsSearchToolbar
+        language={language}
+        searchInputId={searchInputId}
+        searchValue={searchValue}
+        onSearchValueChange={setSearchValue}
+        resultSummaries={searchResultSummaries}
+      />
 
       <ActiveWordsSection
         trainer={trainer}
@@ -79,6 +105,7 @@ export function WordsPanel({ trainer }: WordsPanelProps) {
           ...dragControls
         }}
         selectedCountLabel={selectedCountLabel(activeSelection.selectedWordIds.length)}
+        sectionRef={activeSectionRef}
       />
 
       <BuiltinWordsSection
@@ -89,6 +116,7 @@ export function WordsPanel({ trainer }: WordsPanelProps) {
         editedBuiltinWordIds={editedBuiltinWordIds}
         wordsPanelState={wordsPanelState}
         sectionRef={builtinSectionRef}
+        hiddenSectionRef={hiddenBuiltinSectionRef}
         selection={{
           active: builtinSelection,
           hidden: hiddenBuiltinSelection
@@ -110,6 +138,7 @@ export function WordsPanel({ trainer }: WordsPanelProps) {
         filteredInactiveCustomWords={filteredInactiveCustomWords}
         wordsPanelState={wordsPanelState}
         sectionRef={customSectionRef}
+        hiddenSectionRef={hiddenCustomSectionRef}
         selection={{
           active: customSelection,
           hidden: hiddenCustomSelection

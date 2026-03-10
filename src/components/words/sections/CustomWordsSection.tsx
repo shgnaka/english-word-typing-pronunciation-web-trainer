@@ -11,6 +11,7 @@ export function CustomWordsSection({
   filteredInactiveCustomWords,
   wordsPanelState,
   sectionRef,
+  hiddenSectionRef,
   selection,
   bulkFocusRefs,
   onToggleSection,
@@ -25,6 +26,7 @@ export function CustomWordsSection({
   filteredInactiveCustomWords: TrainerState["inactiveCustomWords"];
   wordsPanelState: WordsPanelState;
   sectionRef: Ref<HTMLElement>;
+  hiddenSectionRef?: Ref<HTMLElement>;
   selection: NestedSectionSelectionControls;
   bulkFocusRefs: NestedBulkActionFocusRefs;
   onToggleSection: () => void;
@@ -196,6 +198,7 @@ export function CustomWordsSection({
             searchValue={searchValue}
             filteredInactiveCustomWords={filteredInactiveCustomWords}
             inactiveCustomMinimized={wordsPanelState.inactiveCustomMinimized}
+            sectionRef={hiddenSectionRef}
             selection={selection.hidden}
             bulkFocusRefs={bulkFocusRefs.hidden}
             onToggleSection={onToggleHiddenSection}

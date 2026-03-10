@@ -12,6 +12,7 @@ export function BuiltinWordsSection({
   editedBuiltinWordIds,
   wordsPanelState,
   sectionRef,
+  hiddenSectionRef,
   selection,
   bulkFocusRefs,
   onToggleSection,
@@ -26,6 +27,7 @@ export function BuiltinWordsSection({
   editedBuiltinWordIds: Set<string>;
   wordsPanelState: WordsPanelState;
   sectionRef: Ref<HTMLElement>;
+  hiddenSectionRef?: Ref<HTMLElement>;
   selection: NestedSectionSelectionControls;
   bulkFocusRefs: NestedBulkActionFocusRefs;
   onToggleSection: () => void;
@@ -154,6 +156,7 @@ export function BuiltinWordsSection({
               searchValue={searchValue}
               filteredHiddenBuiltinWords={filteredHiddenBuiltinWords}
               hiddenBuiltinMinimized={wordsPanelState.hiddenBuiltinMinimized}
+              sectionRef={hiddenSectionRef}
               selection={selection.hidden}
               bulkFocusRefs={bulkFocusRefs.hidden}
               onToggleSection={onToggleHiddenSection}

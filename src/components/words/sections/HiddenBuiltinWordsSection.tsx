@@ -1,3 +1,4 @@
+import type { Ref } from "react";
 import { t } from "../../../i18n";
 import type { TrainerState } from "../../../features/trainer/useTrainer";
 import { BulkActionBar, IconButton, ReadonlyWordRow, SectionHeaderMeta, StatePill, type BulkActionFocusRefs, type SectionSelectionControls } from "../shared";
@@ -7,6 +8,7 @@ export function HiddenBuiltinWordsSection({
   searchValue,
   filteredHiddenBuiltinWords,
   hiddenBuiltinMinimized,
+  sectionRef,
   selection,
   bulkFocusRefs,
   onToggleSection,
@@ -16,6 +18,7 @@ export function HiddenBuiltinWordsSection({
   searchValue: string;
   filteredHiddenBuiltinWords: TrainerState["hiddenBuiltinWords"];
   hiddenBuiltinMinimized: boolean;
+  sectionRef?: Ref<HTMLElement>;
   selection: SectionSelectionControls;
   bulkFocusRefs: BulkActionFocusRefs;
   onToggleSection: () => void;
@@ -27,7 +30,7 @@ export function HiddenBuiltinWordsSection({
   const minimizedSummary = t(language, "words.hiddenBuiltinMinimizedSummary").replace("{count}", String(trainer.hiddenBuiltinWords.length));
 
   return (
-    <section className={`word-section word-section-hidden ${hiddenBuiltinMinimized ? "word-section-minimized" : ""}`} data-testid="hidden-builtin-word-section">
+    <section ref={sectionRef} className={`word-section word-section-hidden ${hiddenBuiltinMinimized ? "word-section-minimized" : ""}`} data-testid="hidden-builtin-word-section">
       <div className="panel-header panel-header-compact">
         <div>
           <p className="label">{t(language, "words.hiddenBuiltinTitle")}</p>

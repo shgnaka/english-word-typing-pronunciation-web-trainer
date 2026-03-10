@@ -1,3 +1,4 @@
+import type { Ref } from "react";
 import { t } from "../../../i18n";
 import type { TrainerState } from "../../../features/trainer/useTrainer";
 import { BulkActionBar, EditingWordRow, IconButton, ReadonlyWordRow, SectionHeaderMeta, StatePill, type BulkActionFocusRefs, type SectionSelectionControls } from "../shared";
@@ -7,6 +8,7 @@ export function HiddenCustomWordsSection({
   searchValue,
   filteredInactiveCustomWords,
   inactiveCustomMinimized,
+  sectionRef,
   selection,
   bulkFocusRefs,
   onToggleSection,
@@ -17,6 +19,7 @@ export function HiddenCustomWordsSection({
   searchValue: string;
   filteredInactiveCustomWords: TrainerState["inactiveCustomWords"];
   inactiveCustomMinimized: boolean;
+  sectionRef?: Ref<HTMLElement>;
   selection: SectionSelectionControls;
   bulkFocusRefs: BulkActionFocusRefs;
   onToggleSection: () => void;
@@ -33,7 +36,7 @@ export function HiddenCustomWordsSection({
   }
 
   return (
-    <section className={`word-section word-section-hidden word-section-hidden-custom ${inactiveCustomMinimized ? "word-section-minimized" : ""}`} data-testid="inactive-custom-word-section">
+    <section ref={sectionRef} className={`word-section word-section-hidden word-section-hidden-custom ${inactiveCustomMinimized ? "word-section-minimized" : ""}`} data-testid="inactive-custom-word-section">
       <div className="panel-header panel-header-compact">
         <div>
           <p className="label">{t(language, "words.inactiveCustomTitle")}</p>
