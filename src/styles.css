@@ -1035,6 +1035,24 @@ input {
   margin: 0.35rem 0 0;
 }
 
+.inline-action-destructive {
+  border-color: rgba(255, 107, 107, 0.34);
+  background: rgba(255, 107, 107, 0.12);
+  color: #ffd7d7;
+}
+
+.inline-action-destructive:hover:not(:disabled),
+.inline-action-destructive:focus-visible:not(:disabled) {
+  border-color: rgba(255, 107, 107, 0.52);
+  background: rgba(255, 107, 107, 0.18);
+  box-shadow: 0 0 0 3px rgba(255, 107, 107, 0.14);
+}
+
+.inline-action-destructive:disabled {
+  border-color: rgba(255, 107, 107, 0.16);
+  color: rgba(255, 215, 215, 0.48);
+}
+
 .settings-grid label {
   display: grid;
   gap: 0.5rem;

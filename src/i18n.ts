@@ -62,6 +62,7 @@ type MessageKey =
   | "words.bulkRemoveFromPractice"
   | "words.bulkRestore"
   | "words.bulkDelete"
+  | "words.bulkDeleteConfirm"
   | "words.edit"
   | "words.save"
   | "words.cancel"
@@ -210,7 +211,8 @@ const messages: Record<DisplayLanguage, Record<MessageKey, string>> = {
     "words.bulkHint": "Select words below to unlock bulk actions for this section.",
     "words.bulkRemoveFromPractice": "Remove selected",
     "words.bulkRestore": "Restore selected",
-    "words.bulkDelete": "Delete selected",
+    "words.bulkDelete": "Delete permanently",
+    "words.bulkDeleteConfirm": "Delete the selected words permanently from this browser?",
     "words.edit": "Edit",
     "words.save": "Save",
     "words.cancel": "Cancel",
@@ -358,7 +360,8 @@ const messages: Record<DisplayLanguage, Record<MessageKey, string>> = {
     "words.bulkHint": "このセクションで一括操作を使うには、下の単語を選択してください。",
     "words.bulkRemoveFromPractice": "選択した項目を練習順から外す",
     "words.bulkRestore": "選択した項目を復元",
-    "words.bulkDelete": "選択した項目を削除",
+    "words.bulkDelete": "選択した項目を完全に削除",
+    "words.bulkDeleteConfirm": "選択した単語をこのブラウザから完全に削除しますか？",
     "words.edit": "編集",
     "words.save": "保存",
     "words.cancel": "キャンセル",
@@ -506,7 +509,8 @@ const messages: Record<DisplayLanguage, Record<MessageKey, string>> = {
     "words.bulkHint": "この セクションで まとめて そうさするには、したの たんごを えらんでください。",
     "words.bulkRemoveFromPractice": "えらんだ ものを れんしゅうじゅんから はずす",
     "words.bulkRestore": "えらんだ ものを もどす",
-    "words.bulkDelete": "えらんだ ものを さくじょ",
+    "words.bulkDelete": "えらんだ ものを かんぜんに さくじょ",
+    "words.bulkDeleteConfirm": "えらんだ たんごを このブラウザから かんぜんに さくじょ しますか？",
     "words.edit": "へんしゅう",
     "words.save": "ほぞん",
     "words.cancel": "キャンセル",

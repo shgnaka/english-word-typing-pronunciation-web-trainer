@@ -291,6 +291,7 @@ describe("App", () => {
 
   it("supports bulk delete for hidden custom words", async () => {
     const user = userEvent.setup();
+    const confirmSpy = vi.spyOn(window, "confirm").mockReturnValue(true);
     render(<App />);
 
     await user.click(screen.getByRole("button", { name: "Words" }));
@@ -307,6 +308,29 @@ describe("App", () => {
 
     expect(screen.getByTestId("inactive-custom-word-list")).not.toHaveTextContent("banana");
     expect(screen.getByTestId("inactive-custom-word-list")).not.toHaveTextContent("grape");
+    expect(confirmSpy).toHaveBeenCalled();
+    confirmSpy.mockRestore();
+  });
+
+  it("cancels destructive bulk delete when confirmation is declined", async () => {
+    const user = userEvent.setup();
+    const confirmSpy = vi.spyOn(window, "confirm").mockReturnValue(false);
+    render(<App />);
+
+    await user.click(screen.getByRole("button", { name: "Words" }));
+    await user.type(screen.getByLabelText("New word"), "banana");
+    await user.click(screen.getByRole("button", { name: "Add word" }));
+    await user.type(screen.getByLabelText("New word"), "grape");
+    await user.click(screen.getByRole("button", { name: "Add word" }));
+
+    await user.click(screen.getByTestId("select-custom-word-checkbox-custom-banana"));
+    await user.click(screen.getByTestId("select-custom-word-checkbox-custom-grape"));
+    await user.click(screen.getByTestId("bulk-delete-custom-words-button"));
+
+    expect(screen.getByTestId("custom-word-list")).toHaveTextContent("banana");
+    expect(screen.getByTestId("custom-word-list")).toHaveTextContent("grape");
+    expect(confirmSpy).toHaveBeenCalled();
+    confirmSpy.mockRestore();
   });
 
   it("highlights search matches and lets the user clear an empty search result", async () => {

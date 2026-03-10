@@ -27,6 +27,10 @@ export function HiddenCustomWordsSection({
   const allHiddenVisibleSelected =
     selection.selectableWordIds.length > 0 && selection.selectableWordIds.every((wordId) => selection.selectedWordIds.includes(wordId));
 
+  function confirmBulkDelete() {
+    return window.confirm(t(language, "words.bulkDeleteConfirm"));
+  }
+
   return (
     <section className={`word-section word-section-hidden word-section-hidden-custom ${inactiveCustomMinimized ? "word-section-minimized" : ""}`} data-testid="inactive-custom-word-section">
       <div className="panel-header panel-header-compact">
@@ -90,9 +94,15 @@ export function HiddenCustomWordsSection({
               </button>
               <button
                 type="button"
-                className="secondary inline-action"
+                className="secondary inline-action inline-action-destructive"
                 data-testid="bulk-delete-hidden-custom-words-button"
-                onClick={() => selection.runBulkAction(() => trainer.handleRemoveWords(selection.selectedWordIds))}
+                onClick={() => {
+                  if (!confirmBulkDelete()) {
+                    return;
+                  }
+
+                  selection.runBulkAction(() => trainer.handleRemoveWords(selection.selectedWordIds));
+                }}
                 disabled={selection.selectedWordIds.length === 0}
               >
                 {t(language, "words.bulkDelete")}

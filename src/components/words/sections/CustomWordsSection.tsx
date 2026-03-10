@@ -39,6 +39,10 @@ export function CustomWordsSection({
     selection.active.selectableWordIds.every((wordId) => selection.active.selectedWordIds.includes(wordId));
   const activeCustomCount = trainer.customWords.length - trainer.inactiveCustomWords.length;
 
+  function confirmBulkDelete() {
+    return window.confirm(t(language, "words.bulkDeleteConfirm"));
+  }
+
   return (
     <section ref={sectionRef} className={`word-section word-section-custom ${wordsPanelState.customMinimized ? "word-section-minimized" : ""}`} data-testid="custom-word-section">
       <div className="panel-header">
@@ -113,9 +117,15 @@ export function CustomWordsSection({
               </button>
               <button
                 type="button"
-                className="secondary inline-action"
+                className="secondary inline-action inline-action-destructive"
                 data-testid="bulk-delete-custom-words-button"
-                onClick={() => selection.active.runBulkAction(() => trainer.handleRemoveWords(selection.active.selectedWordIds))}
+                onClick={() => {
+                  if (!confirmBulkDelete()) {
+                    return;
+                  }
+
+                  selection.active.runBulkAction(() => trainer.handleRemoveWords(selection.active.selectedWordIds));
+                }}
                 disabled={selection.active.selectedWordIds.length === 0}
               >
                 {t(language, "words.bulkDelete")}
