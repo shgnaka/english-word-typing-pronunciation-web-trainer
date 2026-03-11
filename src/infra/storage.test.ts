@@ -3,25 +3,29 @@ import {
   clearBuiltinWordOrder,
   clearBuiltinWordOverrides,
   defaultSessionConfig,
+  defaultThemePreference,
   defaultWordsPanelState,
   loadBuiltinWordOrder,
   loadBuiltinWordOverrides,
   loadCustomWords,
   loadSessionConfig,
+  loadThemePreference,
   loadWordsPanelState,
   saveBuiltinWordOrder,
   saveBuiltinWordOverrides,
   saveCustomWords,
   saveSessionConfig,
+  saveThemePreference,
   saveWordsPanelState
 } from "./storage";
-import type { BuiltinWordOverrides, WordEntry, WordOrder } from "../domain/types";
+import type { BuiltinWordOverrides, ThemePreference, WordEntry, WordOrder } from "../domain/types";
 
 const customWordsKey = "wordbeat.customWords";
 const builtinWordOrderKey = "wordbeat.builtinWordOrder";
 const builtinWordOverridesKey = "wordbeat.builtinWordOverrides";
 const sessionConfigKey = "wordbeat.sessionConfig";
 const wordsPanelStateKey = "wordbeat.wordsPanelState";
+const themePreferenceKey = "wordbeat.themePreference";
 
 describe("storage", () => {
   beforeEach(() => {
@@ -321,6 +325,65 @@ describe("storage", () => {
         ...defaultWordsPanelState,
         customMinimized: true
       }
+    });
+  });
+
+  it("loads legacy theme preference and migrates it to the versioned format", () => {
+    window.localStorage.setItem(
+      themePreferenceKey,
+      JSON.stringify({
+        themeId: "forest",
+        accent: "sky",
+        backgroundIntensity: 84
+      })
+    );
+
+    expect(loadThemePreference()).toEqual({
+      themeId: "forest",
+      accent: "sky",
+      backgroundIntensity: 84
+    });
+    expect(JSON.parse(window.localStorage.getItem(themePreferenceKey) ?? "null")).toEqual({
+      version: 1,
+      value: {
+        themeId: "forest",
+        accent: "sky",
+        backgroundIntensity: 84
+      }
+    });
+  });
+
+  it("falls back to the default theme preference for malformed theme values", () => {
+    window.localStorage.setItem(
+      themePreferenceKey,
+      JSON.stringify({
+        version: 1,
+        value: {
+          themeId: "midnight",
+          accent: "gold",
+          backgroundIntensity: 999
+        }
+      })
+    );
+
+    expect(loadThemePreference()).toEqual({
+      ...defaultThemePreference,
+      backgroundIntensity: 100
+    });
+  });
+
+  it("saves theme preference in a versioned format", () => {
+    const themePreference: ThemePreference = {
+      themeId: "ocean",
+      accent: "rose",
+      backgroundIntensity: 35
+    };
+
+    saveThemePreference(themePreference);
+
+    expect(JSON.parse(window.localStorage.getItem(themePreferenceKey) ?? "null")).toEqual({
+      version: 1,
+      value: themePreference
     });
   });
 });

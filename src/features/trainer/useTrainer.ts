@@ -1,17 +1,20 @@
 import { useEffect, useState } from "react";
-import type { BuiltinWordOverrides, DisplayLanguage, SessionConfig, WordEntry, WordOrder } from "../../domain/types";
+import type { BuiltinWordOverrides, DisplayLanguage, SessionConfig, ThemeAccent, ThemeId, ThemePreference, WordEntry, WordOrder } from "../../domain/types";
 import { createWordEntry, dedupeWords, normalizeWord } from "../../domain/words";
 import { clearBrowserTtsCache } from "../../infra/browserTts";
 import {
   defaultDisplayLanguage,
   defaultSessionConfig,
+  defaultThemePreference,
   saveBuiltinWordOrder,
   sanitizeWordCount,
   saveBuiltinWordOverrides,
   saveDisplayLanguage,
   saveCustomWords,
-  saveSessionConfig
+  saveSessionConfig,
+  saveThemePreference
 } from "../../infra/storage";
+import { sanitizeBackgroundIntensity } from "../../theme";
 import {
   buildActiveCustomWords,
   buildActiveWordsFromPreferences,
@@ -39,6 +42,7 @@ export function useTrainer() {
   const [config, setConfig] = useState<SessionConfig>(defaultSessionConfig);
   const [draftConfig, setDraftConfig] = useState<SessionConfig>(defaultSessionConfig);
   const [displayLanguage, setDisplayLanguage] = useState<DisplayLanguage>(defaultDisplayLanguage);
+  const [themePreference, setThemePreference] = useState<ThemePreference>(defaultThemePreference);
   const [inputValue, setInputValue] = useState("");
   const [addWordError, setAddWordError] = useState("");
   const [editingWordSource, setEditingWordSource] = useState<WordEntry["source"] | null>(null);
@@ -84,7 +88,8 @@ export function useTrainer() {
       builtinWordOverrides: loadedBuiltinWordOverrides,
       customWords: loadedCustomWords,
       config: loadedConfig,
-      displayLanguage: loadedDisplayLanguage
+      displayLanguage: loadedDisplayLanguage,
+      themePreference: loadedThemePreference
     } = loadTrainerPreferences();
     setWordOrder(loadedWordOrder);
     setBuiltinWordOverrides(loadedBuiltinWordOverrides);
@@ -92,6 +97,7 @@ export function useTrainer() {
     setConfig(loadedConfig);
     setDraftConfig(loadedConfig);
     setDisplayLanguage(loadedDisplayLanguage);
+    setThemePreference(loadedThemePreference);
     pronunciation.resetAutoPronunciation();
     sessionControls.initializeSession(
       buildTrainerQueue(buildActiveWordsFromPreferences(loadedBuiltinWordOverrides, loadedCustomWords, loadedWordOrder), loadedConfig)
@@ -105,6 +111,10 @@ export function useTrainer() {
       config,
       draftConfig
     });
+  const availableWordCount = activeWords.length;
+  const requestedWordCount = draftConfig.wordCount;
+  const effectiveWordCount = Math.min(requestedWordCount, availableWordCount);
+  const isWordCountClamped = availableWordCount < requestedWordCount;
 
   function restartSession(nextConfig = config) {
     pronunciation.resetAutoPronunciation();
@@ -696,6 +706,36 @@ export function useTrainer() {
     saveDisplayLanguage(language);
   }
 
+  function updateThemePreference(nextPreference: ThemePreference) {
+    setThemePreference(nextPreference);
+    saveThemePreference(nextPreference);
+  }
+
+  function handleThemeIdChange(themeId: ThemeId) {
+    updateThemePreference({
+      ...themePreference,
+      themeId
+    });
+  }
+
+  function handleThemeAccentChange(accent: ThemeAccent) {
+    updateThemePreference({
+      ...themePreference,
+      accent
+    });
+  }
+
+  function handleThemeBackgroundIntensityChange(backgroundIntensity: number) {
+    updateThemePreference({
+      ...themePreference,
+      backgroundIntensity: sanitizeBackgroundIntensity(backgroundIntensity)
+    });
+  }
+
+  function resetThemePreference() {
+    updateThemePreference(defaultThemePreference);
+  }
+
   async function handleClearBrowserTtsCache() {
     setIsClearingBrowserTtsCache(true);
     try {
@@ -715,6 +755,7 @@ export function useTrainer() {
     config,
     draftConfig,
     displayLanguage,
+    themePreference,
     builtinWords,
     activeWords,
     hiddenBuiltinWords,
@@ -743,6 +784,10 @@ export function useTrainer() {
     isCountdownActive,
     isTypingActiveLayout,
     hasPendingConfigChanges,
+    availableWordCount,
+    requestedWordCount,
+    effectiveWordCount,
+    isWordCountClamped,
     handleKeyInput: sessionControls.handleKeyInput,
     handleAddWord,
     handleRemoveWord,
@@ -771,6 +816,10 @@ export function useTrainer() {
     discardConfigChanges,
     clearBrowserTtsCache: handleClearBrowserTtsCache,
     setDisplayLanguage: handleDisplayLanguageChange,
+    setThemeId: handleThemeIdChange,
+    setThemeAccent: handleThemeAccentChange,
+    setThemeBackgroundIntensity: handleThemeBackgroundIntensityChange,
+    resetThemePreference,
     restartSession,
     retryFocusedWords,
     skipCountdown() {

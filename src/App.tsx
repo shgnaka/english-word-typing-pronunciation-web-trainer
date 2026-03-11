@@ -6,6 +6,7 @@ import { SettingsPanel } from "./components/SettingsPanel";
 import { WordsPanel } from "./components/WordsPanel";
 import { useTrainer } from "./features/trainer/useTrainer";
 import { t } from "./i18n";
+import { buildThemeStyleProperties, getThemeColorScheme } from "./theme";
 
 function isInteractiveElement(target: EventTarget | null): boolean {
   if (!(target instanceof HTMLElement)) {
@@ -62,6 +63,26 @@ function App() {
       }
     };
   }, [trainer.isCountdownActive, trainer.isTypingActiveLayout, trainer.screen]);
+
+  useEffect(() => {
+    const root = document.documentElement;
+    const themeVariables = buildThemeStyleProperties(trainer.themePreference);
+    const colorScheme = getThemeColorScheme(trainer.themePreference.themeId);
+
+    root.dataset.theme = trainer.themePreference.themeId;
+    root.dataset.colorScheme = colorScheme;
+    Object.entries(themeVariables).forEach(([key, value]) => {
+      root.style.setProperty(key, value);
+    });
+
+    return () => {
+      delete root.dataset.theme;
+      delete root.dataset.colorScheme;
+      Object.keys(themeVariables).forEach((key) => {
+        root.style.removeProperty(key);
+      });
+    };
+  }, [trainer.themePreference]);
 
   function handlePracticePanelKeyDown(event: ReactKeyboardEvent<HTMLElement>) {
     if (trainer.screen !== "practice") {

@@ -114,6 +114,57 @@ describe("App", () => {
     expect(screen.getByTestId("empty-custom-cta")).toHaveTextContent("Add your first custom word");
   });
 
+  it("updates theme settings immediately and persists them across reloads", async () => {
+    const user = userEvent.setup();
+    const { unmount } = render(<App />);
+
+    await user.click(screen.getByRole("button", { name: "Settings" }));
+    await user.click(screen.getByTestId("theme-option-forest"));
+    await user.click(screen.getByTestId("theme-accent-sky"));
+    fireEvent.change(screen.getByTestId("theme-background-intensity"), { target: { value: "82" } });
+
+    expect(document.documentElement.dataset.theme).toBe("forest");
+    expect(document.documentElement.dataset.colorScheme).toBe("dark");
+    expect(document.documentElement.style.getPropertyValue("--theme-accent-rgb")).toBe("121 192 255");
+    expect(screen.getByTestId("theme-background-intensity-value")).toHaveTextContent("82%");
+
+    unmount();
+    render(<App />);
+
+    expect(document.documentElement.dataset.theme).toBe("forest");
+    expect(document.documentElement.dataset.colorScheme).toBe("dark");
+    expect(document.documentElement.style.getPropertyValue("--theme-accent-rgb")).toBe("121 192 255");
+
+    await user.click(screen.getByRole("button", { name: "Settings" }));
+    expect(screen.getByTestId("theme-background-intensity-value")).toHaveTextContent("82%");
+  });
+
+  it("resets theme settings back to the default theme", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.click(screen.getByRole("button", { name: "Settings" }));
+    await user.click(screen.getByTestId("theme-option-ocean"));
+    await user.click(screen.getByTestId("theme-accent-rose"));
+    fireEvent.change(screen.getByTestId("theme-background-intensity"), { target: { value: "20" } });
+    await user.click(screen.getByTestId("reset-theme-button"));
+
+    expect(document.documentElement.dataset.theme).toBe("dusk");
+    expect(document.documentElement.style.getPropertyValue("--theme-accent-rgb")).toBe("255 191 105");
+    expect(screen.getByTestId("theme-background-intensity-value")).toHaveTextContent("60%");
+  });
+
+  it("supports the daylight base theme", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.click(screen.getByRole("button", { name: "Settings" }));
+    await user.click(screen.getByTestId("theme-option-daylight"));
+
+    expect(document.documentElement.dataset.theme).toBe("daylight");
+    expect(document.documentElement.dataset.colorScheme).toBe("light");
+  });
+
   it("uses empty-state ctas to guide the next action", async () => {
     const user = userEvent.setup();
     render(<App />);
@@ -932,6 +983,17 @@ describe("App", () => {
     );
     window.localStorage.setItem("wordbeat.wordsPanelState", "{bad json");
     window.localStorage.setItem("wordbeat.displayLanguage", "fr");
+    window.localStorage.setItem(
+      "wordbeat.themePreference",
+      JSON.stringify({
+        version: 1,
+        value: {
+          themeId: "broken",
+          accent: "broken",
+          backgroundIntensity: "loud"
+        }
+      })
+    );
 
     render(<App />);
 
@@ -950,6 +1012,9 @@ describe("App", () => {
     expect(screen.getByTestId("speech-toggle")).toBeChecked();
     expect(screen.getByTestId("finger-guide-toggle")).toBeChecked();
     expect(screen.getByTestId("keyboard-hint-toggle")).toBeChecked();
+    expect(document.documentElement.dataset.theme).toBe("dusk");
+    expect(document.documentElement.dataset.colorScheme).toBe("dark");
+    expect(screen.getByTestId("theme-background-intensity-value")).toHaveTextContent("60%");
   });
 
   it("reset builtin words restores the shipped builtin order", async () => {
@@ -1075,8 +1140,16 @@ describe("App", () => {
 
     await user.click(screen.getByRole("button", { name: "Words" }));
     expect(screen.getByTestId("words-session-config")).toHaveTextContent("Session word setup");
+    expect(screen.getByTestId("word-stat-session-size")).toHaveTextContent("1 session");
+    expect(screen.getByTestId("word-stat-session-size")).toHaveTextContent("10");
+    expect(screen.getByTestId("words-session-outcome-summary")).toHaveTextContent("Practice order: 20 words");
+    expect(screen.getByTestId("words-session-outcome-summary")).toHaveTextContent("This session: 10 words");
     fireEvent.change(screen.getByLabelText("Words per session"), { target: { value: "1" } });
 
+    expect(screen.getByTestId("word-stat-session-size")).toHaveTextContent("1");
+    expect(screen.getByTestId("words-session-outcome-summary")).toHaveTextContent("Practice order: 20 words");
+    expect(screen.getByTestId("words-session-outcome-summary")).toHaveTextContent("This session: 1 words");
+    expect(screen.queryByTestId("words-session-clamp-hint")).not.toBeInTheDocument();
     expect(screen.getByTestId("words-session-config-status")).toHaveTextContent("You have unapplied changes.");
     expect(screen.getByTestId("words-session-config-summary")).toHaveTextContent("Pending changes");
     expect(screen.getByTestId("words-session-config-summary")).toHaveTextContent("Words per session: 10 -> 1");
@@ -1099,6 +1172,36 @@ describe("App", () => {
     expect(screen.getByTestId("shuffle-toggle")).not.toBeChecked();
     expect(screen.getByTestId("words-session-config-status")).toHaveTextContent("Current session already matches this word setup.");
     expect(screen.queryByTestId("words-session-config-summary")).not.toBeInTheDocument();
+  });
+
+  it("shows clamped session counts and updates them when practice-order words change", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.click(screen.getByRole("button", { name: "Words" }));
+    fireEvent.change(screen.getByLabelText("Words per session"), { target: { value: "20" } });
+
+    expect(screen.getByTestId("word-stat-session-size")).toHaveTextContent("20");
+    expect(screen.getByTestId("words-session-outcome-summary")).toHaveTextContent("Practice order: 20 words");
+    expect(screen.getByTestId("words-session-outcome-summary")).toHaveTextContent("This session: 20 words");
+    expect(screen.queryByTestId("words-session-clamp-hint")).not.toBeInTheDocument();
+
+    const builtinWordList = within(screen.getByTestId("builtin-word-list"));
+    await user.click(builtinWordList.getByTestId("more-row-actions-button-builtin-apple"));
+    await user.click(builtinWordList.getByTestId("delete-word-button-builtin-apple"));
+
+    expect(screen.getByTestId("words-session-outcome-summary")).toHaveTextContent("Practice order: 19 words");
+    expect(screen.getByTestId("words-session-outcome-summary")).toHaveTextContent("This session: 19 words");
+    expect(screen.getByTestId("words-session-clamp-hint")).toHaveTextContent(
+      "Only 19 words are in the practice order, so this session will use 19."
+    );
+
+    await user.type(screen.getByLabelText("New word"), "banana");
+    await user.click(screen.getByRole("button", { name: "Add word" }));
+
+    expect(screen.getByTestId("words-session-outcome-summary")).toHaveTextContent("Practice order: 20 words");
+    expect(screen.getByTestId("words-session-outcome-summary")).toHaveTextContent("This session: 20 words");
+    expect(screen.queryByTestId("words-session-clamp-hint")).not.toBeInTheDocument();
   });
 
   it("applies visual assistance toggles immediately without pending session changes", async () => {
