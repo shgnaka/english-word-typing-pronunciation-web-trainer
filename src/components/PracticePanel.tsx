@@ -1,6 +1,6 @@
 import { useEffect, useState, type MouseEvent } from "react";
 import { keyboardRows } from "../domain/keyboard";
-import { getFingerLabel, t } from "../i18n";
+import { formatMessage, getFingerLabel, t } from "../i18n";
 import type { TrainerState } from "../features/trainer/useTrainer";
 import { FingerGuideButtons } from "./FingerGuideButtons";
 
@@ -269,7 +269,7 @@ export function PracticePanel({ trainer }: PracticePanelProps) {
   }
 
   const incorrectFeedback = mistypedKey
-    ? t(language, "practice.feedback.incorrectWithKey").replace("{key}", mistypedKey.toUpperCase())
+    ? formatMessage(language, "practice.feedback.incorrectWithKey", { key: mistypedKey.toUpperCase() })
     : t(language, "practice.feedback.incorrect");
   const shouldShowKeyboardGuide = trainer.isTypingActiveLayout || trainer.config.showKeyboardHint;
   const shouldShowFingerGuide = trainer.isTypingActiveLayout || trainer.config.showFingerGuide;
@@ -285,17 +285,18 @@ export function PracticePanel({ trainer }: PracticePanelProps) {
       ? t(language, "practice.audio.fallback")
       : null;
   const targetSummary = trainer.currentTarget && trainer.currentGuide
-    ? t(language, "practice.a11y.target")
-        .replace("{char}", trainer.currentTarget.toUpperCase())
-        .replace("{key}", trainer.currentTarget.toUpperCase())
-        .replace("{finger}", getFingerLabel(language, trainer.currentGuide.fingerId, trainer.currentGuide.finger))
+    ? formatMessage(language, "practice.a11y.target", {
+        char: trainer.currentTarget.toUpperCase(),
+        key: trainer.currentTarget.toUpperCase(),
+        finger: getFingerLabel(language, trainer.currentGuide.fingerId, trainer.currentGuide.finger)
+      })
     : t(language, "practice.noKey");
   const practiceStatusMessage = showEmptyState
     ? t(language, "practice.a11y.status.empty")
     : trainer.session.isComplete
     ? t(language, "practice.a11y.status.complete")
     : trainer.isCountdownActive
-    ? t(language, "practice.a11y.status.countdown").replace("{count}", String(trainer.countdown))
+    ? formatMessage(language, "practice.a11y.status.countdown", { count: trainer.countdown })
     : trainer.session.lastInputCorrect === false
     ? incorrectFeedback
     : pronunciationStatusMessage

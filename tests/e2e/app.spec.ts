@@ -213,14 +213,28 @@ test("reorders mixed practice words with drag and drop", async ({ page }) => {
   await expect(activeWordChips.nth(2)).toHaveText("apple");
 });
 
+test("bulk-removes selected custom words from practice", async ({ page }) => {
+  await page.getByTestId("tab-words").click();
+  await page.getByTestId("new-word-input").fill("banana");
+  await page.getByTestId("add-word-button").click();
+  await page.getByTestId("new-word-input").fill("mango");
+  await page.getByTestId("add-word-button").click();
+
+  await page.getByTestId("select-custom-word-checkbox-custom-banana").check();
+  await page.getByTestId("select-custom-word-checkbox-custom-mango").check();
+  await page.getByTestId("bulk-remove-custom-words-button").click();
+
+  const hiddenCustomWords = page.getByTestId("inactive-custom-word-list");
+  await expect(hiddenCustomWords).toContainText("banana");
+  await expect(hiddenCustomWords).toContainText("mango");
+});
+
 test("uses reordered mixed words for non-shuffled practice and reset restores shipped builtin order", async ({ page }) => {
   await page.getByTestId("tab-words").click();
   await page.getByTestId("new-word-input").fill("banana");
   await page.getByTestId("add-word-button").click();
-  for (let step = 0; step < 20; step += 1) {
-    await page.getByTestId("active-word-list").getByTestId("more-row-actions-button-custom-banana").click();
-    await page.getByTestId("active-word-list").getByTestId("move-word-up-button-custom-banana").click();
-  }
+  await page.getByTestId("active-word-list").getByTestId("more-row-actions-button-custom-banana").click();
+  await page.getByTestId("active-word-list").getByTestId("move-word-top-button-custom-banana").click();
 
   await page.getByTestId("tab-practice").click();
   await expect(page.getByTestId("current-word")).toHaveText("banana");

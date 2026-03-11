@@ -20,7 +20,6 @@ function formatPendingValue(language: TrainerState["displayLanguage"], value: Se
 
 export function WordsPanel({ trainer }: WordsPanelProps) {
   const language = trainer.displayLanguage;
-  const lastActiveWordIndex = trainer.activeWords.length - 1;
   const editedBuiltinWordIds = new Set(trainer.editedBuiltinWordIds);
   const searchInputId = useId();
   const newWordInputRef = useRef<HTMLInputElement | null>(null);
@@ -165,10 +164,7 @@ export function WordsPanel({ trainer }: WordsPanelProps) {
         filteredActiveWords={filteredActiveWords}
         selection={activeSelection}
         bulkFocusRefs={createBulkFocusRefs("active")}
-        dragControls={{
-          lastActiveWordIndex,
-          ...dragControls
-        }}
+        dragControls={dragControls}
         selectedCountLabel={selectedCountLabel(activeSelection.selectedWordIds.length)}
         sectionRef={activeSectionRef}
       />

@@ -1,4 +1,5 @@
-import type { BuiltinWordOverrides, DisplayLanguage, SessionConfig, WordEntry, WordOrder } from "../domain/types";
+import type { BuiltinWordOverride, BuiltinWordOverrides, DisplayLanguage, SessionConfig, WordEntry, WordOrder } from "../domain/types";
+import { normalizeWord } from "../domain/words";
 
 const customWordsKey = "wordbeat.customWords";
 const builtinWordOverridesKey = "wordbeat.builtinWordOverrides";
@@ -12,6 +13,12 @@ interface VersionedStorageRecord<T> {
   version: number;
   value: T;
 }
+
+interface StorageCodec<T> {
+  parse: (value: unknown) => T;
+}
+
+const fallbackStoredAt = "1970-01-01T00:00:00.000Z";
 
 export const defaultSessionConfig: SessionConfig = {
   wordCount: 10,
@@ -46,12 +53,125 @@ export function sanitizeWordCount(value: number): number {
   return Math.min(20, Math.max(1, Math.round(value)));
 }
 
+function sanitizeStoredBoolean(value: unknown, fallback: boolean): boolean {
+  return typeof value === "boolean" ? value : fallback;
+}
+
 function isVersionedStorageRecord<T>(value: unknown): value is VersionedStorageRecord<T> {
   if (!value || typeof value !== "object") {
     return false;
   }
 
   return "version" in value && "value" in value;
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return Boolean(value) && typeof value === "object" && !Array.isArray(value);
+}
+
+function sanitizeStoredTimestamp(value: unknown): string {
+  if (typeof value !== "string") {
+    return fallbackStoredAt;
+  }
+
+  return Number.isNaN(Date.parse(value)) ? fallbackStoredAt : value;
+}
+
+function sanitizeWordEntry(value: unknown, source: WordEntry["source"]): WordEntry | null {
+  if (!isRecord(value)) {
+    return null;
+  }
+
+  const normalizedText = normalizeWord(
+    typeof value.normalizedText === "string" && value.normalizedText.length > 0
+      ? value.normalizedText
+      : typeof value.text === "string"
+      ? value.text
+      : ""
+  );
+
+  if (!normalizedText) {
+    return null;
+  }
+
+  const sanitizedSource = value.source === "builtin" || value.source === "custom" ? value.source : source;
+  const id = typeof value.id === "string" && value.id.length > 0 ? value.id : `${sanitizedSource}-${normalizedText}`;
+
+  return {
+    id,
+    text: normalizedText,
+    normalizedText,
+    source: sanitizedSource,
+    createdAt: sanitizeStoredTimestamp(value.createdAt)
+  };
+}
+
+function sanitizeWordEntries(values: unknown, source: WordEntry["source"]): WordEntry[] {
+  if (!Array.isArray(values)) {
+    return [];
+  }
+
+  return values.flatMap((value) => {
+    const entry = sanitizeWordEntry(value, source);
+    return entry ? [entry] : [];
+  });
+}
+
+function sanitizeBuiltinWordOverride(value: unknown): BuiltinWordOverride | null {
+  if (!isRecord(value)) {
+    return null;
+  }
+
+  if (value.status === "deleted") {
+    return {
+      status: "deleted",
+      updatedAt: sanitizeStoredTimestamp(value.updatedAt)
+    };
+  }
+
+  if (value.status !== "edited") {
+    return null;
+  }
+
+  const normalizedText = normalizeWord(
+    typeof value.normalizedText === "string" && value.normalizedText.length > 0
+      ? value.normalizedText
+      : typeof value.text === "string"
+      ? value.text
+      : ""
+  );
+
+  if (!normalizedText) {
+    return null;
+  }
+
+  return {
+    status: "edited",
+    text: normalizedText,
+    normalizedText,
+    updatedAt: sanitizeStoredTimestamp(value.updatedAt)
+  };
+}
+
+function sanitizeBuiltinWordOverridesValue(value: unknown): BuiltinWordOverrides {
+  if (!isRecord(value)) {
+    return {};
+  }
+
+  return Object.fromEntries(
+    Object.entries(value).flatMap(([wordId, override]) => {
+      const sanitizedOverride = sanitizeBuiltinWordOverride(override);
+      return sanitizedOverride ? [[wordId, sanitizedOverride]] : [];
+    })
+  );
+}
+
+function sanitizeWordOrderValue(value: unknown): WordOrder {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return value.filter((wordId): wordId is string => typeof wordId === "string" && wordId.length > 0);
 }
 
 function sanitizeSessionConfigValue(value: Partial<SessionConfig> | null | undefined): SessionConfig {
@@ -61,11 +181,11 @@ function sanitizeSessionConfigValue(value: Partial<SessionConfig> | null | undef
     ...defaultSessionConfig,
     ...parsed,
     wordCount: sanitizeWordCount(parsed.wordCount ?? defaultSessionConfig.wordCount),
-    shuffle: Boolean(parsed.shuffle ?? defaultSessionConfig.shuffle),
-    speechEnabled: Boolean(parsed.speechEnabled ?? defaultSessionConfig.speechEnabled),
-    browserTtsEnabled: Boolean(parsed.browserTtsEnabled ?? defaultSessionConfig.browserTtsEnabled),
-    showFingerGuide: Boolean(parsed.showFingerGuide ?? defaultSessionConfig.showFingerGuide),
-    showKeyboardHint: Boolean(parsed.showKeyboardHint ?? defaultSessionConfig.showKeyboardHint)
+    shuffle: sanitizeStoredBoolean(parsed.shuffle, defaultSessionConfig.shuffle),
+    speechEnabled: sanitizeStoredBoolean(parsed.speechEnabled, defaultSessionConfig.speechEnabled),
+    browserTtsEnabled: sanitizeStoredBoolean(parsed.browserTtsEnabled, defaultSessionConfig.browserTtsEnabled),
+    showFingerGuide: sanitizeStoredBoolean(parsed.showFingerGuide, defaultSessionConfig.showFingerGuide),
+    showKeyboardHint: sanitizeStoredBoolean(parsed.showKeyboardHint, defaultSessionConfig.showKeyboardHint)
   };
 }
 
@@ -73,11 +193,34 @@ function sanitizeWordsPanelStateValue(value: Partial<WordsPanelState> | null | u
   const parsed = value ?? {};
 
   return {
-    builtinMinimized: Boolean(parsed.builtinMinimized ?? defaultWordsPanelState.builtinMinimized),
-    hiddenBuiltinMinimized: Boolean(parsed.hiddenBuiltinMinimized ?? defaultWordsPanelState.hiddenBuiltinMinimized),
-    customMinimized: Boolean(parsed.customMinimized ?? defaultWordsPanelState.customMinimized),
-    inactiveCustomMinimized: Boolean(parsed.inactiveCustomMinimized ?? defaultWordsPanelState.inactiveCustomMinimized)
+    builtinMinimized: sanitizeStoredBoolean(parsed.builtinMinimized, defaultWordsPanelState.builtinMinimized),
+    hiddenBuiltinMinimized: sanitizeStoredBoolean(parsed.hiddenBuiltinMinimized, defaultWordsPanelState.hiddenBuiltinMinimized),
+    customMinimized: sanitizeStoredBoolean(parsed.customMinimized, defaultWordsPanelState.customMinimized),
+    inactiveCustomMinimized: sanitizeStoredBoolean(parsed.inactiveCustomMinimized, defaultWordsPanelState.inactiveCustomMinimized)
   };
+}
+
+function createStorageCodec<T>(parse: (value: unknown) => T): StorageCodec<T> {
+  return { parse };
+}
+
+const customWordsCodec = createStorageCodec<WordEntry[]>((value) => sanitizeWordEntries(value, "custom"));
+const builtinWordOverridesCodec = createStorageCodec<BuiltinWordOverrides>((value) => sanitizeBuiltinWordOverridesValue(value));
+const builtinWordOrderCodec = createStorageCodec<WordOrder>((value) => sanitizeWordOrderValue(value));
+const sessionConfigCodec = createStorageCodec<SessionConfig>((value) => sanitizeSessionConfigValue(value as Partial<SessionConfig> | null | undefined));
+const wordsPanelStateCodec = createStorageCodec<WordsPanelState>((value) => sanitizeWordsPanelStateValue(value as Partial<WordsPanelState> | null | undefined));
+
+function parseDisplayLanguageValue(value: unknown): DisplayLanguage {
+  return value === "en" || value === "ja" || value === "ja-hira" ? value : defaultDisplayLanguage;
+}
+
+function parseStoredValue<T>(raw: string, codec: StorageCodec<T>, fallback: T): T {
+  try {
+    const parsed = JSON.parse(raw) as unknown;
+    return codec.parse(isVersionedStorageRecord<unknown>(parsed) ? parsed.value : parsed);
+  } catch {
+    return fallback;
+  }
 }
 
 function saveVersionedRecord<T>(key: string, value: T): void {
@@ -90,55 +233,35 @@ function saveVersionedRecord<T>(key: string, value: T): void {
   );
 }
 
-export function loadCustomWords(): WordEntry[] {
-  const raw = globalThis.localStorage?.getItem(customWordsKey);
+function loadVersionedStorageValue<T>(key: string, codec: StorageCodec<T>, fallback: T): T {
+  const raw = globalThis.localStorage?.getItem(key);
   if (!raw) {
-    return [];
+    return fallback;
   }
 
-  try {
-    const parsed = JSON.parse(raw) as WordEntry[] | VersionedStorageRecord<WordEntry[]>;
-    const words = Array.isArray(parsed)
-      ? parsed
-      : isVersionedStorageRecord<WordEntry[]>(parsed) && Array.isArray(parsed.value)
-      ? parsed.value
-      : [];
+  const value = parseStoredValue(raw, codec, fallback);
+  saveVersionedRecord(key, value);
+  return value;
+}
 
-    saveVersionedRecord(customWordsKey, words);
-    return words;
-  } catch {
-    return [];
-  }
+function saveVersionedStorageValue<T>(key: string, codec: StorageCodec<T>, value: unknown): void {
+  saveVersionedRecord(key, codec.parse(value));
+}
+
+export function loadCustomWords(): WordEntry[] {
+  return loadVersionedStorageValue(customWordsKey, customWordsCodec, []);
 }
 
 export function saveCustomWords(words: WordEntry[]): void {
-  saveVersionedRecord(customWordsKey, words);
+  saveVersionedStorageValue(customWordsKey, customWordsCodec, words);
 }
 
 export function loadBuiltinWordOverrides(): BuiltinWordOverrides {
-  const raw = globalThis.localStorage?.getItem(builtinWordOverridesKey);
-  if (!raw) {
-    return {};
-  }
-
-  try {
-    const parsed = JSON.parse(raw) as unknown;
-    const overrides: BuiltinWordOverrides =
-      isVersionedStorageRecord<BuiltinWordOverrides>(parsed) && parsed.value && typeof parsed.value === "object"
-        ? parsed.value
-        : parsed && typeof parsed === "object" && !Array.isArray(parsed)
-        ? (parsed as BuiltinWordOverrides)
-        : {};
-
-    saveVersionedRecord(builtinWordOverridesKey, overrides);
-    return overrides;
-  } catch {
-    return {};
-  }
+  return loadVersionedStorageValue(builtinWordOverridesKey, builtinWordOverridesCodec, {});
 }
 
 export function saveBuiltinWordOverrides(overrides: BuiltinWordOverrides): void {
-  saveVersionedRecord(builtinWordOverridesKey, overrides);
+  saveVersionedStorageValue(builtinWordOverridesKey, builtinWordOverridesCodec, overrides);
 }
 
 export function clearBuiltinWordOverrides(): void {
@@ -146,28 +269,11 @@ export function clearBuiltinWordOverrides(): void {
 }
 
 export function loadBuiltinWordOrder(): WordOrder {
-  const raw = globalThis.localStorage?.getItem(builtinWordOrderKey);
-  if (!raw) {
-    return [];
-  }
-
-  try {
-    const parsed = JSON.parse(raw) as WordOrder | VersionedStorageRecord<WordOrder>;
-    const order = Array.isArray(parsed)
-      ? parsed
-      : isVersionedStorageRecord<WordOrder>(parsed) && Array.isArray(parsed.value)
-      ? parsed.value
-      : [];
-
-    saveVersionedRecord(builtinWordOrderKey, order);
-    return order;
-  } catch {
-    return [];
-  }
+  return loadVersionedStorageValue(builtinWordOrderKey, builtinWordOrderCodec, []);
 }
 
 export function saveBuiltinWordOrder(order: WordOrder): void {
-  saveVersionedRecord(builtinWordOrderKey, order);
+  saveVersionedStorageValue(builtinWordOrderKey, builtinWordOrderCodec, order);
 }
 
 export function clearBuiltinWordOrder(): void {
@@ -175,56 +281,23 @@ export function clearBuiltinWordOrder(): void {
 }
 
 export function loadSessionConfig(): SessionConfig {
-  const raw = globalThis.localStorage?.getItem(sessionConfigKey);
-  if (!raw) {
-    return defaultSessionConfig;
-  }
-
-  try {
-    const parsed = JSON.parse(raw) as Partial<SessionConfig> | VersionedStorageRecord<Partial<SessionConfig>>;
-    const config = isVersionedStorageRecord<Partial<SessionConfig>>(parsed)
-      ? sanitizeSessionConfigValue(parsed.value)
-      : sanitizeSessionConfigValue(parsed);
-    saveVersionedRecord(sessionConfigKey, config);
-    return config;
-  } catch {
-    return defaultSessionConfig;
-  }
+  return loadVersionedStorageValue(sessionConfigKey, sessionConfigCodec, defaultSessionConfig);
 }
 
 export function saveSessionConfig(config: SessionConfig): void {
-  saveVersionedRecord(sessionConfigKey, sanitizeSessionConfigValue(config));
+  saveVersionedStorageValue(sessionConfigKey, sessionConfigCodec, config);
 }
 
 export function loadWordsPanelState(): WordsPanelState {
-  const raw = globalThis.localStorage?.getItem(wordsPanelStateKey);
-  if (!raw) {
-    return defaultWordsPanelState;
-  }
-
-  try {
-    const parsed = JSON.parse(raw) as Partial<WordsPanelState> | VersionedStorageRecord<Partial<WordsPanelState>>;
-    const wordsPanelState = isVersionedStorageRecord<Partial<WordsPanelState>>(parsed)
-      ? sanitizeWordsPanelStateValue(parsed.value)
-      : sanitizeWordsPanelStateValue(parsed);
-    saveVersionedRecord(wordsPanelStateKey, wordsPanelState);
-    return wordsPanelState;
-  } catch {
-    return defaultWordsPanelState;
-  }
+  return loadVersionedStorageValue(wordsPanelStateKey, wordsPanelStateCodec, defaultWordsPanelState);
 }
 
 export function saveWordsPanelState(state: WordsPanelState): void {
-  saveVersionedRecord(wordsPanelStateKey, sanitizeWordsPanelStateValue(state));
+  saveVersionedStorageValue(wordsPanelStateKey, wordsPanelStateCodec, state);
 }
 
 export function loadDisplayLanguage(): DisplayLanguage {
-  const raw = globalThis.localStorage?.getItem(displayLanguageKey);
-  if (raw === "en" || raw === "ja" || raw === "ja-hira") {
-    return raw;
-  }
-
-  return defaultDisplayLanguage;
+  return parseDisplayLanguageValue(globalThis.localStorage?.getItem(displayLanguageKey));
 }
 
 export function saveDisplayLanguage(language: DisplayLanguage): void {
