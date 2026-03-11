@@ -158,6 +158,27 @@ export function ActiveWordsSection({
                   dragControls.dropWord(word.id);
                 }}
                 onDragEnd={dragControls.clear}
+                onTouchStart={() => {
+                  dragControls.startWordDrag(word.id);
+                }}
+                onTouchMove={(event) => {
+                  const touch = event.touches[0];
+                  if (!touch) {
+                    return;
+                  }
+
+                  event.preventDefault();
+                  dragControls.handleTouchMove(touch.clientX, touch.clientY);
+                }}
+                onTouchEnd={() => {
+                  if (dragControls.dropTargetWordId && dragControls.dropTargetWordId !== word.id) {
+                    dragControls.dropWord(dragControls.dropTargetWordId);
+                    return;
+                  }
+
+                  dragControls.clear();
+                }}
+                onTouchCancel={dragControls.clear}
               />
             );
           })

@@ -1,5 +1,5 @@
 import type { MouseEvent } from "react";
-import { t } from "../i18n";
+import { formatMessage, t } from "../i18n";
 import type { TrainerState } from "../features/trainer/useTrainer";
 
 interface ResultsPanelProps {
@@ -20,22 +20,26 @@ function buildResultsFeedback(trainer: TrainerState, language: TrainerState["dis
   );
   const cleanWordsCount = completedWords.filter((result) => result.mistakes === 0).length;
 
-  const strength = t(language, "results.feedbackCleanWords")
-      .replace("{count}", String(cleanWordsCount))
-      .replace("{total}", String(completedWords.length));
+  const strength = formatMessage(language, "results.feedbackCleanWords", {
+    count: cleanWordsCount,
+    total: completedWords.length
+  });
   const focus =
     mostMistakesWord.mistakes > 0
-      ? t(language, "results.feedbackMostMistakes")
-          .replace("{word}", mostMistakesWord.word)
-          .replace("{mistakes}", String(mostMistakesWord.mistakes))
-      : t(language, "results.feedbackSlowest")
-          .replace("{word}", slowestWord.word)
-          .replace("{time}", String(slowestWord.elapsedMs));
+      ? formatMessage(language, "results.feedbackMostMistakes", {
+          word: mostMistakesWord.word,
+          mistakes: mostMistakesWord.mistakes
+        })
+      : formatMessage(language, "results.feedbackSlowest", {
+          word: slowestWord.word,
+          time: slowestWord.elapsedMs
+        });
   const supporting =
     mostMistakesWord.mistakes > 0
-      ? t(language, "results.feedbackSlowest")
-          .replace("{word}", slowestWord.word)
-          .replace("{time}", String(slowestWord.elapsedMs))
+      ? formatMessage(language, "results.feedbackSlowest", {
+          word: slowestWord.word,
+          time: slowestWord.elapsedMs
+        })
       : t(language, "results.feedbackNoMistakes");
 
   return {
@@ -48,12 +52,13 @@ function buildResultsFeedback(trainer: TrainerState, language: TrainerState["dis
 export function ResultsPanel({ trainer }: ResultsPanelProps) {
   const language = trainer.displayLanguage;
   const feedbackItems = buildResultsFeedback(trainer, language);
-  const resultsAnnouncement = t(language, "results.a11y.summary")
-    .replace("{count}", String(trainer.session.completedWords.length))
-    .replace("{wpm}", String(trainer.score.wpm))
-    .replace("{accuracy}", String(trainer.score.accuracy))
-    .replace("{score}", String(trainer.score.rawScore))
-    .replace("{level}", trainer.score.level);
+  const resultsAnnouncement = formatMessage(language, "results.a11y.summary", {
+    count: trainer.session.completedWords.length,
+    wpm: trainer.score.wpm,
+    accuracy: trainer.score.accuracy,
+    score: trainer.score.rawScore,
+    level: trainer.score.level
+  });
 
   function blurButtonAfterAction(event: MouseEvent<HTMLButtonElement>, action: () => void) {
     action();

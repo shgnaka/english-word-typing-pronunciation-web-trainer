@@ -4,6 +4,7 @@ import type { TypingResult } from "./types";
 
 function buildResult(word: string, elapsedMs: number, keystrokes: number, mistakes: number): TypingResult {
   return {
+    wordId: `test-${word}`,
     word,
     elapsedMs,
     keystrokes,

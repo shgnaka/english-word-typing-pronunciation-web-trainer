@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { t } from "../../../i18n";
+import { formatMessage } from "../../../i18n";
 import type { TrainerState } from "../../../features/trainer/useTrainer";
 import { loadWordsPanelState, saveWordsPanelState } from "../../../infra/storage";
 import { useWordsPanelDrag } from "./useWordsPanelDrag";
@@ -37,13 +37,6 @@ export function useWordsPanelController(trainer: TrainerState) {
   const hiddenBuiltinWordIds = useMemo(() => filteredHiddenBuiltinWords.map((word) => word.id), [filteredHiddenBuiltinWords]);
   const customWordIds = useMemo(() => filteredCustomWords.map((word) => word.id), [filteredCustomWords]);
   const hiddenCustomWordIds = useMemo(() => filteredInactiveCustomWords.map((word) => word.id), [filteredInactiveCustomWords]);
-  const selectableWordIdsBySection = {
-    active: filteredActiveWords.map((word) => word.id),
-    builtin: filteredBuiltinWords.map((word) => word.id),
-    hiddenBuiltin: filteredHiddenBuiltinWords.map((word) => word.id),
-    custom: filteredCustomWords.map((word) => word.id),
-    hiddenCustom: filteredInactiveCustomWords.map((word) => word.id)
-  } satisfies Record<WordSectionKey, string[]>;
   const hasSearchResults =
     filteredActiveWords.length > 0 ||
     filteredBuiltinWords.length > 0 ||
@@ -71,7 +64,7 @@ export function useWordsPanelController(trainer: TrainerState) {
   }
 
   function selectedCountLabel(count: number) {
-    return t(language, "words.selectedCount").replace("{count}", String(count));
+    return formatMessage(language, "words.selectedCount", { count });
   }
 
   return {

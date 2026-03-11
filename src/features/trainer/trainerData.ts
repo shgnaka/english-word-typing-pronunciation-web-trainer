@@ -8,6 +8,10 @@ export function buildResolvedBuiltinWords(overrides: BuiltinWordOverrides): Word
   return resolveBuiltinWords(defaultWords, overrides);
 }
 
+export function buildActiveCustomWords(customWords: WordEntry[], order: WordOrder): WordEntry[] {
+  return customWords.filter((word) => order.includes(word.id));
+}
+
 export function buildResolvedHiddenBuiltinWords(overrides: BuiltinWordOverrides, order: WordOrder): WordEntry[] {
   const hiddenWords = defaultWords.filter((word) => overrides[word.id]?.status === "deleted");
   return orderWords(hiddenWords, order);
@@ -19,6 +23,14 @@ export function buildWordOrder(words: WordEntry[], order: WordOrder): WordOrder 
 
 export function buildAvailableWords(words: WordEntry[], order: WordOrder): WordEntry[] {
   return dedupeWords(orderWords(words, order));
+}
+
+export function buildActiveWordsFromPreferences(
+  builtinWordOverrides: BuiltinWordOverrides,
+  customWords: WordEntry[],
+  order: WordOrder
+): WordEntry[] {
+  return buildAvailableWords([...buildResolvedBuiltinWords(builtinWordOverrides), ...buildActiveCustomWords(customWords, order)], order);
 }
 
 export function buildTrainerQueue(words: WordEntry[], config: SessionConfig): WordEntry[] {
@@ -35,9 +47,10 @@ export function loadTrainerPreferences(): {
   const customWords = loadCustomWords();
   const builtinWordOverrides = loadBuiltinWordOverrides();
   const resolvedBuiltinWords = buildResolvedBuiltinWords(builtinWordOverrides);
+  const wordOrder = buildWordOrder([...resolvedBuiltinWords, ...customWords], loadBuiltinWordOrder());
 
   return {
-    wordOrder: buildWordOrder([...resolvedBuiltinWords, ...customWords], loadBuiltinWordOrder()),
+    wordOrder,
     builtinWordOverrides,
     customWords,
     config: loadSessionConfig(),

@@ -1,5 +1,5 @@
 import type { RefObject } from "react";
-import { t } from "../../../i18n";
+import { formatMessage, t } from "../../../i18n";
 import type { TrainerState } from "../../../features/trainer/useTrainer";
 
 export function AddWordSection({
@@ -13,13 +13,14 @@ export function AddWordSection({
   const addWordPreview = trainer.addWordPreview;
   const duplicatePreviewLabel =
     addWordPreview?.duplicateMatch
-      ? t(language, "words.inputDuplicate")
-          .replace("{source}", t(language, addWordPreview.duplicateMatch.source === "builtin" ? "words.sourceBuiltin" : "words.sourceCustom"))
-          .replace("{word}", addWordPreview.duplicateMatch.text)
+      ? formatMessage(language, "words.inputDuplicate", {
+          source: t(language, addWordPreview.duplicateMatch.source === "builtin" ? "words.sourceBuiltin" : "words.sourceCustom"),
+          word: addWordPreview.duplicateMatch.text
+        })
       : "";
   const normalizedPreviewLabel =
     addWordPreview?.normalizedValue
-      ? t(language, "words.inputPreview").replace("{word}", addWordPreview.normalizedValue)
+      ? formatMessage(language, "words.inputPreview", { word: addWordPreview.normalizedValue })
       : "";
 
   return (

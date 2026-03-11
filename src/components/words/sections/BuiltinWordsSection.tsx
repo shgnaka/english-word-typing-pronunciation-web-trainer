@@ -1,7 +1,7 @@
 import type { Ref } from "react";
-import { t } from "../../../i18n";
+import { formatMessage, t } from "../../../i18n";
 import type { TrainerState } from "../../../features/trainer/useTrainer";
-import { BulkActionBar, EditingWordRow, IconButton, ReadonlyWordRow, type NestedBulkActionFocusRefs, type NestedSectionSelectionControls, SectionHeaderMeta, StatePill, type WordsPanelState } from "../shared";
+import { BulkActionBar, EditingWordRow, IconButton, ManagedWordRow, ReadonlyWordRow, type NestedBulkActionFocusRefs, type NestedSectionSelectionControls, SectionHeaderMeta, StatePill, type WordsPanelState } from "../shared";
 import { HiddenBuiltinWordsSection } from "./HiddenBuiltinWordsSection";
 
 export function BuiltinWordsSection({
@@ -39,9 +39,10 @@ export function BuiltinWordsSection({
   const allVisibleSelected =
     selection.active.selectableWordIds.length > 0 &&
     selection.active.selectableWordIds.every((wordId) => selection.active.selectedWordIds.includes(wordId));
-  const minimizedSummary = t(language, "words.builtinMinimizedSummary")
-    .replace("{activeCount}", String(trainer.builtinWords.length))
-    .replace("{hiddenCount}", String(trainer.hiddenBuiltinWords.length));
+  const minimizedSummary = formatMessage(language, "words.builtinMinimizedSummary", {
+    activeCount: trainer.builtinWords.length,
+    hiddenCount: trainer.hiddenBuiltinWords.length
+  });
   return (
     <section ref={sectionRef} className={`word-section word-section-builtin ${wordsPanelState.builtinMinimized ? "word-section-minimized" : ""}`} data-testid="builtin-word-section">
       <div className="panel-header">
@@ -111,8 +112,11 @@ export function BuiltinWordsSection({
               <p className="word-list-empty">{t(language, "words.noMatches")}</p>
             ) : (
               filteredBuiltinWords.map((word) => (
-                <div key={word.id} className="word-chip-row" data-testid="builtin-word-row">
-                  {trainer.editingWordId === word.id && trainer.editingWordSource === "builtin" ? (
+                <ManagedWordRow
+                  key={word.id}
+                  containerTestId="builtin-word-row"
+                  isEditing={trainer.editingWordId === word.id && trainer.editingWordSource === "builtin"}
+                  editingRow={
                     <EditingWordRow
                       wordId={word.id}
                       wordText={word.text}
@@ -124,7 +128,8 @@ export function BuiltinWordsSection({
                       saveLabel={t(language, "words.save")}
                       cancelLabel={t(language, "words.cancel")}
                     />
-                  ) : (
+                  }
+                  readonlyRow={
                     <ReadonlyWordRow
                       rowTestId="builtin-word-row"
                       chipTestId="builtin-word-chip"
@@ -142,11 +147,11 @@ export function BuiltinWordsSection({
                         <IconButton key="remove" label={t(language, "words.removeFromPractice")} icon="−" testId={`delete-word-button-${word.id}`} onClick={() => trainer.handleRemoveBuiltinWord(word.id)} />,
                         editedBuiltinWordIds.has(word.id) ? (
                           <IconButton key="restore" label={t(language, "words.restore")} icon="↺" testId={`restore-word-button-${word.id}`} onClick={() => trainer.restoreBuiltinWord(word.id)} />
-                        ) : null,
+                        ) : null
                       ].filter(Boolean)}
                     />
-                  )}
-                </div>
+                  }
+                />
               ))
             )}
           </div>

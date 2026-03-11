@@ -206,6 +206,43 @@ describe("App", () => {
     expect(customWordChips[2]).toHaveTextContent("pear");
   });
 
+  it("sorts custom words by recency and keeps the sorted order after reload", async () => {
+    const user = userEvent.setup();
+    const { unmount } = render(<App />);
+
+    await user.click(screen.getByRole("button", { name: "Words" }));
+    await user.type(screen.getByLabelText("New word"), "banana");
+    await user.click(screen.getByRole("button", { name: "Add word" }));
+    await user.type(screen.getByLabelText("New word"), "mango");
+    await user.click(screen.getByRole("button", { name: "Add word" }));
+    await user.type(screen.getByLabelText("New word"), "pear");
+    await user.click(screen.getByRole("button", { name: "Add word" }));
+
+    await user.click(screen.getByTestId("sort-custom-newest-button"));
+
+    let customWordChips = screen.getAllByTestId("word-chip");
+    expect(customWordChips[0]).toHaveTextContent("pear");
+    expect(customWordChips[1]).toHaveTextContent("mango");
+    expect(customWordChips[2]).toHaveTextContent("banana");
+
+    await user.click(screen.getByTestId("sort-custom-oldest-button"));
+
+    customWordChips = screen.getAllByTestId("word-chip");
+    expect(customWordChips[0]).toHaveTextContent("banana");
+    expect(customWordChips[1]).toHaveTextContent("mango");
+    expect(customWordChips[2]).toHaveTextContent("pear");
+
+    unmount();
+    render(<App />);
+
+    await user.click(screen.getByRole("button", { name: "Words" }));
+
+    customWordChips = screen.getAllByTestId("word-chip");
+    expect(customWordChips[0]).toHaveTextContent("banana");
+    expect(customWordChips[1]).toHaveTextContent("mango");
+    expect(customWordChips[2]).toHaveTextContent("pear");
+  });
+
   it("moves a practice-order word to the top and keeps that order after reload", async () => {
     const user = userEvent.setup();
     const { unmount } = render(<App />);
@@ -266,6 +303,47 @@ describe("App", () => {
     expect(activeWordChips[1]).toHaveTextContent("happy");
     expect(activeWordChips[2]).toHaveTextContent("apple");
     expect(screen.getByTestId("word-order-feedback")).toHaveTextContent("Practice order saved.");
+  });
+
+  it("reorders practice-order words with touch drag gestures", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.click(screen.getByRole("button", { name: "Words" }));
+
+    const rows = screen.getAllByTestId("active-word-row");
+    const draggedRow = rows[0];
+    const targetRow = rows[2];
+    const originalElementFromPoint = document.elementFromPoint;
+    Object.defineProperty(document, "elementFromPoint", {
+      configurable: true,
+      value: vi.fn((x: number, y: number) => {
+        if (x === 32 && y === 48) {
+          return targetRow;
+        }
+
+        return originalElementFromPoint?.call(document, x, y) ?? null;
+      })
+    });
+
+    fireEvent.touchStart(draggedRow, {
+      touches: [{ clientX: 8, clientY: 8 }]
+    });
+    fireEvent.touchMove(draggedRow, {
+      touches: [{ clientX: 32, clientY: 48 }]
+    });
+    fireEvent.touchEnd(draggedRow);
+
+    const activeWordChips = screen.getAllByTestId("active-word-chip");
+    expect(activeWordChips[0]).toHaveTextContent("book");
+    expect(activeWordChips[1]).toHaveTextContent("happy");
+    expect(activeWordChips[2]).toHaveTextContent("apple");
+    expect(screen.getByTestId("word-order-feedback")).toHaveTextContent("Practice order saved.");
+
+    Object.defineProperty(document, "elementFromPoint", {
+      configurable: true,
+      value: originalElementFromPoint
+    });
   });
 
   it("supports bulk remove and restore for custom words", async () => {
@@ -736,6 +814,41 @@ describe("App", () => {
     }
   });
 
+  it("rebuilds the active session when a custom word is edited", async () => {
+    const user = userEvent.setup();
+    let randomCallCount = 0;
+    const randomSpy = vi.spyOn(Math, "random").mockImplementation(() => {
+      const nextValue = randomCallCount === 0 || randomCallCount === 20 ? 0 : 0.999999;
+      randomCallCount += 1;
+      return nextValue;
+    });
+    try {
+      render(<App />);
+
+      await user.click(screen.getByRole("button", { name: "Words" }));
+      await user.type(screen.getByLabelText("New word"), "banana");
+      await user.click(screen.getByRole("button", { name: "Add word" }));
+
+      await user.click(screen.getByRole("button", { name: "Words" }));
+      fireEvent.change(screen.getByTestId("word-count-input"), { target: { value: "20" } });
+      await user.click(screen.getByTestId("shuffle-toggle"));
+      await user.click(screen.getByTestId("apply-settings-button"));
+
+      expect(screen.getByTestId("current-word")).toHaveTextContent("banana");
+
+      await user.click(screen.getByRole("button", { name: "Words" }));
+      await user.click(screen.getByTestId("edit-word-button-custom-banana"));
+      await user.clear(screen.getByTestId("edit-word-input-custom-banana"));
+      await user.type(screen.getByTestId("edit-word-input-custom-banana"), "grape");
+      await user.click(screen.getByTestId("save-word-button-custom-banana"));
+      await user.click(screen.getByRole("button", { name: "Practice" }));
+
+      expect(screen.getByTestId("current-word")).toHaveTextContent("grape");
+    } finally {
+      randomSpy.mockRestore();
+    }
+  });
+
   it("rebuilds the active session when a builtin word is edited or deleted", async () => {
     const user = userEvent.setup();
     render(<App />);
@@ -771,6 +884,72 @@ describe("App", () => {
     await user.click(screen.getByRole("button", { name: "Practice" }));
 
     expect(screen.getByTestId("current-word")).toHaveTextContent("banana");
+  });
+
+  it("recovers safely when persisted trainer data is malformed on boot", async () => {
+    const user = userEvent.setup();
+    window.localStorage.setItem(
+      "wordbeat.customWords",
+      JSON.stringify({
+        version: 1,
+        value: [
+          {
+            id: "",
+            text: "123",
+            source: "custom",
+            createdAt: "not-a-date"
+          }
+        ]
+      })
+    );
+    window.localStorage.setItem(
+      "wordbeat.builtinWordOverrides",
+      JSON.stringify({
+        version: 1,
+        value: {
+          "builtin-apple": {
+            status: "edited",
+            text: "!!!",
+            updatedAt: "not-a-date"
+          }
+        }
+      })
+    );
+    window.localStorage.setItem("wordbeat.builtinWordOrder", JSON.stringify({ version: 1, value: ["", 42, null] }));
+    window.localStorage.setItem(
+      "wordbeat.sessionConfig",
+      JSON.stringify({
+        version: 1,
+        value: {
+          wordCount: Number.NaN,
+          shuffle: "yes",
+          speechEnabled: 0,
+          browserTtsEnabled: "nope",
+          showFingerGuide: null,
+          showKeyboardHint: "sometimes"
+        }
+      })
+    );
+    window.localStorage.setItem("wordbeat.wordsPanelState", "{bad json");
+    window.localStorage.setItem("wordbeat.displayLanguage", "fr");
+
+    render(<App />);
+
+    expect(screen.getByTestId("current-word")).not.toHaveTextContent(/^$/);
+    expect(screen.getByTestId("practice-primary-status")).toHaveTextContent("Start in 3");
+
+    await user.click(screen.getByRole("button", { name: "Words" }));
+    expect(screen.getByTestId("custom-word-list")).toHaveTextContent("No custom words yet.");
+    expect(screen.getByTestId("active-word-list")).toHaveTextContent("apple");
+    expect(screen.getByTestId("active-word-list")).toHaveTextContent("travel");
+    expect(screen.getByTestId("word-count-input")).toHaveValue(10);
+    expect(screen.getByTestId("shuffle-toggle")).not.toBeChecked();
+
+    await user.click(screen.getByRole("button", { name: "Settings" }));
+    expect(screen.getByTestId("browser-tts-toggle")).not.toBeChecked();
+    expect(screen.getByTestId("speech-toggle")).toBeChecked();
+    expect(screen.getByTestId("finger-guide-toggle")).toBeChecked();
+    expect(screen.getByTestId("keyboard-hint-toggle")).toBeChecked();
   });
 
   it("reset builtin words restores the shipped builtin order", async () => {

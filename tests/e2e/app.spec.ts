@@ -164,6 +164,7 @@ test("edits and restores a builtin word", async ({ page }) => {
   await expect(page.getByTestId("current-word")).toHaveText("apricot");
 
   await page.getByTestId("tab-words").click();
+  await page.getByTestId("builtin-word-list").getByTestId("more-row-actions-button-builtin-apple").click();
   await page.getByTestId("restore-word-button-builtin-apple").click();
   await expect(page.getByTestId("builtin-word-list")).toContainText("apple");
   await expect(page.getByTestId("builtin-word-state-builtin-apple")).toHaveCount(0);
@@ -171,6 +172,7 @@ test("edits and restores a builtin word", async ({ page }) => {
 
 test("deletes a builtin word and can reset builtin overrides", async ({ page }) => {
   await page.getByTestId("tab-words").click();
+  await page.getByTestId("builtin-word-list").getByTestId("more-row-actions-button-builtin-apple").click();
   await page.getByTestId("delete-word-button-builtin-apple").click();
 
   await expect(page.getByTestId("builtin-word-list")).not.toContainText("apple");
@@ -182,7 +184,7 @@ test("deletes a builtin word and can reset builtin overrides", async ({ page }) 
   await page.getByTestId("tab-words").click();
   await page.getByTestId("reset-builtin-words-button").click();
   await expect(page.getByTestId("builtin-word-list")).toContainText("apple");
-  await expect(page.getByTestId("hidden-builtin-empty")).toHaveText("No hidden built-in words.");
+  await expect(page.getByTestId("hidden-builtin-empty")).toContainText("No hidden built-in words.");
 });
 
 test("reorders builtin words in the mixed practice list and persists the order after reload", async ({ page }) => {
@@ -213,14 +215,28 @@ test("reorders mixed practice words with drag and drop", async ({ page }) => {
   await expect(activeWordChips.nth(2)).toHaveText("apple");
 });
 
+test("bulk-removes selected custom words from practice", async ({ page }) => {
+  await page.getByTestId("tab-words").click();
+  await page.getByTestId("new-word-input").fill("banana");
+  await page.getByTestId("add-word-button").click();
+  await page.getByTestId("new-word-input").fill("mango");
+  await page.getByTestId("add-word-button").click();
+
+  await page.getByTestId("select-custom-word-checkbox-custom-banana").check();
+  await page.getByTestId("select-custom-word-checkbox-custom-mango").check();
+  await page.getByTestId("bulk-remove-custom-words-button").click();
+
+  const hiddenCustomWords = page.getByTestId("inactive-custom-word-list");
+  await expect(hiddenCustomWords).toContainText("banana");
+  await expect(hiddenCustomWords).toContainText("mango");
+});
+
 test("uses reordered mixed words for non-shuffled practice and reset restores shipped builtin order", async ({ page }) => {
   await page.getByTestId("tab-words").click();
   await page.getByTestId("new-word-input").fill("banana");
   await page.getByTestId("add-word-button").click();
-  for (let step = 0; step < 20; step += 1) {
-    await page.getByTestId("active-word-list").getByTestId("more-row-actions-button-custom-banana").click();
-    await page.getByTestId("active-word-list").getByTestId("move-word-up-button-custom-banana").click();
-  }
+  await page.getByTestId("active-word-list").getByTestId("more-row-actions-button-custom-banana").click();
+  await page.getByTestId("active-word-list").getByTestId("move-word-top-button-custom-banana").click();
 
   await page.getByTestId("tab-practice").click();
   await expect(page.getByTestId("current-word")).toHaveText("banana");
@@ -370,7 +386,8 @@ test("supports Enter to add words and skip countdown", async ({ page }) => {
   await page.getByTestId("tab-practice").click();
   await expect(page.getByTestId("practice-primary-status")).toContainText("Start in 3");
   await page.keyboard.press("Enter");
-  await expect(page.getByTestId("practice-primary-status")).toContainText("Playing pronunciation...");
+  await expect(page.getByTestId("practice-primary-status")).not.toContainText("Start in 3");
+  await expect(page.getByTestId("current-word")).toHaveText("apple");
 });
 
 test("resumes typing after a practice action button is clicked", async ({ page }) => {

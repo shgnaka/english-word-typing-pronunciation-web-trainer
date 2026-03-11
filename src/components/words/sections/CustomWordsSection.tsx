@@ -1,7 +1,7 @@
 import type { Ref } from "react";
-import { t } from "../../../i18n";
+import { formatMessage, t } from "../../../i18n";
 import type { TrainerState } from "../../../features/trainer/useTrainer";
-import { BulkActionBar, EditingWordRow, IconButton, ReadonlyWordRow, type NestedBulkActionFocusRefs, type NestedSectionSelectionControls, SectionHeaderMeta, StatePill, type WordsPanelState } from "../shared";
+import { BulkActionBar, EditingWordRow, IconButton, ManagedWordRow, ReadonlyWordRow, type NestedBulkActionFocusRefs, type NestedSectionSelectionControls, SectionHeaderMeta, StatePill, type WordsPanelState } from "../shared";
 import { HiddenCustomWordsSection } from "./HiddenCustomWordsSection";
 
 export function CustomWordsSection({
@@ -40,9 +40,10 @@ export function CustomWordsSection({
     selection.active.selectableWordIds.length > 0 &&
     selection.active.selectableWordIds.every((wordId) => selection.active.selectedWordIds.includes(wordId));
   const activeCustomCount = trainer.customWords.length - trainer.inactiveCustomWords.length;
-  const minimizedSummary = t(language, "words.customMinimizedSummary")
-    .replace("{activeCount}", String(activeCustomCount))
-    .replace("{hiddenCount}", String(trainer.inactiveCustomWords.length));
+  const minimizedSummary = formatMessage(language, "words.customMinimizedSummary", {
+    activeCount: activeCustomCount,
+    hiddenCount: trainer.inactiveCustomWords.length
+  });
 
   function confirmBulkDelete() {
     return window.confirm(t(language, "words.bulkDeleteConfirm"));
@@ -150,8 +151,11 @@ export function CustomWordsSection({
               <p className="word-list-empty">{t(language, "words.noMatches")}</p>
             ) : (
               filteredCustomWords.map((word) => (
-                <div key={word.id} className="word-chip-row" data-testid="word-chip-row">
-                  {trainer.editingWordId === word.id && trainer.editingWordSource === "custom" ? (
+                <ManagedWordRow
+                  key={word.id}
+                  containerTestId="word-chip-row"
+                  isEditing={trainer.editingWordId === word.id && trainer.editingWordSource === "custom"}
+                  editingRow={
                     <EditingWordRow
                       wordId={word.id}
                       wordText={word.text}
@@ -163,7 +167,8 @@ export function CustomWordsSection({
                       saveLabel={t(language, "words.save")}
                       cancelLabel={t(language, "words.cancel")}
                     />
-                  ) : (
+                  }
+                  readonlyRow={
                     <ReadonlyWordRow
                       rowTestId="word-chip-row"
                       chipTestId="word-chip"
@@ -187,8 +192,8 @@ export function CustomWordsSection({
                         <IconButton key="delete" label={t(language, "words.delete")} icon="🗑" testId={`delete-word-button-${word.id}`} onClick={() => trainer.handleRemoveWord(word.id)} />
                       ]}
                     />
-                  )}
-                </div>
+                  }
+                />
               ))
             )}
           </div>

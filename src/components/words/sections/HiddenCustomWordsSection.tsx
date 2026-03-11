@@ -1,7 +1,7 @@
 import type { Ref } from "react";
-import { t } from "../../../i18n";
+import { formatMessage, t } from "../../../i18n";
 import type { TrainerState } from "../../../features/trainer/useTrainer";
-import { BulkActionBar, EditingWordRow, IconButton, ReadonlyWordRow, SectionHeaderMeta, StatePill, type BulkActionFocusRefs, type SectionSelectionControls } from "../shared";
+import { BulkActionBar, EditingWordRow, IconButton, ManagedWordRow, ReadonlyWordRow, SectionHeaderMeta, StatePill, type BulkActionFocusRefs, type SectionSelectionControls } from "../shared";
 
 export function HiddenCustomWordsSection({
   trainer,
@@ -29,7 +29,7 @@ export function HiddenCustomWordsSection({
   const language = trainer.displayLanguage;
   const allHiddenVisibleSelected =
     selection.selectableWordIds.length > 0 && selection.selectableWordIds.every((wordId) => selection.selectedWordIds.includes(wordId));
-  const minimizedSummary = t(language, "words.hiddenCustomMinimizedSummary").replace("{count}", String(trainer.inactiveCustomWords.length));
+  const minimizedSummary = formatMessage(language, "words.hiddenCustomMinimizedSummary", { count: trainer.inactiveCustomWords.length });
 
   function confirmBulkDelete() {
     return window.confirm(t(language, "words.bulkDeleteConfirm"));
@@ -126,8 +126,11 @@ export function HiddenCustomWordsSection({
               <p className="word-list-empty">{t(language, "words.noMatches")}</p>
             ) : (
               filteredInactiveCustomWords.map((word) => (
-                <div key={word.id} className="word-chip-row" data-testid="inactive-custom-word-row">
-                  {trainer.editingWordId === word.id && trainer.editingWordSource === "custom" ? (
+                <ManagedWordRow
+                  key={word.id}
+                  containerTestId="inactive-custom-word-row"
+                  isEditing={trainer.editingWordId === word.id && trainer.editingWordSource === "custom"}
+                  editingRow={
                     <EditingWordRow
                       wordId={word.id}
                       wordText={word.text}
@@ -139,7 +142,8 @@ export function HiddenCustomWordsSection({
                       saveLabel={t(language, "words.save")}
                       cancelLabel={t(language, "words.cancel")}
                     />
-                  ) : (
+                  }
+                  readonlyRow={
                     <ReadonlyWordRow
                       rowTestId="inactive-custom-word-row"
                       chipTestId="inactive-custom-word-chip"
@@ -158,8 +162,8 @@ export function HiddenCustomWordsSection({
                         <IconButton key="delete" label={t(language, "words.delete")} icon="🗑" testId={`delete-word-button-${word.id}`} onClick={() => trainer.handleRemoveWord(word.id)} />
                       ]}
                     />
-                  )}
-                </div>
+                  }
+                />
               ))
             )}
           </div>

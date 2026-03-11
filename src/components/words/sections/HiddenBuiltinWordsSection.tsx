@@ -1,5 +1,5 @@
 import type { Ref } from "react";
-import { t } from "../../../i18n";
+import { formatMessage, t } from "../../../i18n";
 import type { TrainerState } from "../../../features/trainer/useTrainer";
 import { BulkActionBar, IconButton, ReadonlyWordRow, SectionHeaderMeta, StatePill, type BulkActionFocusRefs, type SectionSelectionControls } from "../shared";
 
@@ -27,7 +27,7 @@ export function HiddenBuiltinWordsSection({
   const language = trainer.displayLanguage;
   const allHiddenVisibleSelected =
     selection.selectableWordIds.length > 0 && selection.selectableWordIds.every((wordId) => selection.selectedWordIds.includes(wordId));
-  const minimizedSummary = t(language, "words.hiddenBuiltinMinimizedSummary").replace("{count}", String(trainer.hiddenBuiltinWords.length));
+  const minimizedSummary = formatMessage(language, "words.hiddenBuiltinMinimizedSummary", { count: trainer.hiddenBuiltinWords.length });
 
   return (
     <section ref={sectionRef} className={`word-section word-section-hidden ${hiddenBuiltinMinimized ? "word-section-minimized" : ""}`} data-testid="hidden-builtin-word-section">

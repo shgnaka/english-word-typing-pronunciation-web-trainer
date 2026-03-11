@@ -3,8 +3,6 @@ import type { BuiltinWordOverrides, DisplayLanguage, SessionConfig, WordEntry, W
 import { createWordEntry, dedupeWords, normalizeWord } from "../../domain/words";
 import { clearBrowserTtsCache } from "../../infra/browserTts";
 import {
-  clearBuiltinWordOrder,
-  clearBuiltinWordOverrides,
   defaultDisplayLanguage,
   defaultSessionConfig,
   saveBuiltinWordOrder,
@@ -14,10 +12,25 @@ import {
   saveCustomWords,
   saveSessionConfig
 } from "../../infra/storage";
-import { buildAvailableWords, buildResolvedBuiltinWords, buildResolvedHiddenBuiltinWords, buildTrainerQueue, buildWordOrder, loadTrainerPreferences } from "./trainerData";
+import {
+  buildActiveCustomWords,
+  buildActiveWordsFromPreferences,
+  buildAvailableWords,
+  buildResolvedBuiltinWords,
+  buildResolvedHiddenBuiltinWords,
+  buildTrainerQueue,
+  buildWordOrder,
+  loadTrainerPreferences
+} from "./trainerData";
 import { deriveTrainerViewState } from "./trainerView";
 import { useTrainerPronunciation } from "./useTrainerPronunciation";
 import { useTrainerSession } from "./useTrainerSession";
+
+interface WordMutationSnapshot {
+  builtinWordOverrides: BuiltinWordOverrides;
+  customWords: WordEntry[];
+  wordOrder: WordOrder;
+}
 
 export function useTrainer() {
   const [wordOrder, setWordOrder] = useState<WordOrder>([]);
@@ -36,7 +49,7 @@ export function useTrainer() {
   const [isClearingBrowserTtsCache, setIsClearingBrowserTtsCache] = useState(false);
   const sessionControls = useTrainerSession();
   const resolvedBuiltinWords = buildResolvedBuiltinWords(builtinWordOverrides);
-  const activeCustomWords = customWords.filter((word) => wordOrder.includes(word.id));
+  const activeCustomWords = buildActiveCustomWords(customWords, wordOrder);
   const inactiveCustomWords = customWords.filter((word) => !wordOrder.includes(word.id));
   const activeWords = buildAvailableWords([...resolvedBuiltinWords, ...activeCustomWords], wordOrder);
   const sanitizedWordOrder = buildWordOrder(activeWords, wordOrder);
@@ -81,16 +94,7 @@ export function useTrainer() {
     setDisplayLanguage(loadedDisplayLanguage);
     pronunciation.resetAutoPronunciation();
     sessionControls.initializeSession(
-      buildTrainerQueue(
-        buildAvailableWords(
-          [
-            ...buildResolvedBuiltinWords(loadedBuiltinWordOverrides),
-            ...loadedCustomWords.filter((word) => loadedWordOrder.includes(word.id))
-          ],
-          loadedWordOrder
-        ),
-        loadedConfig
-      )
+      buildTrainerQueue(buildActiveWordsFromPreferences(loadedBuiltinWordOverrides, loadedCustomWords, loadedWordOrder), loadedConfig)
     );
   }, []);
   const { currentTarget, currentGuide, score, totalWords, remainingWords, completedWordsCount, progressPercent, isCountdownActive, isTypingActiveLayout, hasPendingConfigChanges } =
@@ -137,18 +141,50 @@ export function useTrainer() {
     nextWordOrder = sanitizedWordOrder
   ) {
     pronunciation.resetAutoPronunciation();
-    sessionControls.initializeSession(
-      buildTrainerQueue(
-        buildAvailableWords(
-          [
-            ...buildResolvedBuiltinWords(nextBuiltinWordOverrides),
-            ...nextCustomWords.filter((word) => nextWordOrder.includes(word.id))
-          ],
-          nextWordOrder
-        ),
-        config
-      )
-    );
+    sessionControls.initializeSession(buildTrainerQueue(buildActiveWordsFromPreferences(nextBuiltinWordOverrides, nextCustomWords, nextWordOrder), config));
+  }
+
+  function commitWordMutation(
+    buildNextSnapshot: (current: WordMutationSnapshot) => WordMutationSnapshot | null,
+    options: {
+      cancelEditing?: boolean;
+      afterCommit?: () => void;
+    } = {}
+  ) {
+    const currentSnapshot: WordMutationSnapshot = {
+      builtinWordOverrides,
+      customWords,
+      wordOrder: sanitizedWordOrder
+    };
+    const nextSnapshot = buildNextSnapshot(currentSnapshot);
+
+    if (!nextSnapshot) {
+      return false;
+    }
+
+    if (nextSnapshot.builtinWordOverrides !== currentSnapshot.builtinWordOverrides) {
+      setBuiltinWordOverrides(nextSnapshot.builtinWordOverrides);
+      saveBuiltinWordOverrides(nextSnapshot.builtinWordOverrides);
+    }
+
+    if (nextSnapshot.customWords !== currentSnapshot.customWords) {
+      setCustomWords(nextSnapshot.customWords);
+      saveCustomWords(nextSnapshot.customWords);
+    }
+
+    if (nextSnapshot.wordOrder !== currentSnapshot.wordOrder) {
+      setWordOrder(nextSnapshot.wordOrder);
+      saveBuiltinWordOrder(nextSnapshot.wordOrder);
+    }
+
+    syncSession(nextSnapshot.builtinWordOverrides, nextSnapshot.customWords, nextSnapshot.wordOrder);
+
+    if (options.cancelEditing) {
+      cancelEditingWord();
+    }
+
+    options.afterCommit?.();
+    return true;
   }
 
   function handleAddWord() {
@@ -163,15 +199,19 @@ export function useTrainer() {
       return;
     }
 
-    const nextWords = [...customWords, entry];
-    const nextWordOrder = [...sanitizedWordOrder.filter((wordId) => wordId !== entry.id), entry.id];
-    setCustomWords(nextWords);
-    setWordOrder(nextWordOrder);
-    saveCustomWords(nextWords);
-    saveBuiltinWordOrder(nextWordOrder);
-    syncSession(builtinWordOverrides, nextWords, nextWordOrder);
-    setInputValue("");
-    setAddWordError("");
+    commitWordMutation(
+      (currentSnapshot) => ({
+        ...currentSnapshot,
+        customWords: [...currentSnapshot.customWords, entry],
+        wordOrder: [...currentSnapshot.wordOrder.filter((wordId) => wordId !== entry.id), entry.id]
+      }),
+      {
+        afterCommit: () => {
+          setInputValue("");
+          setAddWordError("");
+        }
+      }
+    );
   }
 
   function handleAddWordInputChange(value: string) {
@@ -182,20 +222,17 @@ export function useTrainer() {
   }
 
   function handleRemoveWord(wordId: string) {
-    const nextWords = customWords.filter((word) => word.id !== wordId);
-    const nextWordOrder = sanitizedWordOrder.filter((currentWordId) => currentWordId !== wordId);
-    setCustomWords(nextWords);
-    setWordOrder(nextWordOrder);
-    saveCustomWords(nextWords);
-    saveBuiltinWordOrder(nextWordOrder);
-    syncSession(builtinWordOverrides, nextWords, nextWordOrder);
-
-    if (editingWordId === wordId) {
-      setEditingWordSource(null);
-      setEditingWordId(null);
-      setEditingWordValue("");
-      setAddWordError("");
-    }
+    commitWordMutation(
+      (currentSnapshot) => ({
+        ...currentSnapshot,
+        customWords: currentSnapshot.customWords.filter((word) => word.id !== wordId),
+        wordOrder: currentSnapshot.wordOrder.filter((currentWordId) => currentWordId !== wordId)
+      }),
+      {
+        cancelEditing: editingWordId === wordId,
+        afterCommit: editingWordId === wordId ? undefined : () => setAddWordError("")
+      }
+    );
   }
 
   function removeCustomWordFromPractice(wordId: string) {
@@ -203,14 +240,15 @@ export function useTrainer() {
       return;
     }
 
-    const nextWordOrder = sanitizedWordOrder.filter((currentWordId) => currentWordId !== wordId);
-    setWordOrder(nextWordOrder);
-    saveBuiltinWordOrder(nextWordOrder);
-    syncSession(builtinWordOverrides, customWords, nextWordOrder);
-
-    if (editingWordId === wordId && editingWordSource === "custom") {
-      cancelEditingWord();
-    }
+    commitWordMutation(
+      (currentSnapshot) => ({
+        ...currentSnapshot,
+        wordOrder: currentSnapshot.wordOrder.filter((currentWordId) => currentWordId !== wordId)
+      }),
+      {
+        cancelEditing: editingWordId === wordId && editingWordSource === "custom"
+      }
+    );
   }
 
   function removeCustomWordsFromPractice(wordIds: string[]) {
@@ -219,14 +257,15 @@ export function useTrainer() {
       return;
     }
 
-    const nextWordOrder = sanitizedWordOrder.filter((currentWordId) => !removableWordIds.has(currentWordId));
-    setWordOrder(nextWordOrder);
-    saveBuiltinWordOrder(nextWordOrder);
-    syncSession(builtinWordOverrides, customWords, nextWordOrder);
-
-    if (editingWordId && editingWordSource === "custom" && removableWordIds.has(editingWordId)) {
-      cancelEditingWord();
-    }
+    commitWordMutation(
+      (currentSnapshot) => ({
+        ...currentSnapshot,
+        wordOrder: currentSnapshot.wordOrder.filter((currentWordId) => !removableWordIds.has(currentWordId))
+      }),
+      {
+        cancelEditing: Boolean(editingWordId && editingWordSource === "custom" && removableWordIds.has(editingWordId))
+      }
+    );
   }
 
   function addCustomWordToPractice(wordId: string) {
@@ -234,10 +273,10 @@ export function useTrainer() {
       return;
     }
 
-    const nextWordOrder = [...sanitizedWordOrder.filter((currentWordId) => currentWordId !== wordId), wordId];
-    setWordOrder(nextWordOrder);
-    saveBuiltinWordOrder(nextWordOrder);
-    syncSession(builtinWordOverrides, customWords, nextWordOrder);
+    commitWordMutation((currentSnapshot) => ({
+      ...currentSnapshot,
+      wordOrder: [...currentSnapshot.wordOrder.filter((currentWordId) => currentWordId !== wordId), wordId]
+    }));
   }
 
   function addCustomWordsToPractice(wordIds: string[]) {
@@ -246,13 +285,10 @@ export function useTrainer() {
       return;
     }
 
-    const nextWordOrder = [
-      ...sanitizedWordOrder.filter((currentWordId) => !restorableWordIds.includes(currentWordId)),
-      ...restorableWordIds
-    ];
-    setWordOrder(nextWordOrder);
-    saveBuiltinWordOrder(nextWordOrder);
-    syncSession(builtinWordOverrides, customWords, nextWordOrder);
+    commitWordMutation((currentSnapshot) => ({
+      ...currentSnapshot,
+      wordOrder: [...currentSnapshot.wordOrder.filter((currentWordId) => !restorableWordIds.includes(currentWordId)), ...restorableWordIds]
+    }));
   }
 
   function moveWord(wordId: string, direction: "up" | "down") {
@@ -268,10 +304,15 @@ export function useTrainer() {
 
     const nextWordOrder = [...sanitizedWordOrder];
     [nextWordOrder[currentIndex], nextWordOrder[targetIndex]] = [nextWordOrder[targetIndex], nextWordOrder[currentIndex]];
-    setWordOrder(nextWordOrder);
-    saveBuiltinWordOrder(nextWordOrder);
-    syncSession(builtinWordOverrides, customWords, nextWordOrder);
-    setReorderFeedbackToken((current) => current + 1);
+    commitWordMutation(
+      (currentSnapshot) => ({
+        ...currentSnapshot,
+        wordOrder: nextWordOrder
+      }),
+      {
+        afterCommit: () => setReorderFeedbackToken((current) => current + 1)
+      }
+    );
   }
 
   function moveWordToIndex(wordId: string, targetIndex: number) {
@@ -288,10 +329,15 @@ export function useTrainer() {
     const nextWordOrder = [...sanitizedWordOrder];
     const [movedWordId] = nextWordOrder.splice(currentIndex, 1);
     nextWordOrder.splice(boundedTargetIndex, 0, movedWordId);
-    setWordOrder(nextWordOrder);
-    saveBuiltinWordOrder(nextWordOrder);
-    syncSession(builtinWordOverrides, customWords, nextWordOrder);
-    setReorderFeedbackToken((current) => current + 1);
+    commitWordMutation(
+      (currentSnapshot) => ({
+        ...currentSnapshot,
+        wordOrder: nextWordOrder
+      }),
+      {
+        afterCommit: () => setReorderFeedbackToken((current) => current + 1)
+      }
+    );
   }
 
   function moveWordToEdge(wordId: string, edge: "top" | "bottom") {
@@ -308,10 +354,15 @@ export function useTrainer() {
     const nextWordOrder = [...sanitizedWordOrder];
     const [movedWordId] = nextWordOrder.splice(currentIndex, 1);
     nextWordOrder.splice(targetIndex, 0, movedWordId);
-    setWordOrder(nextWordOrder);
-    saveBuiltinWordOrder(nextWordOrder);
-    syncSession(builtinWordOverrides, customWords, nextWordOrder);
-    setReorderFeedbackToken((current) => current + 1);
+    commitWordMutation(
+      (currentSnapshot) => ({
+        ...currentSnapshot,
+        wordOrder: nextWordOrder
+      }),
+      {
+        afterCommit: () => setReorderFeedbackToken((current) => current + 1)
+      }
+    );
   }
 
   function clearReorderFeedback() {
@@ -342,11 +393,11 @@ export function useTrainer() {
       return nextWordId;
     });
 
-    setCustomWords(nextWords);
-    setWordOrder(nextWordOrder);
-    saveCustomWords(nextWords);
-    saveBuiltinWordOrder(nextWordOrder);
-    syncSession(builtinWordOverrides, nextWords, nextWordOrder);
+    commitWordMutation((currentSnapshot) => ({
+      ...currentSnapshot,
+      customWords: nextWords,
+      wordOrder: nextWordOrder
+    }));
   }
 
   function startEditingWord(wordId: string, source: WordEntry["source"]) {
@@ -409,10 +460,15 @@ export function useTrainer() {
         }
       };
 
-      setBuiltinWordOverrides(nextBuiltinWordOverrides);
-      saveBuiltinWordOverrides(nextBuiltinWordOverrides);
-      syncSession(nextBuiltinWordOverrides, customWords, sanitizedWordOrder);
-      cancelEditingWord();
+      commitWordMutation(
+        (currentSnapshot) => ({
+          ...currentSnapshot,
+          builtinWordOverrides: nextBuiltinWordOverrides
+        }),
+        {
+          cancelEditing: true
+        }
+      );
       return;
     }
 
@@ -429,12 +485,16 @@ export function useTrainer() {
     );
     const nextWordOrder = sanitizedWordOrder.map((wordId) => (wordId === editingWordId ? entry.id : wordId));
 
-    setCustomWords(nextWords);
-    setWordOrder(nextWordOrder);
-    saveCustomWords(nextWords);
-    saveBuiltinWordOrder(nextWordOrder);
-    syncSession(builtinWordOverrides, nextWords, nextWordOrder);
-    cancelEditingWord();
+    commitWordMutation(
+      (currentSnapshot) => ({
+        ...currentSnapshot,
+        customWords: nextWords,
+        wordOrder: nextWordOrder
+      }),
+      {
+        cancelEditing: true
+      }
+    );
   }
 
   function handleRemoveBuiltinWord(wordId: string) {
@@ -446,13 +506,15 @@ export function useTrainer() {
       }
     };
 
-    setBuiltinWordOverrides(nextBuiltinWordOverrides);
-    saveBuiltinWordOverrides(nextBuiltinWordOverrides);
-    syncSession(nextBuiltinWordOverrides, customWords, sanitizedWordOrder);
-
-    if (editingWordId === wordId) {
-      cancelEditingWord();
-    }
+    commitWordMutation(
+      (currentSnapshot) => ({
+        ...currentSnapshot,
+        builtinWordOverrides: nextBuiltinWordOverrides
+      }),
+      {
+        cancelEditing: editingWordId === wordId
+      }
+    );
   }
 
   function handleRemoveBuiltinWords(wordIds: string[]) {
@@ -469,13 +531,15 @@ export function useTrainer() {
       };
     }
 
-    setBuiltinWordOverrides(nextBuiltinWordOverrides);
-    saveBuiltinWordOverrides(nextBuiltinWordOverrides);
-    syncSession(nextBuiltinWordOverrides, customWords, sanitizedWordOrder);
-
-    if (editingWordId && removableWordIds.includes(editingWordId)) {
-      cancelEditingWord();
-    }
+    commitWordMutation(
+      (currentSnapshot) => ({
+        ...currentSnapshot,
+        builtinWordOverrides: nextBuiltinWordOverrides
+      }),
+      {
+        cancelEditing: Boolean(editingWordId && removableWordIds.includes(editingWordId))
+      }
+    );
   }
 
   function restoreBuiltinWord(wordId: string) {
@@ -485,13 +549,15 @@ export function useTrainer() {
 
     const nextBuiltinWordOverrides = { ...builtinWordOverrides };
     delete nextBuiltinWordOverrides[wordId];
-    setBuiltinWordOverrides(nextBuiltinWordOverrides);
-    saveBuiltinWordOverrides(nextBuiltinWordOverrides);
-    syncSession(nextBuiltinWordOverrides, customWords, sanitizedWordOrder);
-
-    if (editingWordId === wordId) {
-      cancelEditingWord();
-    }
+    commitWordMutation(
+      (currentSnapshot) => ({
+        ...currentSnapshot,
+        builtinWordOverrides: nextBuiltinWordOverrides
+      }),
+      {
+        cancelEditing: editingWordId === wordId
+      }
+    );
   }
 
   function restoreBuiltinWords(wordIds: string[]) {
@@ -509,13 +575,15 @@ export function useTrainer() {
       return;
     }
 
-    setBuiltinWordOverrides(nextBuiltinWordOverrides);
-    saveBuiltinWordOverrides(nextBuiltinWordOverrides);
-    syncSession(nextBuiltinWordOverrides, customWords, sanitizedWordOrder);
-
-    if (editingWordId && wordIds.includes(editingWordId)) {
-      cancelEditingWord();
-    }
+    commitWordMutation(
+      (currentSnapshot) => ({
+        ...currentSnapshot,
+        builtinWordOverrides: nextBuiltinWordOverrides
+      }),
+      {
+        cancelEditing: Boolean(editingWordId && wordIds.includes(editingWordId))
+      }
+    );
   }
 
   function handleRemoveWordsFromPractice(wordIds: string[]) {
@@ -543,21 +611,16 @@ export function useTrainer() {
         ? sanitizedWordOrder
         : sanitizedWordOrder.filter((currentWordId) => !removableCustomWordIds.has(currentWordId));
 
-    if (builtinWordIds.length > 0) {
-      setBuiltinWordOverrides(nextBuiltinWordOverrides);
-      saveBuiltinWordOverrides(nextBuiltinWordOverrides);
-    }
-
-    if (removableCustomWordIds.size > 0) {
-      setWordOrder(nextWordOrder);
-      saveBuiltinWordOrder(nextWordOrder);
-    }
-
-    syncSession(nextBuiltinWordOverrides, customWords, nextWordOrder);
-
-    if (editingWordId && (builtinWordIds.includes(editingWordId) || removableCustomWordIds.has(editingWordId))) {
-      cancelEditingWord();
-    }
+    commitWordMutation(
+      (currentSnapshot) => ({
+        ...currentSnapshot,
+        builtinWordOverrides: nextBuiltinWordOverrides,
+        wordOrder: nextWordOrder
+      }),
+      {
+        cancelEditing: Boolean(editingWordId && (builtinWordIds.includes(editingWordId) || removableCustomWordIds.has(editingWordId)))
+      }
+    );
   }
 
   function handleRemoveWords(wordIds: string[]) {
@@ -566,33 +629,32 @@ export function useTrainer() {
       return;
     }
 
-    const nextWords = customWords.filter((word) => !removableWordIds.has(word.id));
-    const nextWordOrder = sanitizedWordOrder.filter((currentWordId) => !removableWordIds.has(currentWordId));
-    setCustomWords(nextWords);
-    setWordOrder(nextWordOrder);
-    saveCustomWords(nextWords);
-    saveBuiltinWordOrder(nextWordOrder);
-    syncSession(builtinWordOverrides, nextWords, nextWordOrder);
-
-    if (editingWordId && removableWordIds.has(editingWordId)) {
-      cancelEditingWord();
-    }
+    commitWordMutation(
+      (currentSnapshot) => ({
+        ...currentSnapshot,
+        customWords: currentSnapshot.customWords.filter((word) => !removableWordIds.has(word.id)),
+        wordOrder: currentSnapshot.wordOrder.filter((currentWordId) => !removableWordIds.has(currentWordId))
+      }),
+      {
+        cancelEditing: Boolean(editingWordId && removableWordIds.has(editingWordId))
+      }
+    );
   }
 
   function resetBuiltinWords() {
     const nextBuiltinWords = buildResolvedBuiltinWords({});
     const orderedCustomWordIds = activeWords.filter((word) => word.source === "custom").map((word) => word.id);
     const nextWordOrder = [...nextBuiltinWords.map((word) => word.id), ...orderedCustomWordIds];
-    setWordOrder(nextWordOrder);
-    setBuiltinWordOverrides({});
-    clearBuiltinWordOrder();
-    clearBuiltinWordOverrides();
-    saveBuiltinWordOrder(nextWordOrder);
-    syncSession({}, customWords, nextWordOrder);
-
-    if (editingWordSource === "builtin") {
-      cancelEditingWord();
-    }
+    commitWordMutation(
+      (currentSnapshot) => ({
+        ...currentSnapshot,
+        builtinWordOverrides: {},
+        wordOrder: nextWordOrder
+      }),
+      {
+        cancelEditing: editingWordSource === "builtin"
+      }
+    );
   }
 
   function handleConfigChange<K extends keyof SessionConfig>(key: K, value: SessionConfig[K]) {
