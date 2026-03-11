@@ -288,6 +288,38 @@ test("shows pending settings until they are applied", async ({ page }) => {
   await expect(page.getByTestId("progress-count")).toHaveText("0 / 1 words");
 });
 
+test("shows session size and clamped outcome in the words page summary", async ({ page }) => {
+  await page.getByTestId("tab-words").click();
+
+  await expect(page.getByTestId("word-stat-session-size")).toContainText("1 session");
+  await expect(page.getByTestId("word-stat-session-size")).toContainText("10");
+  await expect(page.getByTestId("words-session-outcome-summary")).toContainText("Practice order: 20 words");
+  await expect(page.getByTestId("words-session-outcome-summary")).toContainText("This session: 10 words");
+
+  await page.getByTestId("word-count-input").fill("20");
+
+  await expect(page.getByTestId("word-stat-session-size")).toContainText("20");
+  await expect(page.getByTestId("words-session-outcome-summary")).toContainText("Practice order: 20 words");
+  await expect(page.getByTestId("words-session-outcome-summary")).toContainText("This session: 20 words");
+  await expect(page.getByTestId("words-session-clamp-hint")).toHaveCount(0);
+
+  await page.getByTestId("builtin-word-list").getByTestId("more-row-actions-button-builtin-apple").click();
+  await page.getByTestId("builtin-word-list").getByTestId("delete-word-button-builtin-apple").click();
+
+  await expect(page.getByTestId("words-session-outcome-summary")).toContainText("Practice order: 19 words");
+  await expect(page.getByTestId("words-session-outcome-summary")).toContainText("This session: 19 words");
+  await expect(page.getByTestId("words-session-clamp-hint")).toContainText(
+    "Only 19 words are in the practice order, so this session will use 19."
+  );
+
+  await page.getByTestId("new-word-input").fill("banana");
+  await page.getByTestId("add-word-button").click();
+
+  await expect(page.getByTestId("words-session-outcome-summary")).toContainText("Practice order: 20 words");
+  await expect(page.getByTestId("words-session-outcome-summary")).toContainText("This session: 20 words");
+  await expect(page.getByTestId("words-session-clamp-hint")).toHaveCount(0);
+});
+
 test("can discard pending settings changes", async ({ page }) => {
   await page.getByTestId("tab-words").click();
   await page.getByTestId("shuffle-toggle").check();

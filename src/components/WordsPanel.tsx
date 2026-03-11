@@ -1,5 +1,5 @@
 import { useId, useRef } from "react";
-import { t } from "../i18n";
+import { formatMessage, t } from "../i18n";
 import type { TrainerState } from "../features/trainer/useTrainer";
 import type { SessionConfig } from "../domain/types";
 import { ActiveWordsSection } from "./words/sections/ActiveWordsSection";
@@ -80,6 +80,14 @@ export function WordsPanel({ trainer }: WordsPanelProps) {
     { key: "wordCount" as const, label: t(language, "settings.wordsPerSession") },
     { key: "shuffle" as const, label: t(language, "settings.shuffle") }
   ]).filter(({ key }) => trainer.config[key] !== trainer.draftConfig[key]);
+  const sessionAvailableCount = formatMessage(language, "words.sessionAvailableCount", { count: trainer.availableWordCount });
+  const sessionEffectiveCount = formatMessage(language, "words.sessionEffectiveCount", { count: trainer.effectiveWordCount });
+  const sessionClampHint = trainer.isWordCountClamped
+    ? formatMessage(language, "words.sessionClampHint", {
+        availableCount: trainer.availableWordCount,
+        effectiveCount: trainer.effectiveWordCount
+      })
+    : null;
 
   return (
     <div className="words-page">
@@ -129,6 +137,18 @@ export function WordsPanel({ trainer }: WordsPanelProps) {
                 />
                 <span>{t(language, "settings.shuffle")}</span>
               </label>
+            </div>
+            <div
+              className={`words-session-outcome-summary${trainer.isWordCountClamped ? " words-session-outcome-summary-clamped" : ""}`}
+              data-testid="words-session-outcome-summary"
+            >
+              <p data-testid="words-session-available-count">{sessionAvailableCount}</p>
+              <p data-testid="words-session-effective-count">{sessionEffectiveCount}</p>
+              {sessionClampHint ? (
+                <p className="words-session-outcome-hint" data-testid="words-session-clamp-hint">
+                  {sessionClampHint}
+                </p>
+              ) : null}
             </div>
             <div className="words-session-config-footer">
               <div className={`settings-status ${sessionPendingSummaryItems.length > 0 ? "pending" : ""}`} data-testid="words-session-config-status">

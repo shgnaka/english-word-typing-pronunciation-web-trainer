@@ -111,6 +111,10 @@ export function useTrainer() {
       config,
       draftConfig
     });
+  const availableWordCount = activeWords.length;
+  const requestedWordCount = draftConfig.wordCount;
+  const effectiveWordCount = Math.min(requestedWordCount, availableWordCount);
+  const isWordCountClamped = availableWordCount < requestedWordCount;
 
   function restartSession(nextConfig = config) {
     pronunciation.resetAutoPronunciation();
@@ -780,6 +784,10 @@ export function useTrainer() {
     isCountdownActive,
     isTypingActiveLayout,
     hasPendingConfigChanges,
+    availableWordCount,
+    requestedWordCount,
+    effectiveWordCount,
+    isWordCountClamped,
     handleKeyInput: sessionControls.handleKeyInput,
     handleAddWord,
     handleRemoveWord,
