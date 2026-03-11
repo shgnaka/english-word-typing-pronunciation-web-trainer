@@ -143,7 +143,7 @@ function PracticeWordStage({
         <div>
           <p className={`label ${trainer.isTypingActiveLayout ? "typing-active-label" : ""}`}>{t(trainer.displayLanguage, "practice.currentWord")}</p>
           {showWordReading ? (
-            <div className="practice-word-reading-slot" data-testid="practice-word-reading-slot" aria-hidden="true">
+            <div className="practice-word-reading-slot" data-testid="practice-word-reading-slot">
               {/* Reserved for a future generated reading hint. */}
             </div>
           ) : null}
