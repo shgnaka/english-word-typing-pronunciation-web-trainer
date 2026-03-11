@@ -128,11 +128,13 @@ function PracticeWordStage({
   currentWord,
   hasMistype,
   targetSummary,
+  showWordReading,
   trainer
 }: {
   currentWord: string;
   hasMistype: boolean;
   targetSummary: string;
+  showWordReading: boolean;
   trainer: TrainerState;
 }) {
   return (
@@ -140,6 +142,11 @@ function PracticeWordStage({
       <div className="panel-header practice-header">
         <div>
           <p className={`label ${trainer.isTypingActiveLayout ? "typing-active-label" : ""}`}>{t(trainer.displayLanguage, "practice.currentWord")}</p>
+          {showWordReading ? (
+            <div className="practice-word-reading-slot" data-testid="practice-word-reading-slot" aria-hidden="true">
+              {/* Reserved for a future generated reading hint. */}
+            </div>
+          ) : null}
           <h2 data-testid="current-word" aria-describedby="practice-target-summary practice-status-message">
             {currentWord || t(trainer.displayLanguage, "practice.noWords")}
           </h2>
@@ -380,7 +387,13 @@ export function PracticePanel({ trainer }: PracticePanelProps) {
           </div>
 
           <div className="practice-layout-slot word">
-            <PracticeWordStage currentWord={currentWord} hasMistype={hasMistype} targetSummary={targetSummary} trainer={trainer} />
+            <PracticeWordStage
+              currentWord={currentWord}
+              hasMistype={hasMistype}
+              targetSummary={targetSummary}
+              showWordReading={trainer.config.showWordReading}
+              trainer={trainer}
+            />
           </div>
         </>
       )}

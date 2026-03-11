@@ -1218,6 +1218,36 @@ describe("App", () => {
     expect(screen.queryByTestId("keyboard-guide-slot")).not.toBeInTheDocument();
   });
 
+  it("shows the word reading slot immediately when the setting is enabled", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.click(screen.getByRole("button", { name: "Settings" }));
+    expect(screen.getByTestId("word-reading-toggle")).not.toBeChecked();
+    await user.click(screen.getByTestId("word-reading-toggle"));
+
+    expect(screen.getByTestId("settings-status")).toHaveTextContent("Current session already matches these settings.");
+
+    await user.click(screen.getByRole("button", { name: "Practice" }));
+
+    expect(screen.getByTestId("practice-word-reading-slot")).toBeInTheDocument();
+  });
+
+  it("persists the word reading setting after reload", async () => {
+    const user = userEvent.setup();
+    const { unmount } = render(<App />);
+
+    await user.click(screen.getByRole("button", { name: "Settings" }));
+    await user.click(screen.getByTestId("word-reading-toggle"));
+
+    unmount();
+    render(<App />);
+
+    await user.click(screen.getByRole("button", { name: "Settings" }));
+
+    expect(screen.getByTestId("word-reading-toggle")).toBeChecked();
+  });
+
   it("shows all pending session changes on the settings page", async () => {
     const user = userEvent.setup();
     render(<App />);

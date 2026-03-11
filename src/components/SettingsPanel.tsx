@@ -115,6 +115,15 @@ export function SettingsPanel({ trainer }: SettingsPanelProps) {
             <span>{t(language, "settings.fingerGuide")}</span>
           </label>
           <ThemeSettingsSection trainer={trainer} />
+          <label className="toggle">
+            <input
+              data-testid="word-reading-toggle"
+              type="checkbox"
+              checked={trainer.draftConfig.showWordReading}
+              onChange={(event) => trainer.handleConfigChange("showWordReading", event.target.checked)}
+            />
+            <span>{t(language, "settings.wordReading")}</span>
+          </label>
           <div className="settings-inline-tools">
             <p className="setting-hint">{t(language, "settings.browserTtsCachePolicy")}</p>
             <button

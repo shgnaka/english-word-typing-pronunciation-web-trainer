@@ -127,7 +127,8 @@ describe("storage", () => {
         speechEnabled: true,
         browserTtsEnabled: false,
         showFingerGuide: false,
-        showKeyboardHint: true
+        showKeyboardHint: true,
+        showWordReading: false
       }
     });
   });
@@ -164,6 +165,23 @@ describe("storage", () => {
         wordCount: 3,
         shuffle: true
       }
+    });
+  });
+
+  it("defaults showWordReading to false when loading legacy session config", () => {
+    window.localStorage.setItem(
+      sessionConfigKey,
+      JSON.stringify({
+        wordCount: 5,
+        showKeyboardHint: false
+      })
+    );
+
+    expect(loadSessionConfig()).toEqual({
+      ...defaultSessionConfig,
+      wordCount: 5,
+      showKeyboardHint: false,
+      showWordReading: false
     });
   });
 

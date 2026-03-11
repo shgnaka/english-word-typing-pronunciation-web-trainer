@@ -668,7 +668,7 @@ export function useTrainer() {
   }
 
   function handleConfigChange<K extends keyof SessionConfig>(key: K, value: SessionConfig[K]) {
-    if (key === "showKeyboardHint" || key === "showFingerGuide") {
+    if (key === "showKeyboardHint" || key === "showFingerGuide" || key === "showWordReading") {
       const nextValue = Boolean(value) as SessionConfig[K];
       setConfig((current) => {
         const nextConfig = {

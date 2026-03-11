@@ -362,6 +362,10 @@ input {
   gap: 0.35rem;
 }
 
+.practice-word-reading-slot {
+  min-height: 0.95rem;
+}
+
 .progress-block {
   margin-bottom: 1.5rem;
 }
