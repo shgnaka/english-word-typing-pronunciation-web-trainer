@@ -2,6 +2,7 @@
 
 英単語のタイピング練習、発音確認、指使いガイドをまとめた Web アプリです。  
 MVP では、ブラウザだけで練習開始から結果確認まで完結します。
+- 公開URL: https://shgnaka.github.io/english-word-typing-pronunciation-web-trainer/
 
 ## MVPでできること
 
@@ -100,7 +101,6 @@ GitHub Pages へ自動デプロイする構成です。
 
 - push 先ブランチ: `main`
 - workflow: [deploy-pages.yml](./.github/workflows/deploy-pages.yml)
-- 公開URL: `https://shgnaka.github.io/english-word-typing-pronunciation-web-trainer/`
 
 初回だけ GitHub 側で以下を設定してください。
 
