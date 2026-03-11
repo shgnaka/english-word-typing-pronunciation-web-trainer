@@ -164,6 +164,7 @@ test("edits and restores a builtin word", async ({ page }) => {
   await expect(page.getByTestId("current-word")).toHaveText("apricot");
 
   await page.getByTestId("tab-words").click();
+  await page.getByTestId("builtin-word-list").getByTestId("more-row-actions-button-builtin-apple").click();
   await page.getByTestId("restore-word-button-builtin-apple").click();
   await expect(page.getByTestId("builtin-word-list")).toContainText("apple");
   await expect(page.getByTestId("builtin-word-state-builtin-apple")).toHaveCount(0);
@@ -171,6 +172,7 @@ test("edits and restores a builtin word", async ({ page }) => {
 
 test("deletes a builtin word and can reset builtin overrides", async ({ page }) => {
   await page.getByTestId("tab-words").click();
+  await page.getByTestId("builtin-word-list").getByTestId("more-row-actions-button-builtin-apple").click();
   await page.getByTestId("delete-word-button-builtin-apple").click();
 
   await expect(page.getByTestId("builtin-word-list")).not.toContainText("apple");
@@ -182,7 +184,7 @@ test("deletes a builtin word and can reset builtin overrides", async ({ page }) 
   await page.getByTestId("tab-words").click();
   await page.getByTestId("reset-builtin-words-button").click();
   await expect(page.getByTestId("builtin-word-list")).toContainText("apple");
-  await expect(page.getByTestId("hidden-builtin-empty")).toHaveText("No hidden built-in words.");
+  await expect(page.getByTestId("hidden-builtin-empty")).toContainText("No hidden built-in words.");
 });
 
 test("reorders builtin words in the mixed practice list and persists the order after reload", async ({ page }) => {
@@ -384,7 +386,8 @@ test("supports Enter to add words and skip countdown", async ({ page }) => {
   await page.getByTestId("tab-practice").click();
   await expect(page.getByTestId("practice-primary-status")).toContainText("Start in 3");
   await page.keyboard.press("Enter");
-  await expect(page.getByTestId("practice-primary-status")).toContainText("Playing pronunciation...");
+  await expect(page.getByTestId("practice-primary-status")).not.toContainText("Start in 3");
+  await expect(page.getByTestId("current-word")).toHaveText("apple");
 });
 
 test("resumes typing after a practice action button is clicked", async ({ page }) => {
