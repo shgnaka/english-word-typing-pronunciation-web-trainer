@@ -1,8 +1,17 @@
 import { defaultWords } from "../../data/defaultWords";
 import { buildSessionQueue } from "../../domain/session";
-import type { BuiltinWordOverrides, DisplayLanguage, SessionConfig, WordEntry, WordOrder } from "../../domain/types";
+import type { BuiltinWordOverrides, DisplayLanguage, SessionConfig, ThemePreference, WordEntry, WordOrder } from "../../domain/types";
 import { dedupeWords, orderWords, resolveBuiltinWords, sanitizeWordOrder } from "../../domain/words";
-import { defaultDisplayLanguage, loadBuiltinWordOrder, loadBuiltinWordOverrides, loadCustomWords, loadDisplayLanguage, loadSessionConfig } from "../../infra/storage";
+import {
+  defaultDisplayLanguage,
+  defaultThemePreference,
+  loadBuiltinWordOrder,
+  loadBuiltinWordOverrides,
+  loadCustomWords,
+  loadDisplayLanguage,
+  loadSessionConfig,
+  loadThemePreference
+} from "../../infra/storage";
 
 export function buildResolvedBuiltinWords(overrides: BuiltinWordOverrides): WordEntry[] {
   return resolveBuiltinWords(defaultWords, overrides);
@@ -43,6 +52,7 @@ export function loadTrainerPreferences(): {
   customWords: WordEntry[];
   config: SessionConfig;
   displayLanguage: DisplayLanguage;
+  themePreference: ThemePreference;
 } {
   const customWords = loadCustomWords();
   const builtinWordOverrides = loadBuiltinWordOverrides();
@@ -54,6 +64,7 @@ export function loadTrainerPreferences(): {
     builtinWordOverrides,
     customWords,
     config: loadSessionConfig(),
-    displayLanguage: loadDisplayLanguage() ?? defaultDisplayLanguage
+    displayLanguage: loadDisplayLanguage() ?? defaultDisplayLanguage,
+    themePreference: loadThemePreference() ?? defaultThemePreference
   };
 }

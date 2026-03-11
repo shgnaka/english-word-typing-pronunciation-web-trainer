@@ -1,5 +1,16 @@
-import type { BuiltinWordOverride, BuiltinWordOverrides, DisplayLanguage, SessionConfig, WordEntry, WordOrder } from "../domain/types";
+import type {
+  BuiltinWordOverride,
+  BuiltinWordOverrides,
+  DisplayLanguage,
+  SessionConfig,
+  ThemeAccent,
+  ThemeId,
+  ThemePreference,
+  WordEntry,
+  WordOrder
+} from "../domain/types";
 import { normalizeWord } from "../domain/words";
+import { sanitizeBackgroundIntensity } from "../theme";
 
 const customWordsKey = "wordbeat.customWords";
 const builtinWordOverridesKey = "wordbeat.builtinWordOverrides";
@@ -7,6 +18,7 @@ const builtinWordOrderKey = "wordbeat.builtinWordOrder";
 const sessionConfigKey = "wordbeat.sessionConfig";
 const displayLanguageKey = "wordbeat.displayLanguage";
 const wordsPanelStateKey = "wordbeat.wordsPanelState";
+const themePreferenceKey = "wordbeat.themePreference";
 const storageSchemaVersion = 1;
 
 interface VersionedStorageRecord<T> {
@@ -30,6 +42,12 @@ export const defaultSessionConfig: SessionConfig = {
 };
 
 export const defaultDisplayLanguage: DisplayLanguage = "en";
+
+export const defaultThemePreference: ThemePreference = {
+  themeId: "dusk",
+  accent: "amber",
+  backgroundIntensity: 60
+};
 
 export interface WordsPanelState {
   builtinMinimized: boolean;
@@ -209,9 +227,30 @@ const builtinWordOverridesCodec = createStorageCodec<BuiltinWordOverrides>((valu
 const builtinWordOrderCodec = createStorageCodec<WordOrder>((value) => sanitizeWordOrderValue(value));
 const sessionConfigCodec = createStorageCodec<SessionConfig>((value) => sanitizeSessionConfigValue(value as Partial<SessionConfig> | null | undefined));
 const wordsPanelStateCodec = createStorageCodec<WordsPanelState>((value) => sanitizeWordsPanelStateValue(value as Partial<WordsPanelState> | null | undefined));
+const themePreferenceCodec = createStorageCodec<ThemePreference>((value) => sanitizeThemePreferenceValue(value as Partial<ThemePreference> | null | undefined));
 
 function parseDisplayLanguageValue(value: unknown): DisplayLanguage {
   return value === "en" || value === "ja" || value === "ja-hira" ? value : defaultDisplayLanguage;
+}
+
+function parseThemeId(value: unknown): ThemeId {
+  return value === "dusk" || value === "forest" || value === "ocean" || value === "dawn" || value === "daylight"
+    ? value
+    : defaultThemePreference.themeId;
+}
+
+function parseThemeAccent(value: unknown): ThemeAccent {
+  return value === "amber" || value === "mint" || value === "sky" || value === "rose" ? value : defaultThemePreference.accent;
+}
+
+function sanitizeThemePreferenceValue(value: Partial<ThemePreference> | null | undefined): ThemePreference {
+  const parsed = value ?? {};
+
+  return {
+    themeId: parseThemeId(parsed.themeId),
+    accent: parseThemeAccent(parsed.accent),
+    backgroundIntensity: sanitizeBackgroundIntensity(parsed.backgroundIntensity ?? defaultThemePreference.backgroundIntensity)
+  };
 }
 
 function parseStoredValue<T>(raw: string, codec: StorageCodec<T>, fallback: T): T {
@@ -294,6 +333,14 @@ export function loadWordsPanelState(): WordsPanelState {
 
 export function saveWordsPanelState(state: WordsPanelState): void {
   saveVersionedStorageValue(wordsPanelStateKey, wordsPanelStateCodec, state);
+}
+
+export function loadThemePreference(): ThemePreference {
+  return loadVersionedStorageValue(themePreferenceKey, themePreferenceCodec, defaultThemePreference);
+}
+
+export function saveThemePreference(preference: ThemePreference): void {
+  saveVersionedStorageValue(themePreferenceKey, themePreferenceCodec, preference);
 }
 
 export function loadDisplayLanguage(): DisplayLanguage {

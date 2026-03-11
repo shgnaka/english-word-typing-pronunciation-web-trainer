@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { displayLanguageOptions, t } from "../i18n";
 import type { TrainerState } from "../features/trainer/useTrainer";
 import type { SessionConfig } from "../domain/types";
+import { ThemeSettingsSection } from "./ThemeSettingsSection";
 
 interface SettingsPanelProps {
   trainer: TrainerState;
@@ -113,6 +114,7 @@ export function SettingsPanel({ trainer }: SettingsPanelProps) {
             />
             <span>{t(language, "settings.fingerGuide")}</span>
           </label>
+          <ThemeSettingsSection trainer={trainer} />
           <div className="settings-inline-tools">
             <p className="setting-hint">{t(language, "settings.browserTtsCachePolicy")}</p>
             <button

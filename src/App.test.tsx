@@ -114,6 +114,57 @@ describe("App", () => {
     expect(screen.getByTestId("empty-custom-cta")).toHaveTextContent("Add your first custom word");
   });
 
+  it("updates theme settings immediately and persists them across reloads", async () => {
+    const user = userEvent.setup();
+    const { unmount } = render(<App />);
+
+    await user.click(screen.getByRole("button", { name: "Settings" }));
+    await user.click(screen.getByTestId("theme-option-forest"));
+    await user.click(screen.getByTestId("theme-accent-sky"));
+    fireEvent.change(screen.getByTestId("theme-background-intensity"), { target: { value: "82" } });
+
+    expect(document.documentElement.dataset.theme).toBe("forest");
+    expect(document.documentElement.dataset.colorScheme).toBe("dark");
+    expect(document.documentElement.style.getPropertyValue("--theme-accent-rgb")).toBe("121 192 255");
+    expect(screen.getByTestId("theme-background-intensity-value")).toHaveTextContent("82%");
+
+    unmount();
+    render(<App />);
+
+    expect(document.documentElement.dataset.theme).toBe("forest");
+    expect(document.documentElement.dataset.colorScheme).toBe("dark");
+    expect(document.documentElement.style.getPropertyValue("--theme-accent-rgb")).toBe("121 192 255");
+
+    await user.click(screen.getByRole("button", { name: "Settings" }));
+    expect(screen.getByTestId("theme-background-intensity-value")).toHaveTextContent("82%");
+  });
+
+  it("resets theme settings back to the default theme", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.click(screen.getByRole("button", { name: "Settings" }));
+    await user.click(screen.getByTestId("theme-option-ocean"));
+    await user.click(screen.getByTestId("theme-accent-rose"));
+    fireEvent.change(screen.getByTestId("theme-background-intensity"), { target: { value: "20" } });
+    await user.click(screen.getByTestId("reset-theme-button"));
+
+    expect(document.documentElement.dataset.theme).toBe("dusk");
+    expect(document.documentElement.style.getPropertyValue("--theme-accent-rgb")).toBe("255 191 105");
+    expect(screen.getByTestId("theme-background-intensity-value")).toHaveTextContent("60%");
+  });
+
+  it("supports the daylight base theme", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.click(screen.getByRole("button", { name: "Settings" }));
+    await user.click(screen.getByTestId("theme-option-daylight"));
+
+    expect(document.documentElement.dataset.theme).toBe("daylight");
+    expect(document.documentElement.dataset.colorScheme).toBe("light");
+  });
+
   it("uses empty-state ctas to guide the next action", async () => {
     const user = userEvent.setup();
     render(<App />);
@@ -932,6 +983,17 @@ describe("App", () => {
     );
     window.localStorage.setItem("wordbeat.wordsPanelState", "{bad json");
     window.localStorage.setItem("wordbeat.displayLanguage", "fr");
+    window.localStorage.setItem(
+      "wordbeat.themePreference",
+      JSON.stringify({
+        version: 1,
+        value: {
+          themeId: "broken",
+          accent: "broken",
+          backgroundIntensity: "loud"
+        }
+      })
+    );
 
     render(<App />);
 
@@ -950,6 +1012,9 @@ describe("App", () => {
     expect(screen.getByTestId("speech-toggle")).toBeChecked();
     expect(screen.getByTestId("finger-guide-toggle")).toBeChecked();
     expect(screen.getByTestId("keyboard-hint-toggle")).toBeChecked();
+    expect(document.documentElement.dataset.theme).toBe("dusk");
+    expect(document.documentElement.dataset.colorScheme).toBe("dark");
+    expect(screen.getByTestId("theme-background-intensity-value")).toHaveTextContent("60%");
   });
 
   it("reset builtin words restores the shipped builtin order", async () => {
