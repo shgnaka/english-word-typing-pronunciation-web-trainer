@@ -11,10 +11,7 @@ export function ThemeSettingsSection({ trainer }: ThemeSettingsSectionProps) {
 
   return (
     <section className="theme-settings-section" data-testid="theme-settings-section">
-      <div className="theme-settings-copy">
-        <span>{t(language, "settings.theme")}</span>
-        <p className="setting-hint">{t(language, "settings.themeHelp")}</p>
-      </div>
+      <span className="theme-settings-copy">{t(language, "settings.theme")}</span>
 
       <div className="theme-option-grid" data-testid="theme-option-grid">
         {themeOptions.map((option) => (
@@ -61,19 +58,6 @@ export function ThemeSettingsSection({ trainer }: ThemeSettingsSectionProps) {
               {t(language, option.labelKey)}
             </button>
           ))}
-        </div>
-      </div>
-
-      <div className="theme-preview-card" data-testid="theme-preview-card" aria-label={t(language, "settings.themePreview")}>
-        <div className="theme-preview-header">
-          <span className="label">{t(language, "settings.themePreview")}</span>
-          <strong>{t(language, "settings.themePreviewTitle")}</strong>
-        </div>
-        <div className="theme-preview-body">
-          <div className="theme-preview-pill">{t(language, "settings.themePreviewAccent")}</div>
-          <div className="theme-preview-surface">
-            <span>{t(language, "settings.themePreviewSurface")}</span>
-          </div>
         </div>
       </div>
 

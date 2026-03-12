@@ -159,7 +159,8 @@ describe("PronunciationOrchestrator", () => {
       speechEnabled: true,
       browserTtsEnabled: false,
       showFingerGuide: true,
-      showKeyboardHint: true
+      showKeyboardHint: true,
+      showWordReading: false
     });
     orchestrator.preloadAvailableWords([createWordEntry("apple"), createWordEntry("book")], {
       wordCount: 10,
@@ -167,7 +168,8 @@ describe("PronunciationOrchestrator", () => {
       speechEnabled: true,
       browserTtsEnabled: true,
       showFingerGuide: true,
-      showKeyboardHint: true
+      showKeyboardHint: true,
+      showWordReading: false
     });
 
     expect(preloadBrowserTtsWords).toHaveBeenCalledTimes(1);

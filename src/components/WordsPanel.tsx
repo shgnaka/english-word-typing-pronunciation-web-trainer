@@ -1,7 +1,6 @@
 import { useId, useRef } from "react";
 import { formatMessage, t } from "../i18n";
 import type { TrainerState } from "../features/trainer/useTrainer";
-import type { SessionConfig } from "../domain/types";
 import { ActiveWordsSection } from "./words/sections/ActiveWordsSection";
 import { BuiltinWordsSection } from "./words/sections/BuiltinWordsSection";
 import { CustomWordsSection } from "./words/sections/CustomWordsSection";
@@ -12,10 +11,6 @@ import { WordsSearchToolbar } from "./words/layout/WordsSearchToolbar";
 
 interface WordsPanelProps {
   trainer: TrainerState;
-}
-
-function formatPendingValue(language: TrainerState["displayLanguage"], value: SessionConfig["wordCount" | "shuffle"]) {
-  return typeof value === "boolean" ? t(language, value ? "settings.valueOn" : "settings.valueOff") : String(value);
 }
 
 export function WordsPanel({ trainer }: WordsPanelProps) {
@@ -76,28 +71,11 @@ export function WordsPanel({ trainer }: WordsPanelProps) {
       onClick: () => scrollToSection(hiddenCustomSectionRef.current)
     }
   ].filter((summary) => summary.count > 0);
-  const sessionPendingSummaryItems = ([
-    { key: "wordCount" as const, label: t(language, "settings.wordsPerSession") },
-    { key: "shuffle" as const, label: t(language, "settings.shuffle") }
-  ]).filter(({ key }) => trainer.config[key] !== trainer.draftConfig[key]);
   const sessionAvailableCount = formatMessage(language, "words.sessionAvailableCount", { count: trainer.availableWordCount });
   const sessionEffectiveCount = formatMessage(language, "words.sessionEffectiveCount", { count: trainer.effectiveWordCount });
-  const sessionClampHint = trainer.isWordCountClamped
-    ? formatMessage(language, "words.sessionClampHint", {
-        availableCount: trainer.availableWordCount,
-        effectiveCount: trainer.effectiveWordCount
-      })
-    : null;
 
   return (
     <div className="words-page">
-      <div className="panel-header">
-        <div>
-          <p className="label">{t(language, "words.title")}</p>
-          <h2>{t(language, "words.subtitle")}</h2>
-        </div>
-      </div>
-
       <div className="words-top-grid">
         <div className="words-primary-column">
           <AddWordSection trainer={trainer} inputRef={newWordInputRef} />
@@ -144,28 +122,8 @@ export function WordsPanel({ trainer }: WordsPanelProps) {
             >
               <p data-testid="words-session-available-count">{sessionAvailableCount}</p>
               <p data-testid="words-session-effective-count">{sessionEffectiveCount}</p>
-              {sessionClampHint ? (
-                <p className="words-session-outcome-hint" data-testid="words-session-clamp-hint">
-                  {sessionClampHint}
-                </p>
-              ) : null}
             </div>
             <div className="words-session-config-footer">
-              <div className={`settings-status ${sessionPendingSummaryItems.length > 0 ? "pending" : ""}`} data-testid="words-session-config-status">
-                {sessionPendingSummaryItems.length > 0 ? t(language, "settings.pending") : t(language, "words.sessionSetupSynced")}
-                {sessionPendingSummaryItems.length > 0 ? (
-                  <div className="settings-status-summary" data-testid="words-session-config-summary">
-                    <strong>{t(language, "settings.pendingSummaryLabel")}</strong>
-                    <ul>
-                      {sessionPendingSummaryItems.map(({ key, label }) => (
-                        <li key={key}>
-                          {label}: {formatPendingValue(language, trainer.config[key])} {"->"} {formatPendingValue(language, trainer.draftConfig[key])}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                ) : null}
-              </div>
               <button data-testid="apply-settings-button" onClick={trainer.applyConfigChanges} disabled={!trainer.hasPendingConfigChanges}>
                 {t(language, "words.applySessionSettings")}
               </button>
@@ -237,8 +195,6 @@ export function WordsPanel({ trainer }: WordsPanelProps) {
 
       {normalizedSearchValue && !hasSearchResults ? (
         <div className="empty-state word-search-empty">
-          <strong>{t(language, "words.noMatches")}</strong>
-          <p>{t(language, "words.searchEmptyAction")}</p>
           <button type="button" className="secondary inline-action" data-testid="clear-word-search-button" onClick={() => setSearchValue("")}>
             {t(language, "words.clearSearch")}
           </button>

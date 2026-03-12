@@ -27,9 +27,8 @@ export function WordsSearchToolbar({
           aria-label={t(language, "words.searchLabel")}
         />
       </label>
-      <div className="words-toolbar-meta">
-        <p className="words-toolbar-hint">{t(language, "words.manageHint")}</p>
-        {searchValue.trim() && resultSummaries && resultSummaries.length > 0 ? (
+      {searchValue.trim() && resultSummaries && resultSummaries.length > 0 ? (
+        <div className="words-toolbar-meta">
           <div className="words-search-summary" data-testid="word-search-summary">
             {resultSummaries.map((summary) => (
               <button
@@ -45,8 +44,8 @@ export function WordsSearchToolbar({
               </button>
             ))}
           </div>
-        ) : null}
-      </div>
+        </div>
+      ) : null}
     </section>
   );
 }

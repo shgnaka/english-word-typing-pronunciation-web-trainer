@@ -1,5 +1,5 @@
 import type { Ref } from "react";
-import { formatMessage, t } from "../../../i18n";
+import { t } from "../../../i18n";
 import type { TrainerState } from "../../../features/trainer/useTrainer";
 import { BulkActionBar, IconButton, ReadonlyWordRow, SectionHeaderMeta, StatePill, type BulkActionFocusRefs, type SectionSelectionControls } from "../shared";
 
@@ -27,8 +27,6 @@ export function HiddenBuiltinWordsSection({
   const language = trainer.displayLanguage;
   const allHiddenVisibleSelected =
     selection.selectableWordIds.length > 0 && selection.selectableWordIds.every((wordId) => selection.selectedWordIds.includes(wordId));
-  const minimizedSummary = formatMessage(language, "words.hiddenBuiltinMinimizedSummary", { count: trainer.hiddenBuiltinWords.length });
-
   return (
     <section ref={sectionRef} className={`word-section word-section-hidden ${hiddenBuiltinMinimized ? "word-section-minimized" : ""}`} data-testid="hidden-builtin-word-section">
       <div className="panel-header panel-header-compact">
@@ -56,18 +54,13 @@ export function HiddenBuiltinWordsSection({
           <span className="word-count-pill">{trainer.hiddenBuiltinWords.length}</span>
         </SectionHeaderMeta>
       </div>
-      {hiddenBuiltinMinimized ? (
-        <p className="word-section-summary" data-testid="hidden-builtin-section-summary">
-          {minimizedSummary}
-        </p>
-      ) : (
+      {hiddenBuiltinMinimized ? null : (
         <>
           <BulkActionBar
             selectedCount={selection.selectedWordIds.length}
             selectedCountLabel={selectedCountLabel(selection.selectedWordIds.length)}
             selectVisibleLabel={allHiddenVisibleSelected ? t(language, "words.deselectVisible") : t(language, "words.selectVisible")}
             clearSelectionLabel={t(language, "words.clearSelection")}
-            helperText={t(language, "words.bulkHint")}
             hasVisibleItems={selection.selectableWordIds.length > 0}
             allVisibleSelected={allHiddenVisibleSelected}
             selectedCountTestId="bulk-selected-count-hidden-builtin"
@@ -90,7 +83,7 @@ export function HiddenBuiltinWordsSection({
           </BulkActionBar>
           <div className="word-list" data-testid="hidden-builtin-word-list" aria-label={t(language, "words.hiddenBuiltinTitle")}>
             {filteredHiddenBuiltinWords.length === 0 ? (
-              <p className="word-list-empty">{t(language, "words.noMatches")}</p>
+              null
             ) : (
               filteredHiddenBuiltinWords.map((word) => (
                 <ReadonlyWordRow
