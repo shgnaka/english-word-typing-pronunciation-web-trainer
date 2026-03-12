@@ -1,5 +1,5 @@
 import type { Ref } from "react";
-import { formatMessage, t } from "../../../i18n";
+import { t } from "../../../i18n";
 import type { TrainerState } from "../../../features/trainer/useTrainer";
 import { BulkActionBar, EditingWordRow, IconButton, ManagedWordRow, ReadonlyWordRow, SectionHeaderMeta, StatePill, type BulkActionFocusRefs, type SectionSelectionControls } from "../shared";
 
@@ -29,8 +29,6 @@ export function HiddenCustomWordsSection({
   const language = trainer.displayLanguage;
   const allHiddenVisibleSelected =
     selection.selectableWordIds.length > 0 && selection.selectableWordIds.every((wordId) => selection.selectedWordIds.includes(wordId));
-  const minimizedSummary = formatMessage(language, "words.hiddenCustomMinimizedSummary", { count: trainer.inactiveCustomWords.length });
-
   function confirmBulkDelete() {
     return window.confirm(t(language, "words.bulkDeleteConfirm"));
   }
@@ -40,7 +38,6 @@ export function HiddenCustomWordsSection({
       <div className="panel-header panel-header-compact">
         <div>
           <p className="label">{t(language, "words.inactiveCustomTitle")}</p>
-          <p>{t(language, "words.inactiveCustomHint")}</p>
         </div>
         <SectionHeaderMeta
           tools={
@@ -64,18 +61,13 @@ export function HiddenCustomWordsSection({
           <span className="word-count-pill">{trainer.inactiveCustomWords.length}</span>
         </SectionHeaderMeta>
       </div>
-      {inactiveCustomMinimized ? (
-        <p className="word-section-summary" data-testid="inactive-custom-section-summary">
-          {minimizedSummary}
-        </p>
-      ) : (
+      {inactiveCustomMinimized ? null : (
         <>
           <BulkActionBar
             selectedCount={selection.selectedWordIds.length}
             selectedCountLabel={selectedCountLabel(selection.selectedWordIds.length)}
             selectVisibleLabel={allHiddenVisibleSelected ? t(language, "words.deselectVisible") : t(language, "words.selectVisible")}
             clearSelectionLabel={t(language, "words.clearSelection")}
-            helperText={t(language, "words.bulkHint")}
             hasVisibleItems={selection.selectableWordIds.length > 0}
             allVisibleSelected={allHiddenVisibleSelected}
             selectedCountTestId="bulk-selected-count-hidden-custom"
@@ -116,14 +108,12 @@ export function HiddenCustomWordsSection({
           <div className="word-list" data-testid="inactive-custom-word-list" aria-label={t(language, "words.inactiveCustomTitle")}>
             {trainer.inactiveCustomWords.length === 0 ? (
               <div className="empty-state word-section-empty">
-                <strong>{t(language, "words.inactiveCustomEmpty")}</strong>
-                <p>{t(language, "words.hiddenCustomAction")}</p>
                 <button type="button" className="secondary inline-action" data-testid="hidden-custom-empty-cta" onClick={onScrollToSelf}>
                   {t(language, "words.hiddenCustomCta")}
                 </button>
               </div>
             ) : filteredInactiveCustomWords.length === 0 ? (
-              <p className="word-list-empty">{t(language, "words.noMatches")}</p>
+              null
             ) : (
               filteredInactiveCustomWords.map((word) => (
                 <ManagedWordRow

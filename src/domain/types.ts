@@ -27,6 +27,13 @@ export interface SessionConfig {
   browserTtsEnabled: boolean;
   showFingerGuide: boolean;
   showKeyboardHint: boolean;
+  showWordReading: boolean;
+}
+
+export interface ReadingHint {
+  text: string;
+  confidence: "high" | "low";
+  strategy: "exception" | "rule-based";
 }
 
 export interface TypingResult {

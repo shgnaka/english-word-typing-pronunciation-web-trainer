@@ -7,14 +7,10 @@ export function WordsHero({ trainer, onJumpToActive }: { trainer: TrainerState; 
 
   return (
     <section className="words-hero" data-testid="words-hero">
-      <div className="words-hero-copy">
-        <p className="label">{t(language, "words.collectionLabel")}</p>
-        <h3>{t(language, "words.collectionTitle")}</h3>
-        <div className="words-hero-actions">
-          <button type="button" data-testid="jump-to-active-words-button" onClick={onJumpToActive}>
-            {t(language, "words.jumpToActive")}
-          </button>
-        </div>
+      <div className="words-hero-actions">
+        <button type="button" data-testid="jump-to-active-words-button" onClick={onJumpToActive}>
+          {t(language, "words.jumpToActive")}
+        </button>
       </div>
       <div className="words-stats" data-testid="words-stats">
         <article className="word-stat-card word-stat-card-featured">

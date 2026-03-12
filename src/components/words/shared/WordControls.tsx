@@ -31,7 +31,6 @@ export function BulkActionBar({
   selectedCountLabel,
   selectVisibleLabel,
   clearSelectionLabel,
-  helperText,
   hasVisibleItems,
   allVisibleSelected,
   selectVisibleTestId,
@@ -47,7 +46,6 @@ export function BulkActionBar({
   selectedCountLabel: string;
   selectVisibleLabel: string;
   clearSelectionLabel: string;
-  helperText: string;
   hasVisibleItems: boolean;
   allVisibleSelected: boolean;
   selectVisibleTestId?: string;
@@ -65,7 +63,6 @@ export function BulkActionBar({
         <strong className="bulk-selection-pill" data-testid={selectedCountTestId}>
           {selectedCountLabel}
         </strong>
-        <p>{helperText}</p>
       </div>
       <div className="section-inline-actions">
         <button
