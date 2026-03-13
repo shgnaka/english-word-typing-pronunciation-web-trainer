@@ -86,11 +86,19 @@ const vowelPhonemes = new Set(Object.keys(vowelOnlyMap));
 const consonantPhonemes = new Set(Object.keys(defaultConsonantMoras).concat(["N", "NG"]));
 
 function isVowelPhoneme(value: string | undefined): value is keyof typeof vowelOnlyMap {
-  return Boolean(value) && vowelPhonemes.has(value);
+  if (!value) {
+    return false;
+  }
+
+  return vowelPhonemes.has(value);
 }
 
 function isConsonantPhoneme(value: string | undefined): value is keyof typeof defaultConsonantMoras | "N" | "NG" {
-  return Boolean(value) && consonantPhonemes.has(value);
+  if (!value) {
+    return false;
+  }
+
+  return consonantPhonemes.has(value);
 }
 
 function combineOnsetWithSimpleVowel(onset: keyof typeof simpleOnsetRows, vowel: keyof typeof simpleOnsetRows[typeof onset]): string {
