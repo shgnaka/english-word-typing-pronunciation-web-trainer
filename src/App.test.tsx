@@ -1195,12 +1195,14 @@ describe("App", () => {
 
     await user.click(screen.getByRole("button", { name: "Settings" }));
     await user.click(screen.getByTestId("keyboard-hint-toggle"));
+    await user.click(screen.getByTestId("word-reading-toggle"));
 
     expect(screen.queryByTestId("settings-status")).not.toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "Practice" }));
 
     expect(screen.queryByTestId("keyboard-guide-slot")).not.toBeInTheDocument();
+    expect(screen.getByTestId("practice-word-reading-slot")).toHaveTextContent("アップル");
   });
 
   it("shows the word reading slot immediately when the setting is enabled", async () => {
@@ -1529,6 +1531,21 @@ describe("App", () => {
     expect(screen.getByTestId("keyboard-visual").compareDocumentPosition(screen.getByTestId("finger-guide-slot"))).toBe(
       Node.DOCUMENT_POSITION_FOLLOWING
     );
+  });
+
+  it("persists the word reading assist toggle after reload", async () => {
+    const user = userEvent.setup();
+    const { unmount } = render(<App />);
+
+    await user.click(screen.getByRole("button", { name: "Settings" }));
+    await user.click(screen.getByTestId("word-reading-toggle"));
+
+    unmount();
+    render(<App />);
+
+    await user.click(screen.getByRole("button", { name: "Practice" }));
+
+    expect(screen.getByTestId("practice-word-reading-slot")).toHaveTextContent("アップル");
   });
 
   it("switches display language in settings", async () => {

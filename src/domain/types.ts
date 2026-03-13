@@ -30,10 +30,21 @@ export interface SessionConfig {
   showWordReading: boolean;
 }
 
+export type ReadingHintConfidence = "high" | "medium" | "low";
+export type ReadingHintStrategy = "exception" | "rule-based";
+
 export interface ReadingHint {
   text: string;
-  confidence: "high" | "low";
-  strategy: "exception" | "rule-based";
+  confidence: ReadingHintConfidence;
+  strategy: ReadingHintStrategy;
+}
+
+export interface ReadingResult extends ReadingHint {
+  normalized: string;
+  graphemes: string[];
+  phonemes: string[];
+  moras: string[];
+  katakana: string;
 }
 
 export interface TypingResult {
@@ -79,7 +90,6 @@ export type DisplayLanguage = "en" | "ja" | "ja-hira";
 
 export type ThemeId = "dusk" | "forest" | "ocean" | "dawn" | "daylight";
 export type ThemeColorScheme = "dark" | "light";
-
 export type ThemeAccent = "amber" | "mint" | "sky" | "rose";
 
 export interface ThemePreference {

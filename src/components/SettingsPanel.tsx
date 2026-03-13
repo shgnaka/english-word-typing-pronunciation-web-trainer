@@ -90,6 +90,13 @@ export function SettingsPanel({ trainer }: SettingsPanelProps) {
           >
             {t(language, "settings.browserTtsClear")}
           </button>
+          {trainer.browserTtsCacheMessage ? (
+            <p className="setting-hint" data-testid="browser-tts-cache-status" role="status" aria-live="polite">
+              {trainer.browserTtsCacheMessage === "cleared"
+                ? t(language, "settings.browserTtsCacheCleared")
+                : t(language, "settings.browserTtsCacheClearFailed")}
+            </p>
+          ) : null}
         </SettingsGroupCard>
 
         <SettingsGroupCard
