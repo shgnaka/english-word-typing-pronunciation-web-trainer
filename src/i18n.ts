@@ -145,6 +145,7 @@ type MessageKey =
   | "settings.browserTtsCachePolicy"
   | "settings.keyboardHint"
   | "settings.fingerGuide"
+  | "settings.wordReading"
   | "settings.sessionGroup"
   | "settings.assistGroup"
   | "settings.immediateGroup"
@@ -328,6 +329,7 @@ const messages: Record<DisplayLanguage, Record<MessageKey, string>> = {
     "settings.browserTtsCachePolicy": "Generated browser audio expires after 30 days of inactivity.",
     "settings.keyboardHint": "Show key position",
     "settings.fingerGuide": "Show finger guide",
+    "settings.wordReading": "Show katakana reading",
     "settings.sessionGroup": "Session setup",
     "settings.assistGroup": "Visual assistance",
     "settings.immediateGroup": "Applies now",
@@ -510,6 +512,7 @@ const messages: Record<DisplayLanguage, Record<MessageKey, string>> = {
     "settings.browserTtsCachePolicy": "生成したブラウザ音声は 30 日間未使用で期限切れになります。",
     "settings.keyboardHint": "キー位置を表示",
     "settings.fingerGuide": "指ガイドを表示",
+    "settings.wordReading": "英単語の読み方を表示",
     "settings.sessionGroup": "セッション条件",
     "settings.assistGroup": "表示補助",
     "settings.immediateGroup": "すぐ反映",
@@ -692,6 +695,7 @@ const messages: Record<DisplayLanguage, Record<MessageKey, string>> = {
     "settings.browserTtsCachePolicy": "せいせいした ブラウザおんせいは 30にちかん みしようで きげんぎれに なります。",
     "settings.keyboardHint": "キーいちを ひょうじ",
     "settings.fingerGuide": "ゆびガイドを ひょうじ",
+    "settings.wordReading": "えいたんごの よみかたを ひょうじ",
     "settings.sessionGroup": "セッションじょうけん",
     "settings.assistGroup": "ひょうじ ほじょ",
     "settings.immediateGroup": "すぐ はんえい",

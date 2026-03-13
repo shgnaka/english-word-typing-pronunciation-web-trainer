@@ -91,7 +91,8 @@ describe("storage", () => {
         speechEnabled: true,
         browserTtsEnabled: true,
         showFingerGuide: false,
-        showKeyboardHint: true
+        showKeyboardHint: true,
+        showWordReading: false
       }
     });
   });

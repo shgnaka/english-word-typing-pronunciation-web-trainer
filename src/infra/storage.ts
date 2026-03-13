@@ -19,7 +19,8 @@ export const defaultSessionConfig: SessionConfig = {
   speechEnabled: true,
   browserTtsEnabled: false,
   showFingerGuide: true,
-  showKeyboardHint: true
+  showKeyboardHint: true,
+  showWordReading: false
 };
 
 export const defaultDisplayLanguage: DisplayLanguage = "en";
@@ -65,7 +66,8 @@ function sanitizeSessionConfigValue(value: Partial<SessionConfig> | null | undef
     speechEnabled: Boolean(parsed.speechEnabled ?? defaultSessionConfig.speechEnabled),
     browserTtsEnabled: Boolean(parsed.browserTtsEnabled ?? defaultSessionConfig.browserTtsEnabled),
     showFingerGuide: Boolean(parsed.showFingerGuide ?? defaultSessionConfig.showFingerGuide),
-    showKeyboardHint: Boolean(parsed.showKeyboardHint ?? defaultSessionConfig.showKeyboardHint)
+    showKeyboardHint: Boolean(parsed.showKeyboardHint ?? defaultSessionConfig.showKeyboardHint),
+    showWordReading: Boolean(parsed.showWordReading ?? defaultSessionConfig.showWordReading)
   };
 }
 

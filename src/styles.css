@@ -208,6 +208,13 @@ input {
   gap: 0.35rem;
 }
 
+.practice-word-reading {
+  margin: 0 0 0.15rem;
+  color: var(--color-text-muted);
+  font-size: clamp(0.95rem, 2vw, 1.1rem);
+  letter-spacing: 0.08em;
+}
+
 .progress-block {
   margin-bottom: 1.5rem;
 }

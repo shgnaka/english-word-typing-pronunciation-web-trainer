@@ -1,4 +1,5 @@
 import { useEffect, useState, type MouseEvent } from "react";
+import { generateReadingHint } from "../domain/reading";
 import { keyboardRows } from "../domain/keyboard";
 import { getFingerLabel, t } from "../i18n";
 import type { TrainerState } from "../features/trainer/useTrainer";
@@ -127,11 +128,13 @@ function PracticeMetricsBar({ trainer, language }: PracticePanelProps & { langua
 function PracticeWordStage({
   currentWord,
   hasMistype,
+  readingHint,
   targetSummary,
   trainer
 }: {
   currentWord: string;
   hasMistype: boolean;
+  readingHint: string | null;
   targetSummary: string;
   trainer: TrainerState;
 }) {
@@ -140,6 +143,11 @@ function PracticeWordStage({
       <div className="panel-header practice-header">
         <div>
           <p className={`label ${trainer.isTypingActiveLayout ? "typing-active-label" : ""}`}>{t(trainer.displayLanguage, "practice.currentWord")}</p>
+          {readingHint ? (
+            <p className="practice-word-reading" data-testid="practice-word-reading-slot">
+              {readingHint}
+            </p>
+          ) : null}
           <h2 data-testid="current-word" aria-describedby="practice-target-summary practice-status-message">
             {currentWord || t(trainer.displayLanguage, "practice.noWords")}
           </h2>
@@ -257,6 +265,13 @@ export function PracticePanel({ trainer }: PracticePanelProps) {
   const language = trainer.displayLanguage;
   const isCompactPracticeGuides = useCompactPracticeGuides();
   const currentWord = trainer.session.currentWord?.text ?? "";
+  const readingHint =
+    trainer.config.showWordReading && currentWord
+      ? (() => {
+          const hint = generateReadingHint(currentWord);
+          return hint && hint.confidence !== "low" ? hint.text : null;
+        })()
+      : null;
   const showEmptyState = !currentWord;
   const hasMistype = trainer.session.lastInputCorrect === false;
   const mistypedKey = trainer.session.lastMistypedKey;
@@ -379,7 +394,13 @@ export function PracticePanel({ trainer }: PracticePanelProps) {
           </div>
 
           <div className="practice-layout-slot word">
-            <PracticeWordStage currentWord={currentWord} hasMistype={hasMistype} targetSummary={targetSummary} trainer={trainer} />
+            <PracticeWordStage
+              currentWord={currentWord}
+              hasMistype={hasMistype}
+              readingHint={readingHint}
+              targetSummary={targetSummary}
+              trainer={trainer}
+            />
           </div>
         </>
       )}
