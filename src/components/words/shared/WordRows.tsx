@@ -1,4 +1,4 @@
-import { Children, isValidElement, useEffect, useState, type DragEvent, type ReactNode } from "react";
+import { Children, isValidElement, useEffect, useState, type DragEvent, type ReactNode, type TouchEvent } from "react";
 import { IconButtonSpacer } from "./WordControls";
 
 function useCompactWordRowActions() {
@@ -39,7 +39,7 @@ function renderHighlightedText(text: string, searchValue: string) {
   }
 
   const normalizedText = text.toLowerCase();
-  const parts: Array<JSX.Element | string> = [];
+  const parts: ReactNode[] = [];
   let cursor = 0;
 
   while (cursor < text.length) {
@@ -135,7 +135,11 @@ export function ReadonlyWordRow({
   onDragStart,
   onDragOver,
   onDrop,
-  onDragEnd
+  onDragEnd,
+  onTouchStart,
+  onTouchMove,
+  onTouchEnd,
+  onTouchCancel
 }: {
   rowTestId: string;
   chipTestId: string;
@@ -156,6 +160,10 @@ export function ReadonlyWordRow({
   onDragOver?: (event: DragEvent<HTMLDivElement>) => void;
   onDrop?: (event: DragEvent<HTMLDivElement>) => void;
   onDragEnd?: () => void;
+  onTouchStart?: (event: TouchEvent<HTMLDivElement>) => void;
+  onTouchMove?: (event: TouchEvent<HTMLDivElement>) => void;
+  onTouchEnd?: (event: TouchEvent<HTMLDivElement>) => void;
+  onTouchCancel?: (event: TouchEvent<HTMLDivElement>) => void;
 }) {
   const isCompact = useCompactWordRowActions();
   const normalizedActions = Children.toArray(actions).filter((action) => !isCompact || !isSpacerAction(action));
@@ -167,12 +175,17 @@ export function ReadonlyWordRow({
     <div
       className={`word-chip-row ${selected ? "word-chip-row-selected" : ""} ${draggable ? "word-chip-row-draggable" : ""} ${dragStateClassName}`.trim()}
       data-testid={rowTestId}
+      data-word-id={wordId}
       draggable={draggable}
       aria-grabbed={draggable ? dragStateClassName.includes("dragging") : undefined}
       onDragStart={onDragStart}
       onDragOver={onDragOver}
       onDrop={onDrop}
       onDragEnd={onDragEnd}
+      onTouchStart={onTouchStart}
+      onTouchMove={onTouchMove}
+      onTouchEnd={onTouchEnd}
+      onTouchCancel={onTouchCancel}
     >
       {onToggleSelected ? (
         <label className="word-select-toggle">
@@ -202,6 +215,24 @@ export function ReadonlyWordRow({
           </details>
         ) : null}
       </div>
+    </div>
+  );
+}
+
+export function ManagedWordRow({
+  containerTestId,
+  isEditing,
+  editingRow,
+  readonlyRow
+}: {
+  containerTestId: string;
+  isEditing: boolean;
+  editingRow: ReactNode;
+  readonlyRow: ReactNode;
+}) {
+  return (
+    <div className="word-chip-row" data-testid={containerTestId}>
+      {isEditing ? editingRow : readonlyRow}
     </div>
   );
 }

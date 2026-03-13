@@ -34,10 +34,12 @@ export interface NestedBulkActionFocusRefs {
 }
 
 export interface ActiveDragControls {
+  lastActiveWordIndex: number;
   draggedWordId: string | null;
   dropTargetWordId: string | null;
   startWordDrag: (wordId: string) => void;
   dropWord: (wordId: string) => void;
   setDragTarget: (wordId: string | null) => void;
+  handleTouchMove: (clientX: number, clientY: number) => void;
   clear: () => void;
 }

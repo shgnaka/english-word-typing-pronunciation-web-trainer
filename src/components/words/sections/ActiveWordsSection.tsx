@@ -47,7 +47,6 @@ export function ActiveWordsSection({
       <div className="panel-header">
         <div>
           <p className="label">{t(language, "words.activeTitle")}</p>
-          <p>{t(language, "words.activeHint")}</p>
         </div>
         <SectionHeaderMeta>
           <StatePill label={t(language, "words.stateActive")} tone="active" testId="active-state-pill" />
@@ -59,7 +58,6 @@ export function ActiveWordsSection({
         selectedCountLabel={selectedCountLabel}
         selectVisibleLabel={allVisibleSelected ? t(language, "words.deselectVisible") : t(language, "words.selectVisible")}
         clearSelectionLabel={t(language, "words.clearSelection")}
-        helperText={t(language, "words.bulkHint")}
         hasVisibleItems={selection.selectableWordIds.length > 0}
         allVisibleSelected={allVisibleSelected}
         selectedCountTestId="bulk-selected-count-active"
@@ -87,7 +85,7 @@ export function ActiveWordsSection({
       ) : null}
       <div className="word-list" data-testid="active-word-list" aria-label={t(language, "words.activeTitle")}>
         {filteredActiveWords.length === 0 ? (
-          <p className="word-list-empty">{t(language, "words.noMatches")}</p>
+          null
         ) : (
           filteredActiveWords.map((word) => {
             const activeWordIndex = trainer.activeWords.findIndex((entry) => entry.id === word.id);
@@ -158,6 +156,27 @@ export function ActiveWordsSection({
                   dragControls.dropWord(word.id);
                 }}
                 onDragEnd={dragControls.clear}
+                onTouchStart={() => {
+                  dragControls.startWordDrag(word.id);
+                }}
+                onTouchMove={(event) => {
+                  const touch = event.touches[0];
+                  if (!touch) {
+                    return;
+                  }
+
+                  event.preventDefault();
+                  dragControls.handleTouchMove(touch.clientX, touch.clientY);
+                }}
+                onTouchEnd={() => {
+                  if (dragControls.dropTargetWordId && dragControls.dropTargetWordId !== word.id) {
+                    dragControls.dropWord(dragControls.dropTargetWordId);
+                    return;
+                  }
+
+                  dragControls.clear();
+                }}
+                onTouchCancel={dragControls.clear}
               />
             );
           })

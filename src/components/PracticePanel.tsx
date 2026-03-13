@@ -1,7 +1,7 @@
 import { useEffect, useState, type MouseEvent } from "react";
 import { generateReadingHint } from "../domain/reading";
 import { keyboardRows } from "../domain/keyboard";
-import { getFingerLabel, t } from "../i18n";
+import { formatMessage, getFingerLabel, t } from "../i18n";
 import type { TrainerState } from "../features/trainer/useTrainer";
 import { FingerGuideButtons } from "./FingerGuideButtons";
 
@@ -64,14 +64,12 @@ function PracticePrimaryStatus({
 }
 
 function PracticeGuideToggle({
-  title,
-  summary,
+  ariaLabel,
   expanded,
   onToggle,
   testId
 }: {
-  title: string;
-  summary: string;
+  ariaLabel: string;
   expanded: boolean;
   onToggle: () => void;
   testId: string;
@@ -79,23 +77,15 @@ function PracticeGuideToggle({
   return (
     <button
       type="button"
-      className="secondary practice-guide-toggle"
+      className="secondary practice-guide-toggle icon-only"
       data-testid={testId}
       aria-expanded={expanded}
+      aria-label={ariaLabel}
       onClick={onToggle}
     >
-      <span>{title}</span>
-      <strong>{summary}</strong>
+      <span aria-hidden="true">{expanded ? "−" : "+"}</span>
+      <span className="sr-only">{ariaLabel}</span>
     </button>
-  );
-}
-
-function PracticeStepHint({ label, message }: { label: string; message: string }) {
-  return (
-    <div className="practice-step-hint" data-testid="practice-step-hint">
-      <span className="label">{label}</span>
-      <p>{message}</p>
-    </div>
   );
 }
 
@@ -130,12 +120,14 @@ function PracticeWordStage({
   hasMistype,
   readingHint,
   targetSummary,
+  showWordReading,
   trainer
 }: {
   currentWord: string;
   hasMistype: boolean;
   readingHint: string | null;
   targetSummary: string;
+  showWordReading: boolean;
   trainer: TrainerState;
 }) {
   return (
@@ -147,6 +139,8 @@ function PracticeWordStage({
             <p className="practice-word-reading" data-testid="practice-word-reading-slot">
               {readingHint}
             </p>
+          ) : showWordReading ? (
+            <div className="practice-word-reading-slot" data-testid="practice-word-reading-slot" />
           ) : null}
           <h2 data-testid="current-word" aria-describedby="practice-target-summary practice-status-message">
             {currentWord || t(trainer.displayLanguage, "practice.noWords")}
@@ -189,36 +183,31 @@ function PracticeWordStage({
 
 function KeyboardGuideCard({
   trainer,
-  language,
+  compact,
+  plain = false,
   hasMistype,
   mistypedKey
 }: {
   trainer: TrainerState;
-  language: TrainerState["displayLanguage"];
+  compact: boolean;
+  plain?: boolean;
   hasMistype: boolean;
   mistypedKey: string | null;
 }) {
   return (
     <section
-      className={`guide-card keyboard-guide-card ${trainer.isTypingActiveLayout ? "typing-active compact" : ""}`}
+      className={`guide-card keyboard-guide-card ${trainer.isTypingActiveLayout ? "typing-active" : ""} ${compact ? "compact" : ""} ${plain ? "guide-card-plain" : ""}`.trim()}
       data-testid="keyboard-visual"
     >
-      <div className={`guide-card-header ${trainer.isTypingActiveLayout ? "typing-active compact" : ""}`}>
-        <div>
-          <span className="label">{t(language, "practice.keyboardMap")}</span>
-          <strong>{trainer.currentTarget ? `Key ${trainer.currentTarget.toUpperCase()}` : t(language, "practice.noKey")}</strong>
-        </div>
-        {!trainer.isTypingActiveLayout ? <p className="guide-card-copy">{t(language, "practice.keyboardHelp")}</p> : null}
-      </div>
-      <div className={`keyboard-map ${trainer.isTypingActiveLayout ? "compact" : ""}`} aria-label="Keyboard guide">
+      <div className={`keyboard-map ${compact ? "compact" : ""}`} aria-label="Keyboard guide">
         {keyboardRows.map((row, rowIndex) => (
-          <div key={row.join("")} className={`keyboard-row row-${rowIndex} ${trainer.isTypingActiveLayout ? "compact" : ""}`}>
+          <div key={row.join("")} className={`keyboard-row row-${rowIndex} ${compact ? "compact" : ""}`}>
             {row.map((key) => (
               <span
                 key={key}
                 className={[
                   "keycap",
-                  trainer.isTypingActiveLayout ? "compact" : "",
+                  compact ? "compact" : "",
                   trainer.currentTarget === key && !hasMistype ? "active" : "",
                   trainer.currentTarget === key && hasMistype ? "target-outline" : "",
                   mistypedKey === key ? "mistyped" : ""
@@ -240,23 +229,26 @@ function KeyboardGuideCard({
 function FingerGuideCard({
   trainer,
   language,
+  compact,
+  plain = false,
   hasMistype
 }: {
   trainer: TrainerState;
   language: TrainerState["displayLanguage"];
+  compact: boolean;
+  plain?: boolean;
   hasMistype: boolean;
 }) {
   return (
     <FingerGuideButtons
       activeFingerId={trainer.currentGuide?.fingerId ?? null}
       hasMistype={hasMistype}
-      helper={t(language, "practice.fingerGuideHelp")}
       label={
         trainer.currentGuide ? getFingerLabel(language, trainer.currentGuide.fingerId, trainer.currentGuide.finger) : t(language, "practice.noFinger")
       }
       language={language}
-      title={t(language, "practice.fingerGuideTitle")}
-      compact={trainer.isTypingActiveLayout}
+      compact={compact}
+      plain={plain}
     />
   );
 }
@@ -284,7 +276,7 @@ export function PracticePanel({ trainer }: PracticePanelProps) {
   }
 
   const incorrectFeedback = mistypedKey
-    ? t(language, "practice.feedback.incorrectWithKey").replace("{key}", mistypedKey.toUpperCase())
+    ? formatMessage(language, "practice.feedback.incorrectWithKey", { key: mistypedKey.toUpperCase() })
     : t(language, "practice.feedback.incorrect");
   const shouldShowKeyboardGuide = trainer.isTypingActiveLayout || trainer.config.showKeyboardHint;
   const shouldShowFingerGuide = trainer.isTypingActiveLayout || trainer.config.showFingerGuide;
@@ -300,17 +292,18 @@ export function PracticePanel({ trainer }: PracticePanelProps) {
       ? t(language, "practice.audio.fallback")
       : null;
   const targetSummary = trainer.currentTarget && trainer.currentGuide
-    ? t(language, "practice.a11y.target")
-        .replace("{char}", trainer.currentTarget.toUpperCase())
-        .replace("{key}", trainer.currentTarget.toUpperCase())
-        .replace("{finger}", getFingerLabel(language, trainer.currentGuide.fingerId, trainer.currentGuide.finger))
+    ? formatMessage(language, "practice.a11y.target", {
+        char: trainer.currentTarget.toUpperCase(),
+        key: trainer.currentTarget.toUpperCase(),
+        finger: getFingerLabel(language, trainer.currentGuide.fingerId, trainer.currentGuide.finger)
+      })
     : t(language, "practice.noKey");
   const practiceStatusMessage = showEmptyState
     ? t(language, "practice.a11y.status.empty")
     : trainer.session.isComplete
     ? t(language, "practice.a11y.status.complete")
     : trainer.isCountdownActive
-    ? t(language, "practice.a11y.status.countdown").replace("{count}", String(trainer.countdown))
+    ? formatMessage(language, "practice.a11y.status.countdown", { count: trainer.countdown })
     : trainer.session.lastInputCorrect === false
     ? incorrectFeedback
     : pronunciationStatusMessage
@@ -348,20 +341,7 @@ export function PracticePanel({ trainer }: PracticePanelProps) {
         title: pronunciationStatusMessage,
         tone: trainer.pronunciationStatus === "error" ? ("error" as const) : ("neutral" as const)
       }
-    : {
-        title: t(language, "practice.feedback.default"),
-        tone: "neutral" as const
-      };
-  const stepHint = showEmptyState
-    ? t(language, "practice.stepHint.empty")
-    : trainer.session.isComplete
-    ? t(language, "practice.stepHint.complete")
-    : trainer.isCountdownActive
-    ? t(language, "practice.stepHint.countdown")
-    : trainer.session.lastInputCorrect === false
-    ? t(language, "practice.stepHint.incorrect")
-    : t(language, "practice.stepHint.active");
-
+    : null;
   useEffect(() => {
     if (!shouldUseCompactGuideDisclosure) {
       setIsKeyboardGuideExpanded(true);
@@ -379,13 +359,9 @@ export function PracticePanel({ trainer }: PracticePanelProps) {
         {practiceStatusMessage}
       </div>
 
-      <PracticePrimaryStatus
-        title={primaryStatus.title}
-        detail={primaryStatus.detail}
-        tone={primaryStatus.tone}
-        action={primaryStatus.action}
-      />
-      <PracticeStepHint label={t(language, "practice.stepHintLabel")} message={stepHint} />
+      {primaryStatus ? (
+        <PracticePrimaryStatus title={primaryStatus.title} detail={undefined} tone={primaryStatus.tone} action={primaryStatus.action} />
+      ) : null}
 
       {showEmptyState ? null : (
         <>
@@ -399,53 +375,50 @@ export function PracticePanel({ trainer }: PracticePanelProps) {
               hasMistype={hasMistype}
               readingHint={readingHint}
               targetSummary={targetSummary}
+              showWordReading={trainer.config.showWordReading}
               trainer={trainer}
             />
           </div>
         </>
       )}
 
-      {shouldShowKeyboardGuide && !showEmptyState ? (
-        <div className="practice-layout-slot keyboard" data-testid="keyboard-guide-slot">
-          {shouldUseCompactGuideDisclosure ? (
-            <div className="practice-guide-disclosure" data-testid="keyboard-guide-disclosure">
-              <PracticeGuideToggle
-                title={t(language, "practice.keyboardMap")}
-                summary={trainer.currentTarget ? `Key ${trainer.currentTarget.toUpperCase()}` : t(language, "practice.noKey")}
-                expanded={isKeyboardGuideExpanded}
-                onToggle={() => setIsKeyboardGuideExpanded((current) => !current)}
-                testId="keyboard-guide-toggle"
-              />
-              {isKeyboardGuideExpanded ? (
-                <KeyboardGuideCard trainer={trainer} language={language} hasMistype={hasMistype} mistypedKey={mistypedKey} />
-              ) : null}
-            </div>
-          ) : (
-            <KeyboardGuideCard trainer={trainer} language={language} hasMistype={hasMistype} mistypedKey={mistypedKey} />
-          )}
-        </div>
-      ) : null}
+      {((shouldShowKeyboardGuide || shouldShowFingerGuide) && !showEmptyState) ? (
+        <div className="practice-layout-slot keyboard practice-guides-panel" data-testid="practice-guides-panel">
+          {shouldShowKeyboardGuide ? (
+            shouldUseCompactGuideDisclosure ? (
+              <div className="practice-guide-disclosure" data-testid="keyboard-guide-disclosure">
+                <PracticeGuideToggle
+                  ariaLabel={t(language, "practice.keyboardMap")}
+                  expanded={isKeyboardGuideExpanded}
+                  onToggle={() => setIsKeyboardGuideExpanded((current) => !current)}
+                  testId="keyboard-guide-toggle"
+                />
+                {isKeyboardGuideExpanded ? (
+                  <KeyboardGuideCard trainer={trainer} compact={isCompactPracticeGuides} plain hasMistype={hasMistype} mistypedKey={mistypedKey} />
+                ) : null}
+              </div>
+            ) : (
+              <KeyboardGuideCard trainer={trainer} compact={isCompactPracticeGuides} plain hasMistype={hasMistype} mistypedKey={mistypedKey} />
+            )
+          ) : null}
 
-      {shouldShowFingerGuide && !showEmptyState ? (
-        <div className="practice-layout-slot finger" data-testid="finger-guide-slot">
-          {shouldUseCompactGuideDisclosure ? (
-            <div className="practice-guide-disclosure" data-testid="finger-guide-disclosure">
-              <PracticeGuideToggle
-                title={t(language, "practice.fingerGuideTitle")}
-                summary={
-                  trainer.currentGuide
-                    ? getFingerLabel(language, trainer.currentGuide.fingerId, trainer.currentGuide.finger)
-                    : t(language, "practice.noFinger")
-                }
-                expanded={isFingerGuideExpanded}
-                onToggle={() => setIsFingerGuideExpanded((current) => !current)}
-                testId="finger-guide-toggle"
-              />
-              {isFingerGuideExpanded ? <FingerGuideCard trainer={trainer} language={language} hasMistype={hasMistype} /> : null}
+          {shouldShowFingerGuide ? (
+            <div className="practice-guides-finger-slot" data-testid="finger-guide-slot">
+              {shouldUseCompactGuideDisclosure ? (
+                <div className="practice-guide-disclosure" data-testid="finger-guide-disclosure">
+                  <PracticeGuideToggle
+                    ariaLabel={t(language, "practice.fingerGuideTitle")}
+                    expanded={isFingerGuideExpanded}
+                    onToggle={() => setIsFingerGuideExpanded((current) => !current)}
+                    testId="finger-guide-toggle"
+                  />
+                  {isFingerGuideExpanded ? <FingerGuideCard trainer={trainer} language={language} compact={isCompactPracticeGuides} plain hasMistype={hasMistype} /> : null}
+                </div>
+              ) : (
+                <FingerGuideCard trainer={trainer} language={language} compact={isCompactPracticeGuides} plain hasMistype={hasMistype} />
+              )}
             </div>
-          ) : (
-            <FingerGuideCard trainer={trainer} language={language} hasMistype={hasMistype} />
-          )}
+          ) : null}
         </div>
       ) : null}
 

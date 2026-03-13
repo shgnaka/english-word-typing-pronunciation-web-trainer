@@ -63,10 +63,6 @@ describe("App", () => {
     render(<App />);
 
     expect(screen.getByTestId("practice-primary-status")).toHaveTextContent("Start in 3");
-    expect(screen.getByTestId("practice-primary-status")).toHaveTextContent("Get ready. Press Enter or Start now to begin immediately.");
-    expect(screen.getByTestId("practice-step-hint")).toHaveTextContent(
-      "Watch the highlighted letter, then start typing as soon as the countdown ends."
-    );
     expect(screen.getByTestId("progress-count")).toHaveTextContent("0 / 10 words");
     expect(screen.getByTestId("remaining-words")).toHaveTextContent("10");
     expect(screen.getByTestId("practice-status-message")).toHaveTextContent("Typing will start in 3.");
@@ -90,14 +86,14 @@ describe("App", () => {
     render(<App />);
 
     await user.click(screen.getByRole("button", { name: "Words" }));
-    expect(screen.getByTestId("add-word-rules")).toHaveTextContent("Letters A-Z are kept.");
+    expect(screen.queryByTestId("add-word-rules")).not.toBeInTheDocument();
 
     await user.type(screen.getByLabelText("New word"), "Hello-123");
-    expect(screen.getByTestId("add-word-normalized-preview")).toHaveTextContent("Will save as: hello");
+    expect(screen.queryByTestId("add-word-normalized-preview")).not.toBeInTheDocument();
 
     await user.clear(screen.getByLabelText("New word"));
     await user.type(screen.getByLabelText("New word"), "apple");
-    expect(screen.getByTestId("add-word-duplicate-preview")).toHaveTextContent("Already exists in Built-in: apple");
+    expect(screen.queryByTestId("add-word-duplicate-preview")).not.toBeInTheDocument();
   });
 
   it("shows actionable empty states on the words page", async () => {
@@ -106,12 +102,59 @@ describe("App", () => {
 
     await user.click(screen.getByRole("button", { name: "Words" }));
 
-    expect(screen.getByTestId("hidden-builtin-empty")).toHaveTextContent("No hidden built-in words.");
-    expect(screen.getByTestId("hidden-builtin-empty")).toHaveTextContent("Remove a built-in word from practice");
     expect(screen.getByTestId("hidden-builtin-empty-cta")).toHaveTextContent("Go to built-in words");
-    expect(screen.getByTestId("custom-word-list")).toHaveTextContent("No custom words yet.");
-    expect(screen.getByTestId("custom-word-list")).toHaveTextContent("Add a custom word above");
     expect(screen.getByTestId("empty-custom-cta")).toHaveTextContent("Add your first custom word");
+  });
+
+  it("updates theme settings immediately and persists them across reloads", async () => {
+    const user = userEvent.setup();
+    const { unmount } = render(<App />);
+
+    await user.click(screen.getByRole("button", { name: "Settings" }));
+    await user.click(screen.getByTestId("theme-option-forest"));
+    await user.click(screen.getByTestId("theme-accent-sky"));
+    fireEvent.change(screen.getByTestId("theme-background-intensity"), { target: { value: "82" } });
+
+    expect(document.documentElement.dataset.theme).toBe("forest");
+    expect(document.documentElement.dataset.colorScheme).toBe("dark");
+    expect(document.documentElement.style.getPropertyValue("--theme-accent-rgb")).toBe("121 192 255");
+    expect(screen.getByTestId("theme-background-intensity-value")).toHaveTextContent("82%");
+
+    unmount();
+    render(<App />);
+
+    expect(document.documentElement.dataset.theme).toBe("forest");
+    expect(document.documentElement.dataset.colorScheme).toBe("dark");
+    expect(document.documentElement.style.getPropertyValue("--theme-accent-rgb")).toBe("121 192 255");
+
+    await user.click(screen.getByRole("button", { name: "Settings" }));
+    expect(screen.getByTestId("theme-background-intensity-value")).toHaveTextContent("82%");
+  });
+
+  it("resets theme settings back to the default theme", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.click(screen.getByRole("button", { name: "Settings" }));
+    await user.click(screen.getByTestId("theme-option-ocean"));
+    await user.click(screen.getByTestId("theme-accent-rose"));
+    fireEvent.change(screen.getByTestId("theme-background-intensity"), { target: { value: "20" } });
+    await user.click(screen.getByTestId("reset-theme-button"));
+
+    expect(document.documentElement.dataset.theme).toBe("dusk");
+    expect(document.documentElement.style.getPropertyValue("--theme-accent-rgb")).toBe("255 191 105");
+    expect(screen.getByTestId("theme-background-intensity-value")).toHaveTextContent("60%");
+  });
+
+  it("supports the daylight base theme", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.click(screen.getByRole("button", { name: "Settings" }));
+    await user.click(screen.getByTestId("theme-option-daylight"));
+
+    expect(document.documentElement.dataset.theme).toBe("daylight");
+    expect(document.documentElement.dataset.colorScheme).toBe("light");
   });
 
   it("uses empty-state ctas to guide the next action", async () => {
@@ -155,13 +198,13 @@ describe("App", () => {
 
     await user.click(screen.getByRole("button", { name: "Words" }));
     await user.click(screen.getByTestId("toggle-builtin-section-button"));
-    expect(screen.getByTestId("builtin-section-summary")).toHaveTextContent("20 active built-in words, 0 hidden");
+    expect(screen.queryByTestId("builtin-word-list")).not.toBeInTheDocument();
 
     unmount();
     render(<App />);
 
     await user.click(screen.getByRole("button", { name: "Words" }));
-    expect(screen.getByTestId("builtin-section-summary")).toHaveTextContent("20 active built-in words, 0 hidden");
+    expect(screen.queryByTestId("builtin-word-list")).not.toBeInTheDocument();
   });
 
   it("shows count-based minimized summaries for custom and hidden word sections", async () => {
@@ -177,13 +220,13 @@ describe("App", () => {
     await user.click(screen.getByTestId("delete-word-button-builtin-book"));
 
     await user.click(screen.getByTestId("toggle-hidden-builtin-section-button"));
-    expect(screen.getByTestId("hidden-builtin-section-summary")).toHaveTextContent("1 hidden built-in words");
+    expect(screen.queryByTestId("hidden-builtin-word-list")).not.toBeInTheDocument();
 
     await user.click(screen.getByTestId("toggle-inactive-custom-section-button"));
-    expect(screen.getByTestId("inactive-custom-section-summary")).toHaveTextContent("1 hidden custom words");
+    expect(screen.queryByTestId("inactive-custom-word-list")).not.toBeInTheDocument();
 
     await user.click(screen.getByTestId("toggle-custom-section-button"));
-    expect(screen.getByTestId("custom-section-summary")).toHaveTextContent("1 active custom words, 1 hidden");
+    expect(screen.queryByTestId("custom-word-list")).not.toBeInTheDocument();
   });
 
   it("sorts custom words alphabetically from the custom words section", async () => {
@@ -201,6 +244,43 @@ describe("App", () => {
     await user.click(screen.getByTestId("sort-custom-alpha-button"));
 
     const customWordChips = screen.getAllByTestId("word-chip");
+    expect(customWordChips[0]).toHaveTextContent("banana");
+    expect(customWordChips[1]).toHaveTextContent("mango");
+    expect(customWordChips[2]).toHaveTextContent("pear");
+  });
+
+  it("sorts custom words by recency and keeps the sorted order after reload", async () => {
+    const user = userEvent.setup();
+    const { unmount } = render(<App />);
+
+    await user.click(screen.getByRole("button", { name: "Words" }));
+    await user.type(screen.getByLabelText("New word"), "banana");
+    await user.click(screen.getByRole("button", { name: "Add word" }));
+    await user.type(screen.getByLabelText("New word"), "mango");
+    await user.click(screen.getByRole("button", { name: "Add word" }));
+    await user.type(screen.getByLabelText("New word"), "pear");
+    await user.click(screen.getByRole("button", { name: "Add word" }));
+
+    await user.click(screen.getByTestId("sort-custom-newest-button"));
+
+    let customWordChips = screen.getAllByTestId("word-chip");
+    expect(customWordChips[0]).toHaveTextContent("pear");
+    expect(customWordChips[1]).toHaveTextContent("mango");
+    expect(customWordChips[2]).toHaveTextContent("banana");
+
+    await user.click(screen.getByTestId("sort-custom-oldest-button"));
+
+    customWordChips = screen.getAllByTestId("word-chip");
+    expect(customWordChips[0]).toHaveTextContent("banana");
+    expect(customWordChips[1]).toHaveTextContent("mango");
+    expect(customWordChips[2]).toHaveTextContent("pear");
+
+    unmount();
+    render(<App />);
+
+    await user.click(screen.getByRole("button", { name: "Words" }));
+
+    customWordChips = screen.getAllByTestId("word-chip");
     expect(customWordChips[0]).toHaveTextContent("banana");
     expect(customWordChips[1]).toHaveTextContent("mango");
     expect(customWordChips[2]).toHaveTextContent("pear");
@@ -266,6 +346,47 @@ describe("App", () => {
     expect(activeWordChips[1]).toHaveTextContent("happy");
     expect(activeWordChips[2]).toHaveTextContent("apple");
     expect(screen.getByTestId("word-order-feedback")).toHaveTextContent("Practice order saved.");
+  });
+
+  it("reorders practice-order words with touch drag gestures", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.click(screen.getByRole("button", { name: "Words" }));
+
+    const rows = screen.getAllByTestId("active-word-row");
+    const draggedRow = rows[0];
+    const targetRow = rows[2];
+    const originalElementFromPoint = document.elementFromPoint;
+    Object.defineProperty(document, "elementFromPoint", {
+      configurable: true,
+      value: vi.fn((x: number, y: number) => {
+        if (x === 32 && y === 48) {
+          return targetRow;
+        }
+
+        return originalElementFromPoint?.call(document, x, y) ?? null;
+      })
+    });
+
+    fireEvent.touchStart(draggedRow, {
+      touches: [{ clientX: 8, clientY: 8 }]
+    });
+    fireEvent.touchMove(draggedRow, {
+      touches: [{ clientX: 32, clientY: 48 }]
+    });
+    fireEvent.touchEnd(draggedRow);
+
+    const activeWordChips = screen.getAllByTestId("active-word-chip");
+    expect(activeWordChips[0]).toHaveTextContent("book");
+    expect(activeWordChips[1]).toHaveTextContent("happy");
+    expect(activeWordChips[2]).toHaveTextContent("apple");
+    expect(screen.getByTestId("word-order-feedback")).toHaveTextContent("Practice order saved.");
+
+    Object.defineProperty(document, "elementFromPoint", {
+      configurable: true,
+      value: originalElementFromPoint
+    });
   });
 
   it("supports bulk remove and restore for custom words", async () => {
@@ -529,7 +650,7 @@ describe("App", () => {
     await user.click(screen.getAllByTestId("restore-word-button-builtin-apple")[0]);
 
     expect(screen.getByTestId("builtin-word-list")).toHaveTextContent("apple");
-    expect(screen.getByTestId("hidden-builtin-empty")).toHaveTextContent("No hidden built-in words.");
+    expect(screen.getByTestId("hidden-builtin-empty-cta")).toBeInTheDocument();
   });
 
   it("rejects duplicate builtin word edits", async () => {
@@ -560,7 +681,7 @@ describe("App", () => {
 
     expect(screen.getByTestId("builtin-word-list")).toHaveTextContent("apple");
     expect(screen.getByTestId("builtin-word-list")).toHaveTextContent("book");
-    expect(screen.getByTestId("hidden-builtin-empty")).toHaveTextContent("No hidden built-in words.");
+    expect(screen.getByTestId("hidden-builtin-empty-cta")).toBeInTheDocument();
   });
 
   it("reorders builtin words in the mixed practice list and keeps the order after reload", async () => {
@@ -736,6 +857,41 @@ describe("App", () => {
     }
   });
 
+  it("rebuilds the active session when a custom word is edited", async () => {
+    const user = userEvent.setup();
+    let randomCallCount = 0;
+    const randomSpy = vi.spyOn(Math, "random").mockImplementation(() => {
+      const nextValue = randomCallCount === 0 || randomCallCount === 20 ? 0 : 0.999999;
+      randomCallCount += 1;
+      return nextValue;
+    });
+    try {
+      render(<App />);
+
+      await user.click(screen.getByRole("button", { name: "Words" }));
+      await user.type(screen.getByLabelText("New word"), "banana");
+      await user.click(screen.getByRole("button", { name: "Add word" }));
+
+      await user.click(screen.getByRole("button", { name: "Words" }));
+      fireEvent.change(screen.getByTestId("word-count-input"), { target: { value: "20" } });
+      await user.click(screen.getByTestId("shuffle-toggle"));
+      await user.click(screen.getByTestId("apply-settings-button"));
+
+      expect(screen.getByTestId("current-word")).toHaveTextContent("banana");
+
+      await user.click(screen.getByRole("button", { name: "Words" }));
+      await user.click(screen.getByTestId("edit-word-button-custom-banana"));
+      await user.clear(screen.getByTestId("edit-word-input-custom-banana"));
+      await user.type(screen.getByTestId("edit-word-input-custom-banana"), "grape");
+      await user.click(screen.getByTestId("save-word-button-custom-banana"));
+      await user.click(screen.getByRole("button", { name: "Practice" }));
+
+      expect(screen.getByTestId("current-word")).toHaveTextContent("grape");
+    } finally {
+      randomSpy.mockRestore();
+    }
+  });
+
   it("rebuilds the active session when a builtin word is edited or deleted", async () => {
     const user = userEvent.setup();
     render(<App />);
@@ -773,6 +929,86 @@ describe("App", () => {
     expect(screen.getByTestId("current-word")).toHaveTextContent("banana");
   });
 
+  it("recovers safely when persisted trainer data is malformed on boot", async () => {
+    const user = userEvent.setup();
+    window.localStorage.setItem(
+      "wordbeat.customWords",
+      JSON.stringify({
+        version: 1,
+        value: [
+          {
+            id: "",
+            text: "123",
+            source: "custom",
+            createdAt: "not-a-date"
+          }
+        ]
+      })
+    );
+    window.localStorage.setItem(
+      "wordbeat.builtinWordOverrides",
+      JSON.stringify({
+        version: 1,
+        value: {
+          "builtin-apple": {
+            status: "edited",
+            text: "!!!",
+            updatedAt: "not-a-date"
+          }
+        }
+      })
+    );
+    window.localStorage.setItem("wordbeat.builtinWordOrder", JSON.stringify({ version: 1, value: ["", 42, null] }));
+    window.localStorage.setItem(
+      "wordbeat.sessionConfig",
+      JSON.stringify({
+        version: 1,
+        value: {
+          wordCount: Number.NaN,
+          shuffle: "yes",
+          speechEnabled: 0,
+          browserTtsEnabled: "nope",
+          showFingerGuide: null,
+          showKeyboardHint: "sometimes"
+        }
+      })
+    );
+    window.localStorage.setItem("wordbeat.wordsPanelState", "{bad json");
+    window.localStorage.setItem("wordbeat.displayLanguage", "fr");
+    window.localStorage.setItem(
+      "wordbeat.themePreference",
+      JSON.stringify({
+        version: 1,
+        value: {
+          themeId: "broken",
+          accent: "broken",
+          backgroundIntensity: "loud"
+        }
+      })
+    );
+
+    render(<App />);
+
+    expect(screen.getByTestId("current-word")).not.toHaveTextContent(/^$/);
+    expect(screen.getByTestId("practice-primary-status")).toHaveTextContent("Start in 3");
+
+    await user.click(screen.getByRole("button", { name: "Words" }));
+    expect(screen.getByTestId("empty-custom-cta")).toBeInTheDocument();
+    expect(screen.getByTestId("active-word-list")).toHaveTextContent("apple");
+    expect(screen.getByTestId("active-word-list")).toHaveTextContent("travel");
+    expect(screen.getByTestId("word-count-input")).toHaveValue(10);
+    expect(screen.getByTestId("shuffle-toggle")).not.toBeChecked();
+
+    await user.click(screen.getByRole("button", { name: "Settings" }));
+    expect(screen.getByTestId("browser-tts-toggle")).not.toBeChecked();
+    expect(screen.getByTestId("speech-toggle")).toBeChecked();
+    expect(screen.getByTestId("finger-guide-toggle")).toBeChecked();
+    expect(screen.getByTestId("keyboard-hint-toggle")).toBeChecked();
+    expect(document.documentElement.dataset.theme).toBe("dusk");
+    expect(document.documentElement.dataset.colorScheme).toBe("dark");
+    expect(screen.getByTestId("theme-background-intensity-value")).toHaveTextContent("60%");
+  });
+
   it("reset builtin words restores the shipped builtin order", async () => {
     const user = userEvent.setup();
     render(<App />);
@@ -794,10 +1030,7 @@ describe("App", () => {
 
     fireEvent.keyDown(practicePanel, { key: "Enter" });
 
-    expect(screen.getByTestId("practice-primary-status")).toHaveTextContent("Keep typing.");
-    expect(screen.getByTestId("practice-step-hint")).toHaveTextContent(
-      "Type the highlighted letter. Use Pronounce or the guides if you need help."
-    );
+    expect(screen.queryByTestId("practice-primary-status")).not.toBeInTheDocument();
   });
 
   it("auto pronounces the first word when typing becomes available", async () => {
@@ -885,7 +1118,6 @@ describe("App", () => {
     await user.click(screen.getByTestId("clear-browser-tts-cache-button"));
 
     expect(clearBrowserTtsCacheSpy).toHaveBeenCalledTimes(1);
-    expect(screen.getByTestId("browser-tts-cache-status")).toHaveTextContent("Browser audio cache was cleared.");
 
     clearBrowserTtsCacheSpy.mockRestore();
   });
@@ -896,11 +1128,18 @@ describe("App", () => {
 
     await user.click(screen.getByRole("button", { name: "Words" }));
     expect(screen.getByTestId("words-session-config")).toHaveTextContent("Session word setup");
+    expect(screen.getByTestId("word-stat-session-size")).toHaveTextContent("1 session");
+    expect(screen.getByTestId("word-stat-session-size")).toHaveTextContent("10");
+    expect(screen.getByTestId("words-session-outcome-summary")).toHaveTextContent("Practice order: 20 words");
+    expect(screen.getByTestId("words-session-outcome-summary")).toHaveTextContent("This session: 10 words");
     fireEvent.change(screen.getByLabelText("Words per session"), { target: { value: "1" } });
 
-    expect(screen.getByTestId("words-session-config-status")).toHaveTextContent("You have unapplied changes.");
-    expect(screen.getByTestId("words-session-config-summary")).toHaveTextContent("Pending changes");
-    expect(screen.getByTestId("words-session-config-summary")).toHaveTextContent("Words per session: 10 -> 1");
+    expect(screen.getByTestId("word-stat-session-size")).toHaveTextContent("1");
+    expect(screen.getByTestId("words-session-outcome-summary")).toHaveTextContent("Practice order: 20 words");
+    expect(screen.getByTestId("words-session-outcome-summary")).toHaveTextContent("This session: 1 words");
+    expect(screen.queryByTestId("words-session-clamp-hint")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("words-session-config-status")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("words-session-config-summary")).not.toBeInTheDocument();
 
     await user.click(screen.getByTestId("apply-settings-button"));
 
@@ -918,8 +1157,36 @@ describe("App", () => {
 
     await user.click(screen.getByRole("button", { name: "Words" }));
     expect(screen.getByTestId("shuffle-toggle")).not.toBeChecked();
-    expect(screen.getByTestId("words-session-config-status")).toHaveTextContent("Current session already matches this word setup.");
+    expect(screen.queryByTestId("words-session-config-status")).not.toBeInTheDocument();
     expect(screen.queryByTestId("words-session-config-summary")).not.toBeInTheDocument();
+  });
+
+  it("shows clamped session counts and updates them when practice-order words change", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.click(screen.getByRole("button", { name: "Words" }));
+    fireEvent.change(screen.getByLabelText("Words per session"), { target: { value: "20" } });
+
+    expect(screen.getByTestId("word-stat-session-size")).toHaveTextContent("20");
+    expect(screen.getByTestId("words-session-outcome-summary")).toHaveTextContent("Practice order: 20 words");
+    expect(screen.getByTestId("words-session-outcome-summary")).toHaveTextContent("This session: 20 words");
+    expect(screen.queryByTestId("words-session-clamp-hint")).not.toBeInTheDocument();
+
+    const builtinWordList = within(screen.getByTestId("builtin-word-list"));
+    await user.click(builtinWordList.getByTestId("more-row-actions-button-builtin-apple"));
+    await user.click(builtinWordList.getByTestId("delete-word-button-builtin-apple"));
+
+    expect(screen.getByTestId("words-session-outcome-summary")).toHaveTextContent("Practice order: 19 words");
+    expect(screen.getByTestId("words-session-outcome-summary")).toHaveTextContent("This session: 19 words");
+    expect(screen.queryByTestId("words-session-clamp-hint")).not.toBeInTheDocument();
+
+    await user.type(screen.getByLabelText("New word"), "banana");
+    await user.click(screen.getByRole("button", { name: "Add word" }));
+
+    expect(screen.getByTestId("words-session-outcome-summary")).toHaveTextContent("Practice order: 20 words");
+    expect(screen.getByTestId("words-session-outcome-summary")).toHaveTextContent("This session: 20 words");
+    expect(screen.queryByTestId("words-session-clamp-hint")).not.toBeInTheDocument();
   });
 
   it("applies visual assistance toggles immediately without pending session changes", async () => {
@@ -930,12 +1197,42 @@ describe("App", () => {
     await user.click(screen.getByTestId("keyboard-hint-toggle"));
     await user.click(screen.getByTestId("word-reading-toggle"));
 
-    expect(screen.getByTestId("settings-status")).toHaveTextContent("Current session already matches these settings.");
+    expect(screen.queryByTestId("settings-status")).not.toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "Practice" }));
 
     expect(screen.queryByTestId("keyboard-guide-slot")).not.toBeInTheDocument();
     expect(screen.getByTestId("practice-word-reading-slot")).toHaveTextContent("アップル");
+  });
+
+  it("shows the word reading slot immediately when the setting is enabled", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.click(screen.getByRole("button", { name: "Settings" }));
+    expect(screen.getByTestId("word-reading-toggle")).not.toBeChecked();
+    await user.click(screen.getByTestId("word-reading-toggle"));
+
+    expect(screen.queryByTestId("settings-status")).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Practice" }));
+
+    expect(screen.getByTestId("practice-word-reading-slot")).toBeInTheDocument();
+  });
+
+  it("persists the word reading setting after reload", async () => {
+    const user = userEvent.setup();
+    const { unmount } = render(<App />);
+
+    await user.click(screen.getByRole("button", { name: "Settings" }));
+    await user.click(screen.getByTestId("word-reading-toggle"));
+
+    unmount();
+    render(<App />);
+
+    await user.click(screen.getByRole("button", { name: "Settings" }));
+
+    expect(screen.getByTestId("word-reading-toggle")).toBeChecked();
   });
 
   it("shows all pending session changes on the settings page", async () => {
@@ -947,8 +1244,7 @@ describe("App", () => {
     await user.click(screen.getByTestId("shuffle-toggle"));
     await user.click(screen.getByRole("button", { name: "Settings" }));
 
-    expect(screen.getByTestId("settings-status-summary")).toHaveTextContent("Words per session: 10 -> 1");
-    expect(screen.getByTestId("settings-status-summary")).toHaveTextContent("Shuffle words: Off -> On");
+    expect(screen.queryByTestId("settings-status-summary")).not.toBeInTheDocument();
   });
 
   it("renders only two settings groups and keeps cache tools in the immediate group", async () => {
@@ -997,7 +1293,7 @@ describe("App", () => {
     fireEvent.keyDown(practicePanel, { key: "z" });
     fireEvent.keyDown(practicePanel, { key: "a" });
 
-    expect(screen.getByTestId("practice-primary-status")).toHaveTextContent("Keep typing.");
+    expect(screen.queryByTestId("practice-primary-status")).not.toBeInTheDocument();
     expect(screen.getByTestId("target-char")).not.toHaveClass("error");
     expect(screen.queryByTestId("mistyped-keycap")).not.toBeInTheDocument();
     expect(screen.getByTestId("active-keycap")).not.toHaveClass("target-outline");
@@ -1018,7 +1314,7 @@ describe("App", () => {
     expect(screen.getByTestId("progress-count")).toHaveTextContent("0 / 20 words");
   });
 
-  it("shows a results summary once the session is complete", async () => {
+  it("shows result metrics once the session is complete", async () => {
     const user = userEvent.setup();
     render(<App />);
 
@@ -1029,15 +1325,10 @@ describe("App", () => {
     fireEvent.keyDown(screen.getByTestId("primary-panel"), { key: "Enter" });
     await user.keyboard("apple");
 
-    expect(screen.getByTestId("results-summary")).toHaveTextContent("Score blends speed and accuracy");
-    expect(screen.getByTestId("completion-banner")).toHaveTextContent("Session complete");
     expect(screen.getByTestId("results-accessibility-summary")).toHaveTextContent("Completed 1 words.");
-    expect(screen.getByTestId("results-feedback")).toHaveTextContent("Practice insights");
-    expect(screen.getByTestId("results-strength-card")).toHaveTextContent("What went well");
-    expect(screen.getByTestId("results-strength-card")).toHaveTextContent("Clean words: 1 of 1");
-    expect(screen.getByTestId("results-focus-card")).toHaveTextContent("What to focus on next");
-    expect(screen.getByTestId("results-focus-card")).toHaveTextContent("Slowest word: apple");
-    expect(screen.getByTestId("results-feedback-supporting")).toHaveTextContent("No mistakes this session");
+    expect(screen.getByTestId("score-wpm")).toBeInTheDocument();
+    expect(screen.getByTestId("score-accuracy")).toBeInTheDocument();
+    expect(screen.getByTestId("results-list")).toHaveTextContent("apple");
   });
 
   it("restarts a focused retry session from results", async () => {
@@ -1083,9 +1374,10 @@ describe("App", () => {
     expect(screen.getByTestId("practice-panel")).toHaveClass("typing-active-layout");
     expect(screen.getByTestId("practice-metrics-bar")).toBeInTheDocument();
     expect(screen.getByTestId("practice-word-stage")).toBeInTheDocument();
-    expect(screen.getByTestId("keyboard-guide-slot")).toBeInTheDocument();
+    expect(screen.getByTestId("practice-guides-panel")).toBeInTheDocument();
+    expect(screen.getByTestId("keyboard-visual")).toBeInTheDocument();
     expect(screen.getByTestId("finger-guide-slot")).toBeInTheDocument();
-    expect(screen.getByTestId("practice-primary-status")).toBeInTheDocument();
+    expect(screen.queryByTestId("practice-primary-status")).not.toBeInTheDocument();
     expect(screen.getByTestId("practice-actions")).toBeInTheDocument();
   });
 
@@ -1135,16 +1427,12 @@ describe("App", () => {
 
     await user.click(screen.getByTestId("skip-countdown-button"));
 
-    expect(screen.getAllByTestId("practice-primary-status")).toHaveLength(1);
-    expect(screen.getByTestId("practice-primary-status")).toHaveTextContent("Keep typing.");
+    expect(screen.queryByTestId("practice-primary-status")).not.toBeInTheDocument();
 
     await user.keyboard("z");
 
     expect(screen.getAllByTestId("practice-primary-status")).toHaveLength(1);
     expect(screen.getByTestId("practice-primary-status")).toHaveTextContent("Wrong key: Z. Keep aiming for the highlighted letter.");
-    expect(screen.getByTestId("practice-step-hint")).toHaveTextContent(
-      "Ignore the last key and press the highlighted letter to get back on track."
-    );
   });
 
   it("scrolls the primary panel into view when typing starts", async () => {
@@ -1200,7 +1488,7 @@ describe("App", () => {
 
     fireEvent.keyDown(screen.getByTestId("primary-panel"), { key: "Enter" });
 
-    expect(screen.getByTestId("practice-primary-status")).toHaveTextContent("Keep typing.");
+    expect(screen.queryByTestId("practice-primary-status")).not.toBeInTheDocument();
   });
 
   it("does not scroll again while typing or when returning to practice", async () => {
@@ -1237,9 +1525,10 @@ describe("App", () => {
     await user.click(screen.getByRole("button", { name: "Practice" }));
     await user.click(screen.getByTestId("skip-countdown-button"));
 
+    expect(screen.getByTestId("practice-guides-panel")).toBeInTheDocument();
     expect(screen.getByTestId("keyboard-visual")).toBeInTheDocument();
     expect(screen.getByTestId("finger-button-visual")).toBeInTheDocument();
-    expect(screen.getByTestId("keyboard-guide-slot").compareDocumentPosition(screen.getByTestId("finger-guide-slot"))).toBe(
+    expect(screen.getByTestId("keyboard-visual").compareDocumentPosition(screen.getByTestId("finger-guide-slot"))).toBe(
       Node.DOCUMENT_POSITION_FOLLOWING
     );
   });

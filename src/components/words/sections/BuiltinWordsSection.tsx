@@ -1,7 +1,7 @@
 import type { Ref } from "react";
 import { t } from "../../../i18n";
 import type { TrainerState } from "../../../features/trainer/useTrainer";
-import { BulkActionBar, EditingWordRow, IconButton, ReadonlyWordRow, type NestedBulkActionFocusRefs, type NestedSectionSelectionControls, SectionHeaderMeta, StatePill, type WordsPanelState } from "../shared";
+import { BulkActionBar, EditingWordRow, IconButton, ManagedWordRow, ReadonlyWordRow, type NestedBulkActionFocusRefs, type NestedSectionSelectionControls, SectionHeaderMeta, StatePill, type WordsPanelState } from "../shared";
 import { HiddenBuiltinWordsSection } from "./HiddenBuiltinWordsSection";
 
 export function BuiltinWordsSection({
@@ -39,15 +39,11 @@ export function BuiltinWordsSection({
   const allVisibleSelected =
     selection.active.selectableWordIds.length > 0 &&
     selection.active.selectableWordIds.every((wordId) => selection.active.selectedWordIds.includes(wordId));
-  const minimizedSummary = t(language, "words.builtinMinimizedSummary")
-    .replace("{activeCount}", String(trainer.builtinWords.length))
-    .replace("{hiddenCount}", String(trainer.hiddenBuiltinWords.length));
   return (
     <section ref={sectionRef} className={`word-section word-section-builtin ${wordsPanelState.builtinMinimized ? "word-section-minimized" : ""}`} data-testid="builtin-word-section">
       <div className="panel-header">
         <div>
           <p className="label">{t(language, "words.builtinTitle")}</p>
-          <p>{t(language, "words.builtinHint")}</p>
         </div>
         <SectionHeaderMeta
           tools={[
@@ -74,18 +70,13 @@ export function BuiltinWordsSection({
           <span className="word-count-pill">{trainer.builtinWords.length}</span>
         </SectionHeaderMeta>
       </div>
-      {wordsPanelState.builtinMinimized ? (
-        <p className="word-section-summary" data-testid="builtin-section-summary">
-          {minimizedSummary}
-        </p>
-      ) : (
+      {wordsPanelState.builtinMinimized ? null : (
         <>
           <BulkActionBar
             selectedCount={selection.active.selectedWordIds.length}
             selectedCountLabel={selectedCountLabel(selection.active.selectedWordIds.length)}
             selectVisibleLabel={allVisibleSelected ? t(language, "words.deselectVisible") : t(language, "words.selectVisible")}
             clearSelectionLabel={t(language, "words.clearSelection")}
-            helperText={t(language, "words.bulkHint")}
             hasVisibleItems={selection.active.selectableWordIds.length > 0}
             allVisibleSelected={allVisibleSelected}
             selectedCountTestId="bulk-selected-count-builtin"
@@ -108,11 +99,14 @@ export function BuiltinWordsSection({
           </BulkActionBar>
           <div className="word-list" data-testid="builtin-word-list" aria-label={t(language, "words.builtinTitle")}>
             {filteredBuiltinWords.length === 0 ? (
-              <p className="word-list-empty">{t(language, "words.noMatches")}</p>
+              null
             ) : (
               filteredBuiltinWords.map((word) => (
-                <div key={word.id} className="word-chip-row" data-testid="builtin-word-row">
-                  {trainer.editingWordId === word.id && trainer.editingWordSource === "builtin" ? (
+                <ManagedWordRow
+                  key={word.id}
+                  containerTestId="builtin-word-row"
+                  isEditing={trainer.editingWordId === word.id && trainer.editingWordSource === "builtin"}
+                  editingRow={
                     <EditingWordRow
                       wordId={word.id}
                       wordText={word.text}
@@ -124,7 +118,8 @@ export function BuiltinWordsSection({
                       saveLabel={t(language, "words.save")}
                       cancelLabel={t(language, "words.cancel")}
                     />
-                  ) : (
+                  }
+                  readonlyRow={
                     <ReadonlyWordRow
                       rowTestId="builtin-word-row"
                       chipTestId="builtin-word-chip"
@@ -142,11 +137,11 @@ export function BuiltinWordsSection({
                         <IconButton key="remove" label={t(language, "words.removeFromPractice")} icon="−" testId={`delete-word-button-${word.id}`} onClick={() => trainer.handleRemoveBuiltinWord(word.id)} />,
                         editedBuiltinWordIds.has(word.id) ? (
                           <IconButton key="restore" label={t(language, "words.restore")} icon="↺" testId={`restore-word-button-${word.id}`} onClick={() => trainer.restoreBuiltinWord(word.id)} />
-                        ) : null,
+                        ) : null
                       ].filter(Boolean)}
                     />
-                  )}
-                </div>
+                  }
+                />
               ))
             )}
           </div>
@@ -164,8 +159,6 @@ export function BuiltinWordsSection({
             />
           ) : (
             <div className="empty-state word-section-empty" data-testid="hidden-builtin-empty">
-              <strong>{t(language, "words.hiddenBuiltinEmpty")}</strong>
-              <p>{t(language, "words.hiddenBuiltinAction")}</p>
               <button type="button" className="secondary inline-action" data-testid="hidden-builtin-empty-cta" onClick={onScrollToSelf}>
                 {t(language, "words.hiddenBuiltinCta")}
               </button>

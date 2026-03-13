@@ -88,6 +88,16 @@ export type FingerId =
 
 export type DisplayLanguage = "en" | "ja" | "ja-hira";
 
+export type ThemeId = "dusk" | "forest" | "ocean" | "dawn" | "daylight";
+export type ThemeColorScheme = "dark" | "light";
+export type ThemeAccent = "amber" | "mint" | "sky" | "rose";
+
+export interface ThemePreference {
+  themeId: ThemeId;
+  accent: ThemeAccent;
+  backgroundIntensity: number;
+}
+
 export interface KeyboardGuide {
   keyPosition: string;
   finger: string;
