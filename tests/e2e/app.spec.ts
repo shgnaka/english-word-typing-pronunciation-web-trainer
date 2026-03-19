@@ -292,14 +292,15 @@ test("shows pending settings until they are applied", async ({ page }) => {
 test("shows session size and clamped outcome in the words page summary", async ({ page }) => {
   await page.getByTestId("tab-words").click();
 
-  await expect(page.getByTestId("word-stat-session-size")).toContainText("1 session");
-  await expect(page.getByTestId("word-stat-session-size")).toContainText("10");
+  await expect(page.getByTestId("words-session-available-count")).toContainText("Practice order: 20 words");
+  await expect(page.getByTestId("words-session-effective-count")).toContainText("This session: 10 words");
   await expect(page.getByTestId("words-session-outcome-summary")).toContainText("Practice order: 20 words");
   await expect(page.getByTestId("words-session-outcome-summary")).toContainText("This session: 10 words");
 
   await page.getByTestId("word-count-input").fill("20");
 
-  await expect(page.getByTestId("word-stat-session-size")).toContainText("20");
+  await expect(page.getByTestId("words-session-available-count")).toContainText("Practice order: 20 words");
+  await expect(page.getByTestId("words-session-effective-count")).toContainText("This session: 20 words");
   await expect(page.getByTestId("words-session-outcome-summary")).toContainText("Practice order: 20 words");
   await expect(page.getByTestId("words-session-outcome-summary")).toContainText("This session: 20 words");
   await expect(page.getByTestId("words-session-clamp-hint")).toHaveCount(0);

@@ -5,6 +5,7 @@ import { dedupeWords, orderWords, resolveBuiltinWords, sanitizeWordOrder } from 
 import {
   defaultDisplayLanguage,
   defaultThemePreference,
+  defaultStorageScopeId,
   loadBuiltinWordOrder,
   loadBuiltinWordOverrides,
   loadCustomWords,
@@ -46,7 +47,7 @@ export function buildTrainerQueue(words: WordEntry[], config: SessionConfig): Wo
   return buildSessionQueue(words, config.wordCount, config.shuffle);
 }
 
-export function loadTrainerPreferences(): {
+export function loadTrainerPreferences(scopeId = defaultStorageScopeId): {
   wordOrder: WordOrder;
   builtinWordOverrides: BuiltinWordOverrides;
   customWords: WordEntry[];
@@ -54,17 +55,17 @@ export function loadTrainerPreferences(): {
   displayLanguage: DisplayLanguage;
   themePreference: ThemePreference;
 } {
-  const customWords = loadCustomWords();
-  const builtinWordOverrides = loadBuiltinWordOverrides();
+  const customWords = loadCustomWords(scopeId);
+  const builtinWordOverrides = loadBuiltinWordOverrides(scopeId);
   const resolvedBuiltinWords = buildResolvedBuiltinWords(builtinWordOverrides);
-  const wordOrder = buildWordOrder([...resolvedBuiltinWords, ...customWords], loadBuiltinWordOrder());
+  const wordOrder = buildWordOrder([...resolvedBuiltinWords, ...customWords], loadBuiltinWordOrder(scopeId));
 
   return {
     wordOrder,
     builtinWordOverrides,
     customWords,
-    config: loadSessionConfig(),
-    displayLanguage: loadDisplayLanguage() ?? defaultDisplayLanguage,
-    themePreference: loadThemePreference() ?? defaultThemePreference
+    config: loadSessionConfig(scopeId),
+    displayLanguage: loadDisplayLanguage(scopeId) ?? defaultDisplayLanguage,
+    themePreference: loadThemePreference(scopeId) ?? defaultThemePreference
   };
 }

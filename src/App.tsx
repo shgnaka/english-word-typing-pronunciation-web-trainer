@@ -5,6 +5,8 @@ import { ResultsPanel } from "./components/ResultsPanel";
 import { SettingsPanel } from "./components/SettingsPanel";
 import { WordsPanel } from "./components/WordsPanel";
 import { useTrainer } from "./features/trainer/useTrainer";
+import { defaultStorageScopeId } from "./infra/storage";
+import { useProfileManager } from "./features/profile/useProfileManager";
 import { t } from "./i18n";
 import { buildThemeStyleProperties, getThemeColorScheme } from "./theme";
 
@@ -17,7 +19,8 @@ function isInteractiveElement(target: EventTarget | null): boolean {
 }
 
 function App() {
-  const trainer = useTrainer();
+  const profileManager = useProfileManager();
+  const trainer = useTrainer(profileManager.currentProfile.id ?? defaultStorageScopeId);
   const language = trainer.displayLanguage;
   const primaryPanelRef = useRef<HTMLElement | null>(null);
   const wasCountdownActiveRef = useRef(trainer.isCountdownActive);
@@ -145,7 +148,7 @@ function App() {
           >
             {trainer.screen === "practice" ? <PracticePanel trainer={trainer} /> : null}
             {trainer.screen === "words" ? <WordsPanel trainer={trainer} /> : null}
-            {trainer.screen === "settings" ? <SettingsPanel trainer={trainer} /> : null}
+            {trainer.screen === "settings" ? <SettingsPanel trainer={trainer} profileManager={profileManager} /> : null}
             {trainer.screen === "results" ? <ResultsPanel trainer={trainer} /> : null}
           </section>
         </main>
