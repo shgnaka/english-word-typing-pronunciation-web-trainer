@@ -11,26 +11,28 @@ export function ThemeSettingsSection({ trainer }: ThemeSettingsSectionProps) {
 
   return (
     <section className="theme-settings-section" data-testid="theme-settings-section">
-      <div className="theme-settings-copy">
+      <div className="settings-control-block theme-settings-copy">
         <span className="label">{t(language, "settings.theme")}</span>
         <p>{t(language, "settings.themeHelp")}</p>
       </div>
 
-      <div className="theme-option-grid" data-testid="theme-option-grid">
-        {themeOptions.map((option) => (
-          <button
-            key={option.id}
-            type="button"
-            className={`theme-option-card ${trainer.themePreference.themeId === option.id ? "active" : "secondary"}`}
-            data-testid={`theme-option-${option.id}`}
-            onClick={() => trainer.setThemeId(option.id)}
-          >
-            <strong>{t(language, option.labelKey)}</strong>
-          </button>
-        ))}
+      <div className="settings-control-block theme-option-group">
+        <div className="theme-option-grid" data-testid="theme-option-grid">
+          {themeOptions.map((option) => (
+            <button
+              key={option.id}
+              type="button"
+              className={`theme-option-card ${trainer.themePreference.themeId === option.id ? "active" : "secondary"}`}
+              data-testid={`theme-option-${option.id}`}
+              onClick={() => trainer.setThemeId(option.id)}
+            >
+              <strong>{t(language, option.labelKey)}</strong>
+            </button>
+          ))}
+        </div>
       </div>
 
-      <label className="theme-slider-field" htmlFor="theme-background-intensity">
+      <label className="settings-control-block theme-slider-field" htmlFor="theme-background-intensity">
         <span>{t(language, "settings.themeBackgroundIntensity")}</span>
         <div className="theme-slider-row">
           <input
@@ -47,21 +49,23 @@ export function ThemeSettingsSection({ trainer }: ThemeSettingsSectionProps) {
         </div>
       </label>
 
-      <div className="theme-accent-options" data-testid="theme-accent-options">
-        {themeAccentOptions.map((option) => (
-          <button
-            key={option.id}
-            type="button"
-            className={`theme-accent-chip ${trainer.themePreference.accent === option.id ? "active" : "secondary"}`}
-            data-testid={`theme-accent-${option.id}`}
-            onClick={() => trainer.setThemeAccent(option.id)}
-          >
-            {t(language, option.labelKey)}
-          </button>
-        ))}
+      <div className="settings-control-block theme-accent-group">
+        <div className="theme-accent-options" data-testid="theme-accent-options">
+          {themeAccentOptions.map((option) => (
+            <button
+              key={option.id}
+              type="button"
+              className={`theme-accent-chip ${trainer.themePreference.accent === option.id ? "active" : "secondary"}`}
+              data-testid={`theme-accent-${option.id}`}
+              onClick={() => trainer.setThemeAccent(option.id)}
+            >
+              {t(language, option.labelKey)}
+            </button>
+          ))}
+        </div>
       </div>
 
-      <div className="theme-settings-actions">
+      <div className="settings-control-block theme-settings-actions">
         <button type="button" className="secondary" data-testid="reset-theme-button" onClick={trainer.resetThemePreference}>
           {t(language, "settings.themeReset")}
         </button>

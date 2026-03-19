@@ -1720,7 +1720,7 @@ input {
 
 .theme-settings-section {
   display: grid;
-  gap: 0.9rem;
+  gap: 0.4rem;
   background: transparent;
   padding: 0;
   border: 0;
@@ -1741,22 +1741,23 @@ input {
 .theme-option-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-  gap: 0.25rem;
+  gap: 0.4rem;
 }
 
 .theme-option-card {
   justify-content: center;
-  min-height: 0;
-  padding: 0.35rem 0.1rem;
-  background: transparent;
-  border: 0;
-  border-radius: 0;
+  min-height: 2.35rem;
+  padding: 0.52rem 0.8rem;
+  background: var(--color-secondary-fill);
+  border: 1px solid var(--color-panel-border-soft);
+  border-radius: 14px;
   box-shadow: none;
 }
 
 .theme-option-card.secondary,
 .theme-accent-chip.secondary {
-  background: transparent;
+  background: var(--color-secondary-fill);
+  border-color: var(--color-panel-border-soft);
 }
 
 .theme-slider-field {
@@ -1784,23 +1785,22 @@ input {
 .theme-accent-options {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(6rem, 1fr));
-  gap: 0.25rem;
+  gap: 0.4rem;
 }
 
 .theme-accent-chip {
   min-width: 0;
   justify-content: center;
-  min-height: 0;
-  padding: 0.35rem 0.1rem;
-  border: 0;
-  border-radius: 0;
-  background: transparent;
+  min-height: 2.35rem;
+  padding: 0.52rem 0.8rem;
+  border: 1px solid var(--color-panel-border-soft);
+  border-radius: 14px;
+  background: var(--color-secondary-fill);
   box-shadow: none;
 }
 
 .theme-option-card.active,
 .theme-accent-chip.active {
-  padding: 0.42rem 0.2rem;
   border-radius: 18px;
   background: var(--color-secondary-fill-strong);
   outline: 1px solid var(--color-border-contrast);
@@ -1808,13 +1808,9 @@ input {
 }
 
 .theme-settings-actions .secondary {
-  padding: 0.35rem 0.55rem;
+  justify-self: start;
+  padding: 0.52rem 0.8rem;
   border-radius: 14px;
-}
-
-.theme-settings-actions {
-  display: flex;
-  justify-content: flex-start;
 }
 
 .settings-inline-button {
