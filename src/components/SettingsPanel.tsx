@@ -94,17 +94,19 @@ function buildPendingSettingChanges(
 function SettingsStatusCard({
   language,
   config,
-  draftConfig
+  draftConfig,
+  className
 }: {
   language: TrainerState["displayLanguage"];
   config: SessionConfig;
   draftConfig: SessionConfig;
+  className?: string;
 }) {
   const pendingSettingChanges = useMemo(() => buildPendingSettingChanges(language, config, draftConfig), [language, config, draftConfig]);
   const hasPendingChanges = pendingSettingChanges.length > 0;
 
   return (
-    <section className={`settings-status ${hasPendingChanges ? "pending" : ""}`.trim()} data-testid="settings-status" role="status" aria-live="polite">
+    <section className={`settings-status ${className ?? ""} ${hasPendingChanges ? "pending" : ""}`.trim()} data-testid="settings-status" role="status" aria-live="polite">
       <div className="settings-status-summary">
         <strong data-testid="settings-status-message">{hasPendingChanges ? t(language, "settings.pending") : t(language, "settings.synced")}</strong>
         {hasPendingChanges ? (
@@ -415,43 +417,49 @@ export function SettingsPanel({ trainer, profileManager }: SettingsPanelProps) {
           title={t(language, "settings.nextSessionGroup")}
           timing={t(language, "settings.appliesOnApply")}
           testId="settings-next-session-group"
-          className="settings-group-next-session"
         >
           <p className="setting-hint">{t(language, "settings.sessionApplyHint")}</p>
-          <SettingsStatusCard language={language} config={trainer.config} draftConfig={trainer.draftConfig} />
-          <div className="settings-option-list" data-testid="settings-next-session-options">
-            <label className="toggle">
-              <input
-                data-testid="speech-toggle"
-                type="checkbox"
-                checked={trainer.draftConfig.speechEnabled}
-                onChange={(event) => trainer.handleConfigChange("speechEnabled", event.target.checked)}
-              />
-              <span>{t(language, "settings.speech")}</span>
-            </label>
-            <label className="toggle">
-              <input
-                data-testid="browser-tts-toggle"
-                type="checkbox"
-                checked={trainer.draftConfig.browserTtsEnabled}
-                disabled={!trainer.draftConfig.speechEnabled}
-                onChange={(event) => trainer.handleConfigChange("browserTtsEnabled", event.target.checked)}
-              />
-              <span>{t(language, "settings.browserTts")}</span>
-            </label>
-          </div>
-          <div className="cta-row settings-group-actions settings-group-actions-compact">
-            <button data-testid="apply-settings-button" onClick={trainer.applyConfigChanges} disabled={!trainer.hasPendingConfigChanges}>
-              {t(language, "settings.apply")}
-            </button>
-            <button
-              className="secondary"
-              data-testid="discard-settings-button"
-              onClick={trainer.discardConfigChanges}
-              disabled={!trainer.hasPendingConfigChanges}
-            >
-              {t(language, "settings.discard")}
-            </button>
+          <div className="settings-stack">
+            <SettingsStatusCard
+              language={language}
+              config={trainer.config}
+              draftConfig={trainer.draftConfig}
+              className="settings-control-block"
+            />
+            <div className="settings-control-grid" data-testid="settings-next-session-options">
+              <label className="toggle settings-control-block">
+                <input
+                  data-testid="speech-toggle"
+                  type="checkbox"
+                  checked={trainer.draftConfig.speechEnabled}
+                  onChange={(event) => trainer.handleConfigChange("speechEnabled", event.target.checked)}
+                />
+                <span>{t(language, "settings.speech")}</span>
+              </label>
+              <label className="toggle settings-control-block">
+                <input
+                  data-testid="browser-tts-toggle"
+                  type="checkbox"
+                  checked={trainer.draftConfig.browserTtsEnabled}
+                  disabled={!trainer.draftConfig.speechEnabled}
+                  onChange={(event) => trainer.handleConfigChange("browserTtsEnabled", event.target.checked)}
+                />
+                <span>{t(language, "settings.browserTts")}</span>
+              </label>
+            </div>
+            <div className="cta-row settings-control-block settings-group-actions settings-group-actions-compact">
+              <button data-testid="apply-settings-button" onClick={trainer.applyConfigChanges} disabled={!trainer.hasPendingConfigChanges}>
+                {t(language, "settings.apply")}
+              </button>
+              <button
+                className="secondary"
+                data-testid="discard-settings-button"
+                onClick={trainer.discardConfigChanges}
+                disabled={!trainer.hasPendingConfigChanges}
+              >
+                {t(language, "settings.discard")}
+              </button>
+            </div>
           </div>
         </SettingsGroupCard>
       </div>

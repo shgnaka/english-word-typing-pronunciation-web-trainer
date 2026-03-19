@@ -28,22 +28,20 @@ export function WordsSearchToolbar({
         />
       </label>
       {searchValue.trim() && resultSummaries && resultSummaries.length > 0 ? (
-        <div className="words-toolbar-meta">
-          <div className="words-search-summary" data-testid="word-search-summary">
-            {resultSummaries.map((summary) => (
-              <button
-                key={summary.id}
-                type="button"
-                className="secondary search-summary-chip"
-                data-testid={`search-result-count-chip-${summary.id}`}
-                onClick={summary.onClick}
-                aria-label={`${summary.label}: ${summary.count}`}
-              >
-                <span>{summary.label}</span>
-                <strong>{summary.count}</strong>
-              </button>
-            ))}
-          </div>
+        <div className="words-search-summary" data-testid="word-search-summary">
+          {resultSummaries.map((summary) => (
+            <button
+              key={summary.id}
+              type="button"
+              className="secondary search-summary-chip"
+              data-testid={`search-result-count-chip-${summary.id}`}
+              onClick={summary.onClick}
+              aria-label={`${summary.label}: ${summary.count}`}
+            >
+              <span>{summary.label}</span>
+              <strong>{summary.count}</strong>
+            </button>
+          ))}
         </div>
       ) : null}
     </section>

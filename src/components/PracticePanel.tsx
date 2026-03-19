@@ -184,21 +184,16 @@ function PracticeWordStage({
 function KeyboardGuideCard({
   trainer,
   compact,
-  plain = false,
   hasMistype,
   mistypedKey
 }: {
   trainer: TrainerState;
   compact: boolean;
-  plain?: boolean;
   hasMistype: boolean;
   mistypedKey: string | null;
 }) {
   return (
-    <section
-      className={`guide-card keyboard-guide-card ${trainer.isTypingActiveLayout ? "typing-active" : ""} ${compact ? "compact" : ""} ${plain ? "guide-card-plain" : ""}`.trim()}
-      data-testid="keyboard-visual"
-    >
+    <section className={`guide-card keyboard-guide-card ${trainer.isTypingActiveLayout ? "typing-active" : ""} ${compact ? "compact" : ""}`.trim()} data-testid="keyboard-visual">
       <div className={`keyboard-map ${compact ? "compact" : ""}`} aria-label="Keyboard guide">
         {keyboardRows.map((row, rowIndex) => (
           <div key={row.join("")} className={`keyboard-row row-${rowIndex} ${compact ? "compact" : ""}`}>
@@ -230,13 +225,11 @@ function FingerGuideCard({
   trainer,
   language,
   compact,
-  plain = false,
   hasMistype
 }: {
   trainer: TrainerState;
   language: TrainerState["displayLanguage"];
   compact: boolean;
-  plain?: boolean;
   hasMistype: boolean;
 }) {
   return (
@@ -248,7 +241,6 @@ function FingerGuideCard({
       }
       language={language}
       compact={compact}
-      plain={plain}
     />
   );
 }
@@ -393,12 +385,10 @@ export function PracticePanel({ trainer }: PracticePanelProps) {
                   onToggle={() => setIsKeyboardGuideExpanded((current) => !current)}
                   testId="keyboard-guide-toggle"
                 />
-                {isKeyboardGuideExpanded ? (
-                  <KeyboardGuideCard trainer={trainer} compact={isCompactPracticeGuides} plain hasMistype={hasMistype} mistypedKey={mistypedKey} />
-                ) : null}
+                {isKeyboardGuideExpanded ? <KeyboardGuideCard trainer={trainer} compact={isCompactPracticeGuides} hasMistype={hasMistype} mistypedKey={mistypedKey} /> : null}
               </div>
             ) : (
-              <KeyboardGuideCard trainer={trainer} compact={isCompactPracticeGuides} plain hasMistype={hasMistype} mistypedKey={mistypedKey} />
+              <KeyboardGuideCard trainer={trainer} compact={isCompactPracticeGuides} hasMistype={hasMistype} mistypedKey={mistypedKey} />
             )
           ) : null}
 
@@ -412,10 +402,10 @@ export function PracticePanel({ trainer }: PracticePanelProps) {
                     onToggle={() => setIsFingerGuideExpanded((current) => !current)}
                     testId="finger-guide-toggle"
                   />
-                  {isFingerGuideExpanded ? <FingerGuideCard trainer={trainer} language={language} compact={isCompactPracticeGuides} plain hasMistype={hasMistype} /> : null}
+                  {isFingerGuideExpanded ? <FingerGuideCard trainer={trainer} language={language} compact={isCompactPracticeGuides} hasMistype={hasMistype} /> : null}
                 </div>
               ) : (
-                <FingerGuideCard trainer={trainer} language={language} compact={isCompactPracticeGuides} plain hasMistype={hasMistype} />
+                <FingerGuideCard trainer={trainer} language={language} compact={isCompactPracticeGuides} hasMistype={hasMistype} />
               )}
             </div>
           ) : null}

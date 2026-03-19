@@ -8,12 +8,11 @@ interface FingerGuideButtonsProps {
   label: string;
   language: DisplayLanguage;
   compact?: boolean;
-  plain?: boolean;
 }
 
-export function FingerGuideButtons({ activeFingerId, hasMistype, label, language, compact = false, plain = false }: FingerGuideButtonsProps) {
+export function FingerGuideButtons({ activeFingerId, hasMistype, label, language, compact = false }: FingerGuideButtonsProps) {
   return (
-    <section className={`guide-card ${compact ? "compact" : ""} ${plain ? "guide-card-plain" : ""}`.trim()} data-testid="finger-button-visual">
+    <section className={`guide-card ${compact ? "compact" : ""}`.trim()} data-testid="finger-button-visual">
       <div className={`finger-guide-layout ${compact ? "compact" : ""}`}>
         <div className="finger-guide-label-slot">
           <strong className="finger-guide-current" data-testid="finger-button-label">

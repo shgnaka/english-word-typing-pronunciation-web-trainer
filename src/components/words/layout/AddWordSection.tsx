@@ -13,11 +13,7 @@ export function AddWordSection({
 
   return (
     <section className="word-section word-section-highlight">
-      <div className="panel-header">
-        <div>
-          <p className="label">{t(language, "words.newWord")}</p>
-        </div>
-      </div>
+      <p className="label">{t(language, "words.newWord")}</p>
       <div className="add-word-row">
         <input
           ref={inputRef}

@@ -12,30 +12,13 @@ export function WordsHero({ trainer, onJumpToActive }: { trainer: TrainerState; 
           {t(language, "words.jumpToActive")}
         </button>
       </div>
-      <div className="words-stats" data-testid="words-stats">
-        <article className="word-stat-card word-stat-card-featured">
-          <span className="label">{t(language, "words.activeTitle")}</span>
-          <span className="word-stat-value">{trainer.activeWords.length}</span>
-          <span className="word-stat-label">{t(language, "words.stats.available")}</span>
-        </article>
-        <article className="word-stat-card" data-testid="word-stat-session-size">
-          <span className="label">{t(language, "words.stats.sessionSize")}</span>
-          <span className="word-stat-value">{trainer.requestedWordCount}</span>
-          <span className="word-stat-label">{t(language, "words.stats.sessionSizeLabel")}</span>
-        </article>
-        <article className="word-stat-card">
-          <span className="word-stat-value">{trainer.builtinWords.length}</span>
-          <span className="word-stat-label">{t(language, "words.stats.builtin")}</span>
-        </article>
-        <article className="word-stat-card">
-          <span className="word-stat-value">{trainer.customWords.length}</span>
-          <span className="word-stat-label">{t(language, "words.stats.custom")}</span>
-        </article>
-        <article className="word-stat-card">
-          <span className="word-stat-value">{hiddenCount}</span>
-          <span className="word-stat-label">{t(language, "words.stats.hiddenTotal")}</span>
-        </article>
-      </div>
+      <p className="words-hero-summary" data-testid="words-stats">
+        <span>{t(language, "words.activeTitle")}: {trainer.activeWords.length}</span>
+        <span>{t(language, "words.stats.sessionSize")}: {trainer.requestedWordCount}</span>
+        <span>{t(language, "words.stats.builtin")}: {trainer.builtinWords.length}</span>
+        <span>{t(language, "words.stats.custom")}: {trainer.customWords.length}</span>
+        <span>{t(language, "words.stats.hiddenTotal")}: {hiddenCount}</span>
+      </p>
     </section>
   );
 }
