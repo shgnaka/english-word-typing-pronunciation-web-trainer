@@ -12,14 +12,19 @@ import type {
 import { normalizeWord } from "../domain/words";
 import { sanitizeBackgroundIntensity } from "../theme";
 
-const customWordsKey = "wordbeat.customWords";
-const builtinWordOverridesKey = "wordbeat.builtinWordOverrides";
-const builtinWordOrderKey = "wordbeat.builtinWordOrder";
-const sessionConfigKey = "wordbeat.sessionConfig";
-const displayLanguageKey = "wordbeat.displayLanguage";
-const wordsPanelStateKey = "wordbeat.wordsPanelState";
-const themePreferenceKey = "wordbeat.themePreference";
+const storageNamespace = "wordbeat";
+const customWordsKey = "customWords";
+const builtinWordOverridesKey = "builtinWordOverrides";
+const builtinWordOrderKey = "builtinWordOrder";
+const sessionConfigKey = "sessionConfig";
+const displayLanguageKey = "displayLanguage";
+const wordsPanelStateKey = "wordsPanelState";
+const themePreferenceKey = "themePreference";
+const profilesKey = "profiles";
+const currentProfileIdKey = "currentProfileId";
 const storageSchemaVersion = 1;
+export const defaultStorageScopeId = "anonymous";
+export const defaultProfileName = "Profile 1";
 
 interface VersionedStorageRecord<T> {
   version: number;
@@ -31,6 +36,13 @@ interface StorageCodec<T> {
 }
 
 const fallbackStoredAt = "1970-01-01T00:00:00.000Z";
+
+export interface StoredProfile {
+  id: string;
+  name: string;
+  createdAt: string;
+  updatedAt: string;
+}
 
 export const defaultSessionConfig: SessionConfig = {
   wordCount: 10,
@@ -88,12 +100,77 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === "object" && !Array.isArray(value);
 }
 
+function normalizeStorageScopeId(scopeId: string | undefined): string {
+  return scopeId && scopeId.length > 0 ? scopeId : defaultStorageScopeId;
+}
+
+function buildStorageKey(key: string, scopeId = defaultStorageScopeId): string {
+  const normalizedScopeId = normalizeStorageScopeId(scopeId);
+
+  if (normalizedScopeId === defaultStorageScopeId) {
+    return `${storageNamespace}.${key}`;
+  }
+
+  return `${storageNamespace}.${normalizedScopeId}.${key}`;
+}
+
 function sanitizeStoredTimestamp(value: unknown): string {
   if (typeof value !== "string") {
     return fallbackStoredAt;
   }
 
   return Number.isNaN(Date.parse(value)) ? fallbackStoredAt : value;
+}
+
+function sanitizeProfileName(value: unknown, fallback: string): string {
+  if (typeof value !== "string") {
+    return fallback;
+  }
+
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : fallback;
+}
+
+function sanitizeStoredProfile(value: unknown, fallbackName: string): StoredProfile | null {
+  if (!isRecord(value)) {
+    return null;
+  }
+
+  const id = typeof value.id === "string" && value.id.trim().length > 0 ? value.id.trim() : "";
+  if (!id) {
+    return null;
+  }
+
+  return {
+    id,
+    name: sanitizeProfileName(value.name, fallbackName),
+    createdAt: sanitizeStoredTimestamp(value.createdAt),
+    updatedAt: sanitizeStoredTimestamp(typeof value.updatedAt === "string" ? value.updatedAt : value.createdAt)
+  };
+}
+
+function sanitizeStoredProfiles(value: unknown): StoredProfile[] {
+  const defaultProfile: StoredProfile = {
+    id: defaultStorageScopeId,
+    name: defaultProfileName,
+    createdAt: fallbackStoredAt,
+    updatedAt: fallbackStoredAt
+  };
+
+  if (!Array.isArray(value)) {
+    return [defaultProfile];
+  }
+
+  const sanitizedProfiles = value.flatMap((profile, index) => {
+    const sanitizedProfile = sanitizeStoredProfile(profile, `Profile ${index + 1}`);
+    return sanitizedProfile ? [sanitizedProfile] : [];
+  });
+
+  if (sanitizedProfiles.some((profile) => profile.id === defaultStorageScopeId)) {
+    return sanitizedProfiles;
+  }
+
+  return [defaultProfile, ...sanitizedProfiles];
 }
 
 function sanitizeWordEntry(value: unknown, source: WordEntry["source"]): WordEntry | null {
@@ -230,6 +307,7 @@ const builtinWordOrderCodec = createStorageCodec<WordOrder>((value) => sanitizeW
 const sessionConfigCodec = createStorageCodec<SessionConfig>((value) => sanitizeSessionConfigValue(value as Partial<SessionConfig> | null | undefined));
 const wordsPanelStateCodec = createStorageCodec<WordsPanelState>((value) => sanitizeWordsPanelStateValue(value as Partial<WordsPanelState> | null | undefined));
 const themePreferenceCodec = createStorageCodec<ThemePreference>((value) => sanitizeThemePreferenceValue(value as Partial<ThemePreference> | null | undefined));
+const storedProfilesCodec = createStorageCodec<StoredProfile[]>((value) => sanitizeStoredProfiles(value));
 
 function parseDisplayLanguageValue(value: unknown): DisplayLanguage {
   return value === "en" || value === "ja" || value === "ja-hira" ? value : defaultDisplayLanguage;
@@ -264,9 +342,9 @@ function parseStoredValue<T>(raw: string, codec: StorageCodec<T>, fallback: T): 
   }
 }
 
-function saveVersionedRecord<T>(key: string, value: T): void {
+function saveVersionedRecord<T>(key: string, value: T, scopeId = defaultStorageScopeId): void {
   globalThis.localStorage?.setItem(
-    key,
+    buildStorageKey(key, scopeId),
     JSON.stringify({
       version: storageSchemaVersion,
       value
@@ -274,81 +352,130 @@ function saveVersionedRecord<T>(key: string, value: T): void {
   );
 }
 
-function loadVersionedStorageValue<T>(key: string, codec: StorageCodec<T>, fallback: T): T {
-  const raw = globalThis.localStorage?.getItem(key);
+function loadVersionedStorageValue<T>(key: string, codec: StorageCodec<T>, fallback: T, scopeId = defaultStorageScopeId): T {
+  const raw = globalThis.localStorage?.getItem(buildStorageKey(key, scopeId));
   if (!raw) {
     return fallback;
   }
 
   const value = parseStoredValue(raw, codec, fallback);
-  saveVersionedRecord(key, value);
+  saveVersionedRecord(key, value, scopeId);
   return value;
 }
 
-function saveVersionedStorageValue<T>(key: string, codec: StorageCodec<T>, value: unknown): void {
-  saveVersionedRecord(key, codec.parse(value));
+function saveVersionedStorageValue<T>(key: string, codec: StorageCodec<T>, value: unknown, scopeId = defaultStorageScopeId): void {
+  saveVersionedRecord(key, codec.parse(value), scopeId);
 }
 
-export function loadCustomWords(): WordEntry[] {
-  return loadVersionedStorageValue(customWordsKey, customWordsCodec, []);
+function loadStoredProfiles(): StoredProfile[] {
+  return loadVersionedStorageValue(profilesKey, storedProfilesCodec, sanitizeStoredProfiles([]));
 }
 
-export function saveCustomWords(words: WordEntry[]): void {
-  saveVersionedStorageValue(customWordsKey, customWordsCodec, words);
+function writeStoredProfiles(profiles: StoredProfile[]): void {
+  saveVersionedStorageValue(profilesKey, storedProfilesCodec, profiles);
 }
 
-export function loadBuiltinWordOverrides(): BuiltinWordOverrides {
-  return loadVersionedStorageValue(builtinWordOverridesKey, builtinWordOverridesCodec, {});
+function touchProfileUpdatedAt(profileId: string, updatedAt = new Date().toISOString()): void {
+  const profiles = loadStoredProfiles();
+  if (!profiles.some((profile) => profile.id === profileId)) {
+    return;
+  }
+
+  const nextProfiles = profiles.map((profile) =>
+    profile.id === profileId
+      ? { ...profile, updatedAt }
+      : profile
+  );
+
+  writeStoredProfiles(nextProfiles);
 }
 
-export function saveBuiltinWordOverrides(overrides: BuiltinWordOverrides): void {
-  saveVersionedStorageValue(builtinWordOverridesKey, builtinWordOverridesCodec, overrides);
+export function loadCustomWords(scopeId = defaultStorageScopeId): WordEntry[] {
+  return loadVersionedStorageValue(customWordsKey, customWordsCodec, [], scopeId);
 }
 
-export function clearBuiltinWordOverrides(): void {
-  saveVersionedRecord(builtinWordOverridesKey, {});
+export function saveCustomWords(words: WordEntry[], scopeId = defaultStorageScopeId): void {
+  saveVersionedStorageValue(customWordsKey, customWordsCodec, words, scopeId);
+  touchProfileUpdatedAt(scopeId);
 }
 
-export function loadBuiltinWordOrder(): WordOrder {
-  return loadVersionedStorageValue(builtinWordOrderKey, builtinWordOrderCodec, []);
+export function loadBuiltinWordOverrides(scopeId = defaultStorageScopeId): BuiltinWordOverrides {
+  return loadVersionedStorageValue(builtinWordOverridesKey, builtinWordOverridesCodec, {}, scopeId);
 }
 
-export function saveBuiltinWordOrder(order: WordOrder): void {
-  saveVersionedStorageValue(builtinWordOrderKey, builtinWordOrderCodec, order);
+export function saveBuiltinWordOverrides(overrides: BuiltinWordOverrides, scopeId = defaultStorageScopeId): void {
+  saveVersionedStorageValue(builtinWordOverridesKey, builtinWordOverridesCodec, overrides, scopeId);
+  touchProfileUpdatedAt(scopeId);
 }
 
-export function clearBuiltinWordOrder(): void {
-  saveVersionedRecord(builtinWordOrderKey, []);
+export function clearBuiltinWordOverrides(scopeId = defaultStorageScopeId): void {
+  saveVersionedRecord(builtinWordOverridesKey, {}, scopeId);
+  touchProfileUpdatedAt(scopeId);
 }
 
-export function loadSessionConfig(): SessionConfig {
-  return loadVersionedStorageValue(sessionConfigKey, sessionConfigCodec, defaultSessionConfig);
+export function loadBuiltinWordOrder(scopeId = defaultStorageScopeId): WordOrder {
+  return loadVersionedStorageValue(builtinWordOrderKey, builtinWordOrderCodec, [], scopeId);
 }
 
-export function saveSessionConfig(config: SessionConfig): void {
-  saveVersionedStorageValue(sessionConfigKey, sessionConfigCodec, config);
+export function saveBuiltinWordOrder(order: WordOrder, scopeId = defaultStorageScopeId): void {
+  saveVersionedStorageValue(builtinWordOrderKey, builtinWordOrderCodec, order, scopeId);
+  touchProfileUpdatedAt(scopeId);
 }
 
-export function loadWordsPanelState(): WordsPanelState {
-  return loadVersionedStorageValue(wordsPanelStateKey, wordsPanelStateCodec, defaultWordsPanelState);
+export function clearBuiltinWordOrder(scopeId = defaultStorageScopeId): void {
+  saveVersionedRecord(builtinWordOrderKey, [], scopeId);
+  touchProfileUpdatedAt(scopeId);
 }
 
-export function saveWordsPanelState(state: WordsPanelState): void {
-  saveVersionedStorageValue(wordsPanelStateKey, wordsPanelStateCodec, state);
+export function loadSessionConfig(scopeId = defaultStorageScopeId): SessionConfig {
+  return loadVersionedStorageValue(sessionConfigKey, sessionConfigCodec, defaultSessionConfig, scopeId);
 }
 
-export function loadThemePreference(): ThemePreference {
-  return loadVersionedStorageValue(themePreferenceKey, themePreferenceCodec, defaultThemePreference);
+export function saveSessionConfig(config: SessionConfig, scopeId = defaultStorageScopeId): void {
+  saveVersionedStorageValue(sessionConfigKey, sessionConfigCodec, config, scopeId);
+  touchProfileUpdatedAt(scopeId);
 }
 
-export function saveThemePreference(preference: ThemePreference): void {
-  saveVersionedStorageValue(themePreferenceKey, themePreferenceCodec, preference);
+export function loadWordsPanelState(scopeId = defaultStorageScopeId): WordsPanelState {
+  return loadVersionedStorageValue(wordsPanelStateKey, wordsPanelStateCodec, defaultWordsPanelState, scopeId);
 }
 
-export function loadDisplayLanguage(): DisplayLanguage {
-  return parseDisplayLanguageValue(globalThis.localStorage?.getItem(displayLanguageKey));
+export function saveWordsPanelState(state: WordsPanelState, scopeId = defaultStorageScopeId): void {
+  saveVersionedStorageValue(wordsPanelStateKey, wordsPanelStateCodec, state, scopeId);
+  touchProfileUpdatedAt(scopeId);
 }
 
-export function saveDisplayLanguage(language: DisplayLanguage): void {
-  globalThis.localStorage?.setItem(displayLanguageKey, language);
+export function loadThemePreference(scopeId = defaultStorageScopeId): ThemePreference {
+  return loadVersionedStorageValue(themePreferenceKey, themePreferenceCodec, defaultThemePreference, scopeId);
+}
+
+export function saveThemePreference(preference: ThemePreference, scopeId = defaultStorageScopeId): void {
+  saveVersionedStorageValue(themePreferenceKey, themePreferenceCodec, preference, scopeId);
+  touchProfileUpdatedAt(scopeId);
+}
+
+export function loadDisplayLanguage(scopeId = defaultStorageScopeId): DisplayLanguage {
+  return parseDisplayLanguageValue(globalThis.localStorage?.getItem(buildStorageKey(displayLanguageKey, scopeId)));
+}
+
+export function saveDisplayLanguage(language: DisplayLanguage, scopeId = defaultStorageScopeId): void {
+  globalThis.localStorage?.setItem(buildStorageKey(displayLanguageKey, scopeId), language);
+  touchProfileUpdatedAt(scopeId);
+}
+
+export function loadProfiles(): StoredProfile[] {
+  return loadStoredProfiles();
+}
+
+export function saveProfiles(profiles: StoredProfile[]): void {
+  writeStoredProfiles(profiles);
+}
+
+export function loadCurrentProfileId(): string {
+  const currentProfileId = globalThis.localStorage?.getItem(buildStorageKey(currentProfileIdKey));
+  return currentProfileId && currentProfileId.length > 0 ? currentProfileId : defaultStorageScopeId;
+}
+
+export function saveCurrentProfileId(profileId: string): void {
+  globalThis.localStorage?.setItem(buildStorageKey(currentProfileIdKey), profileId || defaultStorageScopeId);
 }

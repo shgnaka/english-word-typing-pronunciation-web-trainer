@@ -1247,16 +1247,98 @@ describe("App", () => {
     expect(screen.queryByTestId("settings-status-summary")).not.toBeInTheDocument();
   });
 
-  it("renders only two settings groups and keeps cache tools in the immediate group", async () => {
+  it("renders three settings groups and keeps cache tools in the immediate group", async () => {
     const user = userEvent.setup();
     render(<App />);
 
     await user.click(screen.getByRole("button", { name: "Settings" }));
 
-    expect(screen.getAllByTestId(/settings-.*-group/)).toHaveLength(2);
+    expect(screen.getAllByTestId(/settings-.*-group/)).toHaveLength(3);
+    expect(screen.getByTestId("settings-profile-group")).toBeInTheDocument();
     expect(screen.getByTestId("settings-immediate-group")).toContainElement(screen.getByTestId("clear-browser-tts-cache-button"));
     expect(screen.getByTestId("settings-next-session-group")).toContainElement(screen.getByTestId("apply-settings-button"));
   });
+
+  it("switches between local profiles and keeps their custom words isolated", async () => {
+    const user = userEvent.setup();
+    const { unmount } = render(<App />);
+
+    await user.click(screen.getByRole("button", { name: "Settings" }));
+    await user.click(screen.getByTestId("create-profile-button"));
+    expect(screen.getByTestId("profile-card-list")).toBeInTheDocument();
+    expect(screen.getByTestId("profile-card-current")).toHaveTextContent("Profile 2");
+    expect(within(screen.getByTestId("profile-card-current")).getByText("Last updated")).toBeInTheDocument();
+    expect(screen.getByTestId("profile-card-anonymous")).toHaveTextContent("Profile 1");
+    expect(within(screen.getByTestId("profile-card-anonymous")).queryByTestId("profile-name-input-anonymous")).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Words" }));
+    await user.type(screen.getByLabelText("New word"), "banana");
+    await user.click(screen.getByRole("button", { name: "Add word" }));
+    expect(screen.getByTestId("custom-word-list")).toHaveTextContent("banana");
+
+    await user.click(screen.getByRole("button", { name: "Settings" }));
+    await user.click(within(screen.getByTestId("profile-card-anonymous")).getByRole("button", { name: "Switch profile" }));
+    await user.click(screen.getByRole("button", { name: "Words" }));
+    expect(screen.getByTestId("custom-word-list")).not.toHaveTextContent("banana");
+
+    await user.click(screen.getByRole("button", { name: "Settings" }));
+    await user.click(screen.getByRole("button", { name: "Switch profile" }));
+    await user.click(screen.getByRole("button", { name: "Words" }));
+    expect(screen.getByTestId("custom-word-list")).toHaveTextContent("banana");
+
+    unmount();
+    render(<App />);
+
+    await user.click(screen.getByRole("button", { name: "Settings" }));
+    expect(screen.getByTestId("profile-card-current")).toHaveTextContent("Profile 2");
+    await user.click(screen.getByRole("button", { name: "Words" }));
+    expect(screen.getByTestId("custom-word-list")).toHaveTextContent("banana");
+  }, 20000);
+
+  it("renames and deletes a local profile from settings", async () => {
+    const user = userEvent.setup();
+    const confirmSpy = vi.spyOn(window, "confirm").mockReturnValue(true);
+    const { unmount } = render(<App />);
+
+    await user.click(screen.getByRole("button", { name: "Settings" }));
+    await user.click(screen.getByTestId("create-profile-button"));
+    const currentProfileNameInput = within(screen.getByTestId("profile-card-current")).getByDisplayValue("Profile 2");
+    const currentProfileNameInputId = currentProfileNameInput.getAttribute("data-testid");
+    expect(currentProfileNameInputId).toMatch(/^profile-name-input-/);
+    const currentProfileId = currentProfileNameInputId?.replace("profile-name-input-", "") ?? "";
+    expect(currentProfileId).toBeTruthy();
+
+    await user.clear(screen.getByTestId(`profile-name-input-${currentProfileId}`));
+    await user.type(screen.getByTestId(`profile-name-input-${currentProfileId}`), "Focus");
+    await user.click(screen.getByTestId(`save-profile-name-button-${currentProfileId}`));
+    expect(screen.getByTestId("profile-card-current")).toHaveTextContent("Focus");
+
+    await user.click(screen.getByRole("button", { name: "Words" }));
+    await user.type(screen.getByLabelText("New word"), "banana");
+    await user.click(screen.getByRole("button", { name: "Add word" }));
+    expect(screen.getByTestId("custom-word-list")).toHaveTextContent("banana");
+
+    await user.click(screen.getByRole("button", { name: "Settings" }));
+    await user.click(screen.getByTestId(`delete-profile-button-${currentProfileId}`));
+
+    expect(confirmSpy).toHaveBeenCalledTimes(1);
+    expect(screen.getByTestId("profile-card-current")).toHaveTextContent("Profile 1");
+    expect(screen.getByTestId("profile-name-input-anonymous")).toHaveValue("Profile 1");
+    expect(screen.queryByTestId(`profile-name-input-${currentProfileId}`)).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Words" }));
+    expect(screen.getByTestId("custom-word-list")).not.toHaveTextContent("banana");
+
+    unmount();
+    render(<App />);
+
+    await user.click(screen.getByRole("button", { name: "Settings" }));
+    expect(screen.getByTestId("profile-card-current")).toHaveTextContent("Profile 1");
+    await user.click(screen.getByRole("button", { name: "Words" }));
+    expect(screen.getByTestId("custom-word-list")).not.toHaveTextContent("banana");
+
+    confirmSpy.mockRestore();
+  }, 20000);
 
   it("updates the finger button guide as typing advances", () => {
     render(<App />);

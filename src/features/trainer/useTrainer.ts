@@ -6,6 +6,7 @@ import {
   defaultDisplayLanguage,
   defaultSessionConfig,
   defaultThemePreference,
+  defaultStorageScopeId,
   saveBuiltinWordOrder,
   sanitizeWordCount,
   saveBuiltinWordOverrides,
@@ -35,7 +36,7 @@ interface WordMutationSnapshot {
   wordOrder: WordOrder;
 }
 
-export function useTrainer() {
+export function useTrainer(scopeId = defaultStorageScopeId) {
   const [wordOrder, setWordOrder] = useState<WordOrder>([]);
   const [builtinWordOverrides, setBuiltinWordOverrides] = useState<BuiltinWordOverrides>({});
   const [customWords, setCustomWords] = useState<WordEntry[]>([]);
@@ -82,6 +83,13 @@ export function useTrainer() {
     availableWords: activeWords
   });
 
+  const persistCustomWords = (words: WordEntry[]) => saveCustomWords(words, scopeId);
+  const persistBuiltinWordOverrides = (overrides: BuiltinWordOverrides) => saveBuiltinWordOverrides(overrides, scopeId);
+  const persistBuiltinWordOrder = (order: WordOrder) => saveBuiltinWordOrder(order, scopeId);
+  const persistSessionConfig = (nextConfig: SessionConfig) => saveSessionConfig(nextConfig, scopeId);
+  const persistDisplayLanguage = (language: DisplayLanguage) => saveDisplayLanguage(language, scopeId);
+  const persistThemePreference = (preference: ThemePreference) => saveThemePreference(preference, scopeId);
+
   useEffect(() => {
     const {
       wordOrder: loadedWordOrder,
@@ -90,7 +98,7 @@ export function useTrainer() {
       config: loadedConfig,
       displayLanguage: loadedDisplayLanguage,
       themePreference: loadedThemePreference
-    } = loadTrainerPreferences();
+    } = loadTrainerPreferences(scopeId);
     setWordOrder(loadedWordOrder);
     setBuiltinWordOverrides(loadedBuiltinWordOverrides);
     setCustomWords(loadedCustomWords);
@@ -102,7 +110,7 @@ export function useTrainer() {
     sessionControls.initializeSession(
       buildTrainerQueue(buildActiveWordsFromPreferences(loadedBuiltinWordOverrides, loadedCustomWords, loadedWordOrder), loadedConfig)
     );
-  }, []);
+  }, [scopeId]);
   const { currentTarget, currentGuide, score, totalWords, remainingWords, completedWordsCount, progressPercent, isCountdownActive, isTypingActiveLayout, hasPendingConfigChanges } =
     deriveTrainerViewState({
       session: sessionControls.session,
@@ -174,17 +182,17 @@ export function useTrainer() {
 
     if (nextSnapshot.builtinWordOverrides !== currentSnapshot.builtinWordOverrides) {
       setBuiltinWordOverrides(nextSnapshot.builtinWordOverrides);
-      saveBuiltinWordOverrides(nextSnapshot.builtinWordOverrides);
+      persistBuiltinWordOverrides(nextSnapshot.builtinWordOverrides);
     }
 
     if (nextSnapshot.customWords !== currentSnapshot.customWords) {
       setCustomWords(nextSnapshot.customWords);
-      saveCustomWords(nextSnapshot.customWords);
+      persistCustomWords(nextSnapshot.customWords);
     }
 
     if (nextSnapshot.wordOrder !== currentSnapshot.wordOrder) {
       setWordOrder(nextSnapshot.wordOrder);
-      saveBuiltinWordOrder(nextSnapshot.wordOrder);
+      persistBuiltinWordOrder(nextSnapshot.wordOrder);
     }
 
     syncSession(nextSnapshot.builtinWordOverrides, nextSnapshot.customWords, nextSnapshot.wordOrder);
@@ -675,7 +683,7 @@ export function useTrainer() {
           ...current,
           [key]: nextValue
         };
-        saveSessionConfig(nextConfig);
+        persistSessionConfig(nextConfig);
         return nextConfig;
       });
       setDraftConfig((current) => ({
@@ -693,7 +701,7 @@ export function useTrainer() {
 
   function applyConfigChanges() {
     setConfig(draftConfig);
-    saveSessionConfig(draftConfig);
+    persistSessionConfig(draftConfig);
     restartSession(draftConfig);
   }
 
@@ -703,12 +711,12 @@ export function useTrainer() {
 
   function handleDisplayLanguageChange(language: DisplayLanguage) {
     setDisplayLanguage(language);
-    saveDisplayLanguage(language);
+    persistDisplayLanguage(language);
   }
 
   function updateThemePreference(nextPreference: ThemePreference) {
     setThemePreference(nextPreference);
-    saveThemePreference(nextPreference);
+    persistThemePreference(nextPreference);
   }
 
   function handleThemeIdChange(themeId: ThemeId) {

@@ -1,31 +1,39 @@
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   clearBuiltinWordOrder,
   clearBuiltinWordOverrides,
+  defaultStorageScopeId,
   defaultSessionConfig,
   defaultThemePreference,
   defaultWordsPanelState,
+  loadCurrentProfileId,
   loadBuiltinWordOrder,
   loadBuiltinWordOverrides,
   loadCustomWords,
+  loadProfiles,
   loadSessionConfig,
   loadThemePreference,
   loadWordsPanelState,
+  saveCurrentProfileId,
   saveBuiltinWordOrder,
   saveBuiltinWordOverrides,
   saveCustomWords,
   saveSessionConfig,
+  saveProfiles,
   saveThemePreference,
   saveWordsPanelState
 } from "./storage";
 import type { BuiltinWordOverrides, ThemePreference, WordEntry, WordOrder } from "../domain/types";
 
 const customWordsKey = "wordbeat.customWords";
+const scopedCustomWordsKey = "wordbeat.alice.customWords";
 const builtinWordOrderKey = "wordbeat.builtinWordOrder";
 const builtinWordOverridesKey = "wordbeat.builtinWordOverrides";
 const sessionConfigKey = "wordbeat.sessionConfig";
 const wordsPanelStateKey = "wordbeat.wordsPanelState";
 const themePreferenceKey = "wordbeat.themePreference";
+const profilesKey = "wordbeat.profiles";
+const currentProfileIdKey = "wordbeat.currentProfileId";
 
 describe("storage", () => {
   beforeEach(() => {
@@ -51,6 +59,109 @@ describe("storage", () => {
     });
   });
 
+  it("loads the default profile list when none exists", () => {
+    expect(loadProfiles()).toEqual([
+      {
+        id: defaultStorageScopeId,
+        name: "Profile 1",
+        createdAt: "1970-01-01T00:00:00.000Z",
+        updatedAt: "1970-01-01T00:00:00.000Z"
+      }
+    ]);
+  });
+
+  it("saves profiles in a versioned format", () => {
+    const profiles = [
+      {
+        id: defaultStorageScopeId,
+        name: "Profile 1",
+        createdAt: "1970-01-01T00:00:00.000Z",
+        updatedAt: "1970-01-01T00:00:00.000Z"
+      },
+      {
+        id: "alice",
+        name: "Profile 2",
+        createdAt: "2026-03-19T00:00:00.000Z",
+        updatedAt: "2026-03-19T00:00:00.000Z"
+      }
+    ];
+
+    saveProfiles(profiles);
+
+    expect(JSON.parse(window.localStorage.getItem(profilesKey) ?? "null")).toEqual({
+      version: 1,
+      value: profiles
+    });
+  });
+
+  it("touches the profile when saving scoped data", () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-03-20T12:34:56.000Z"));
+
+    saveProfiles([
+      {
+        id: defaultStorageScopeId,
+        name: "Profile 1",
+        createdAt: "1970-01-01T00:00:00.000Z",
+        updatedAt: "1970-01-01T00:00:00.000Z"
+      },
+      {
+        id: "alice",
+        name: "Profile 2",
+        createdAt: "2026-03-19T00:00:00.000Z",
+        updatedAt: "2026-03-19T00:00:00.000Z"
+      }
+    ]);
+
+    saveCustomWords([], "alice");
+
+    expect(loadProfiles()).toEqual([
+      {
+        id: defaultStorageScopeId,
+        name: "Profile 1",
+        createdAt: "1970-01-01T00:00:00.000Z",
+        updatedAt: "1970-01-01T00:00:00.000Z"
+      },
+      {
+        id: "alice",
+        name: "Profile 2",
+        createdAt: "2026-03-19T00:00:00.000Z",
+        updatedAt: "2026-03-20T12:34:56.000Z"
+      }
+    ]);
+
+    vi.useRealTimers();
+  });
+
+  it("loads and saves the current profile id", () => {
+    expect(loadCurrentProfileId()).toBe(defaultStorageScopeId);
+
+    saveCurrentProfileId("alice");
+
+    expect(window.localStorage.getItem(currentProfileIdKey)).toBe("alice");
+    expect(loadCurrentProfileId()).toBe("alice");
+  });
+
+  it("saves scoped custom words under a scoped key", () => {
+    const words: WordEntry[] = [
+      {
+        id: "custom-orange",
+        text: "orange",
+        normalizedText: "orange",
+        source: "custom",
+        createdAt: "2026-03-08T00:00:00.000Z"
+      }
+    ];
+
+    saveCustomWords(words, "alice");
+
+    expect(JSON.parse(window.localStorage.getItem(scopedCustomWordsKey) ?? "null")).toEqual({
+      version: 1,
+      value: words
+    });
+    expect(window.localStorage.getItem(customWordsKey)).toBeNull();
+  });
+
   it("loads legacy custom words and migrates them to the versioned format", () => {
     const legacyWords: WordEntry[] = [
       {
@@ -65,6 +176,25 @@ describe("storage", () => {
 
     expect(loadCustomWords()).toEqual(legacyWords);
     expect(JSON.parse(window.localStorage.getItem(customWordsKey) ?? "null")).toEqual({
+      version: 1,
+      value: legacyWords
+    });
+  });
+
+  it("loads scoped custom words and migrates them to the versioned format", () => {
+    const legacyWords: WordEntry[] = [
+      {
+        id: "custom-peach",
+        text: "peach",
+        normalizedText: "peach",
+        source: "custom",
+        createdAt: "2026-03-08T00:00:00.000Z"
+      }
+    ];
+    window.localStorage.setItem(scopedCustomWordsKey, JSON.stringify(legacyWords));
+
+    expect(loadCustomWords("alice")).toEqual(legacyWords);
+    expect(JSON.parse(window.localStorage.getItem(scopedCustomWordsKey) ?? "null")).toEqual({
       version: 1,
       value: legacyWords
     });
