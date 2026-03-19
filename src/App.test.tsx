@@ -1128,15 +1128,12 @@ describe("App", () => {
 
     await user.click(screen.getByRole("button", { name: "Words" }));
     expect(screen.getByTestId("words-session-config")).toHaveTextContent("Session word setup");
-    expect(screen.getByTestId("word-stat-session-size")).toHaveTextContent("1 session");
-    expect(screen.getByTestId("word-stat-session-size")).toHaveTextContent("10");
-    expect(screen.getByTestId("words-session-outcome-summary")).toHaveTextContent("Practice order: 20 words");
-    expect(screen.getByTestId("words-session-outcome-summary")).toHaveTextContent("This session: 10 words");
+    expect(screen.getByTestId("words-session-available-count")).toHaveTextContent("Practice order: 20 words");
+    expect(screen.getByTestId("words-session-effective-count")).toHaveTextContent("This session: 10 words");
     fireEvent.change(screen.getByLabelText("Words per session"), { target: { value: "1" } });
 
-    expect(screen.getByTestId("word-stat-session-size")).toHaveTextContent("1");
-    expect(screen.getByTestId("words-session-outcome-summary")).toHaveTextContent("Practice order: 20 words");
-    expect(screen.getByTestId("words-session-outcome-summary")).toHaveTextContent("This session: 1 words");
+    expect(screen.getByTestId("words-session-available-count")).toHaveTextContent("Practice order: 20 words");
+    expect(screen.getByTestId("words-session-effective-count")).toHaveTextContent("This session: 1 words");
     expect(screen.queryByTestId("words-session-clamp-hint")).not.toBeInTheDocument();
     expect(screen.queryByTestId("words-session-config-status")).not.toBeInTheDocument();
     expect(screen.queryByTestId("words-session-config-summary")).not.toBeInTheDocument();
@@ -1168,24 +1165,23 @@ describe("App", () => {
     await user.click(screen.getByRole("button", { name: "Words" }));
     fireEvent.change(screen.getByLabelText("Words per session"), { target: { value: "20" } });
 
-    expect(screen.getByTestId("word-stat-session-size")).toHaveTextContent("20");
-    expect(screen.getByTestId("words-session-outcome-summary")).toHaveTextContent("Practice order: 20 words");
-    expect(screen.getByTestId("words-session-outcome-summary")).toHaveTextContent("This session: 20 words");
+    expect(screen.getByTestId("words-session-available-count")).toHaveTextContent("Practice order: 20 words");
+    expect(screen.getByTestId("words-session-effective-count")).toHaveTextContent("This session: 20 words");
     expect(screen.queryByTestId("words-session-clamp-hint")).not.toBeInTheDocument();
 
     const builtinWordList = within(screen.getByTestId("builtin-word-list"));
     await user.click(builtinWordList.getByTestId("more-row-actions-button-builtin-apple"));
     await user.click(builtinWordList.getByTestId("delete-word-button-builtin-apple"));
 
-    expect(screen.getByTestId("words-session-outcome-summary")).toHaveTextContent("Practice order: 19 words");
-    expect(screen.getByTestId("words-session-outcome-summary")).toHaveTextContent("This session: 19 words");
+    expect(screen.getByTestId("words-session-available-count")).toHaveTextContent("Practice order: 19 words");
+    expect(screen.getByTestId("words-session-effective-count")).toHaveTextContent("This session: 19 words");
     expect(screen.queryByTestId("words-session-clamp-hint")).not.toBeInTheDocument();
 
     await user.type(screen.getByLabelText("New word"), "banana");
     await user.click(screen.getByRole("button", { name: "Add word" }));
 
-    expect(screen.getByTestId("words-session-outcome-summary")).toHaveTextContent("Practice order: 20 words");
-    expect(screen.getByTestId("words-session-outcome-summary")).toHaveTextContent("This session: 20 words");
+    expect(screen.getByTestId("words-session-available-count")).toHaveTextContent("Practice order: 20 words");
+    expect(screen.getByTestId("words-session-effective-count")).toHaveTextContent("This session: 20 words");
     expect(screen.queryByTestId("words-session-clamp-hint")).not.toBeInTheDocument();
   });
 
