@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState, type FormEvent, type ReactNode } from "react";
 import { displayLanguageOptions, formatMessage, t } from "../i18n";
+import type { SessionConfig } from "../domain/types";
 import type { TrainerState } from "../features/trainer/useTrainer";
 import type { ProfileManagerState } from "../features/profile/useProfileManager";
 import { ThemeSettingsSection } from "./ThemeSettingsSection";
@@ -29,6 +30,98 @@ function SettingsGroupCard({
         <span className="settings-timing-pill">{timing}</span>
       </div>
       {children}
+    </section>
+  );
+}
+
+interface PendingSettingChange {
+  id: string;
+  label: string;
+  before: string;
+  after: string;
+}
+
+function formatBooleanSetting(language: TrainerState["displayLanguage"], value: boolean): string {
+  return value ? t(language, "settings.valueOn") : t(language, "settings.valueOff");
+}
+
+function buildPendingSettingChanges(
+  language: TrainerState["displayLanguage"],
+  config: SessionConfig,
+  draftConfig: SessionConfig
+): PendingSettingChange[] {
+  const changes: PendingSettingChange[] = [];
+
+  if (config.wordCount !== draftConfig.wordCount) {
+    changes.push({
+      id: "word-count",
+      label: t(language, "settings.wordsPerSession"),
+      before: String(config.wordCount),
+      after: String(draftConfig.wordCount)
+    });
+  }
+
+  if (config.shuffle !== draftConfig.shuffle) {
+    changes.push({
+      id: "shuffle",
+      label: t(language, "settings.shuffle"),
+      before: formatBooleanSetting(language, config.shuffle),
+      after: formatBooleanSetting(language, draftConfig.shuffle)
+    });
+  }
+
+  if (config.speechEnabled !== draftConfig.speechEnabled) {
+    changes.push({
+      id: "speech",
+      label: t(language, "settings.speech"),
+      before: formatBooleanSetting(language, config.speechEnabled),
+      after: formatBooleanSetting(language, draftConfig.speechEnabled)
+    });
+  }
+
+  if (config.browserTtsEnabled !== draftConfig.browserTtsEnabled) {
+    changes.push({
+      id: "browser-tts",
+      label: t(language, "settings.browserTts"),
+      before: formatBooleanSetting(language, config.browserTtsEnabled),
+      after: formatBooleanSetting(language, draftConfig.browserTtsEnabled)
+    });
+  }
+
+  return changes;
+}
+
+function SettingsStatusCard({
+  language,
+  config,
+  draftConfig
+}: {
+  language: TrainerState["displayLanguage"];
+  config: SessionConfig;
+  draftConfig: SessionConfig;
+}) {
+  const pendingSettingChanges = useMemo(() => buildPendingSettingChanges(language, config, draftConfig), [language, config, draftConfig]);
+  const hasPendingChanges = pendingSettingChanges.length > 0;
+
+  return (
+    <section className={`settings-status ${hasPendingChanges ? "pending" : ""}`.trim()} data-testid="settings-status" role="status" aria-live="polite">
+      <div className="settings-status-summary">
+        <strong data-testid="settings-status-message">{hasPendingChanges ? t(language, "settings.pending") : t(language, "settings.synced")}</strong>
+        {hasPendingChanges ? (
+          <ul data-testid="settings-status-summary">
+            {pendingSettingChanges.map((change) => (
+              <li key={change.id}>
+                <span className="settings-status-change-label">{change.label}</span>
+                <span className="settings-status-change-values">
+                  {change.before} → {change.after}
+                </span>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="setting-hint">{t(language, "settings.sessionApplyHint")}</p>
+        )}
+      </div>
     </section>
   );
 }
@@ -182,8 +275,20 @@ export function SettingsPanel({ trainer, profileManager }: SettingsPanelProps) {
 
   return (
     <div className="settings-page">
+      <header className="settings-page-header">
+        <div className="settings-page-heading">
+          <span className="label">{t(language, "settings.title")}</span>
+          <h2>{t(language, "settings.subtitle")}</h2>
+        </div>
+      </header>
+
       <div className="settings-grid">
-        <SettingsGroupCard title={t(language, "settings.profileGroup")} timing={t(language, "settings.appliesNow")} testId="settings-profile-group">
+        <SettingsGroupCard
+          title={t(language, "settings.profileGroup")}
+          timing={t(language, "settings.appliesNow")}
+          testId="settings-profile-group"
+          className="settings-profile-group"
+        >
           <p className="setting-hint">{t(language, "settings.profileHelp")}</p>
           <div className="profile-card-list" data-testid="profile-card-list">
             {profileCards.map((profile) => (
@@ -230,67 +335,80 @@ export function SettingsPanel({ trainer, profileManager }: SettingsPanelProps) {
           </button>
         </SettingsGroupCard>
 
-        <SettingsGroupCard title={t(language, "settings.immediateGroup")} timing={t(language, "settings.appliesNow")} testId="settings-immediate-group">
-          <label>
-            <span>{t(language, "settings.language")}</span>
-            <div className="language-toggle" data-testid="language-toggle">
-              {displayLanguageOptions.map((option) => (
-                <button
-                  key={option.value}
-                  type="button"
-                  className={trainer.displayLanguage === option.value ? "active" : "secondary"}
-                  data-testid={`language-${option.value}`}
-                  onClick={() => trainer.setDisplayLanguage(option.value)}
-                >
-                  {option.label}
-                </button>
-              ))}
+        <SettingsGroupCard
+          title={t(language, "settings.immediateGroup")}
+          timing={t(language, "settings.appliesNow")}
+          testId="settings-immediate-group"
+          className="settings-immediate-group"
+        >
+          <p className="setting-hint">{t(language, "settings.assistApplyHint")}</p>
+          <div className="settings-stack">
+            <label className="settings-control-block">
+              <span>{t(language, "settings.language")}</span>
+              <div className="language-toggle" data-testid="language-toggle">
+                {displayLanguageOptions.map((option) => (
+                  <button
+                    key={option.value}
+                    type="button"
+                    className={trainer.displayLanguage === option.value ? "active" : "secondary"}
+                    data-testid={`language-${option.value}`}
+                    onClick={() => trainer.setDisplayLanguage(option.value)}
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
+            </label>
+            <div className="settings-control-grid">
+              <label className="toggle settings-control-block">
+                <input
+                  data-testid="keyboard-hint-toggle"
+                  type="checkbox"
+                  checked={trainer.draftConfig.showKeyboardHint}
+                  onChange={(event) => trainer.handleConfigChange("showKeyboardHint", event.target.checked)}
+                />
+                <span>{t(language, "settings.keyboardHint")}</span>
+              </label>
+              <label className="toggle settings-control-block">
+                <input
+                  data-testid="finger-guide-toggle"
+                  type="checkbox"
+                  checked={trainer.draftConfig.showFingerGuide}
+                  onChange={(event) => trainer.handleConfigChange("showFingerGuide", event.target.checked)}
+                />
+                <span>{t(language, "settings.fingerGuide")}</span>
+              </label>
+              <label className="toggle settings-control-block">
+                <input
+                  data-testid="word-reading-toggle"
+                  type="checkbox"
+                  checked={trainer.draftConfig.showWordReading}
+                  onChange={(event) => trainer.handleConfigChange("showWordReading", event.target.checked)}
+                />
+                <span>{t(language, "settings.wordReading")}</span>
+              </label>
             </div>
-          </label>
-          <label className="toggle">
-            <input
-              data-testid="keyboard-hint-toggle"
-              type="checkbox"
-              checked={trainer.draftConfig.showKeyboardHint}
-              onChange={(event) => trainer.handleConfigChange("showKeyboardHint", event.target.checked)}
-            />
-            <span>{t(language, "settings.keyboardHint")}</span>
-          </label>
-          <label className="toggle">
-            <input
-              data-testid="finger-guide-toggle"
-              type="checkbox"
-              checked={trainer.draftConfig.showFingerGuide}
-              onChange={(event) => trainer.handleConfigChange("showFingerGuide", event.target.checked)}
-            />
-            <span>{t(language, "settings.fingerGuide")}</span>
-          </label>
-          <ThemeSettingsSection trainer={trainer} />
-          <label className="toggle">
-            <input
-              data-testid="word-reading-toggle"
-              type="checkbox"
-              checked={trainer.draftConfig.showWordReading}
-              onChange={(event) => trainer.handleConfigChange("showWordReading", event.target.checked)}
-            />
-            <span>{t(language, "settings.wordReading")}</span>
-          </label>
-          <button
-            type="button"
-            className="secondary settings-inline-button"
-            data-testid="clear-browser-tts-cache-button"
-            onClick={() => trainer.clearBrowserTtsCache()}
-            disabled={trainer.isClearingBrowserTtsCache}
-          >
-            {t(language, "settings.browserTtsClear")}
-          </button>
-          {trainer.browserTtsCacheMessage ? (
-            <p className="setting-hint" data-testid="browser-tts-cache-status" role="status" aria-live="polite">
-              {trainer.browserTtsCacheMessage === "cleared"
-                ? t(language, "settings.browserTtsCacheCleared")
-                : t(language, "settings.browserTtsCacheClearFailed")}
-            </p>
-          ) : null}
+            <ThemeSettingsSection trainer={trainer} />
+            <div className="settings-control-block settings-audio-tools">
+              <span className="label">{t(language, "settings.audioToolsGroup")}</span>
+              <button
+                type="button"
+                className="secondary settings-inline-button"
+                data-testid="clear-browser-tts-cache-button"
+                onClick={() => trainer.clearBrowserTtsCache()}
+                disabled={trainer.isClearingBrowserTtsCache}
+              >
+                {t(language, "settings.browserTtsClear")}
+              </button>
+              {trainer.browserTtsCacheMessage ? (
+                <p className="setting-hint" data-testid="browser-tts-cache-status" role="status" aria-live="polite">
+                  {trainer.browserTtsCacheMessage === "cleared"
+                    ? t(language, "settings.browserTtsCacheCleared")
+                    : t(language, "settings.browserTtsCacheClearFailed")}
+                </p>
+              ) : null}
+            </div>
+          </div>
         </SettingsGroupCard>
 
         <SettingsGroupCard
@@ -299,6 +417,8 @@ export function SettingsPanel({ trainer, profileManager }: SettingsPanelProps) {
           testId="settings-next-session-group"
           className="settings-group-next-session"
         >
+          <p className="setting-hint">{t(language, "settings.sessionApplyHint")}</p>
+          <SettingsStatusCard language={language} config={trainer.config} draftConfig={trainer.draftConfig} />
           <div className="settings-option-list" data-testid="settings-next-session-options">
             <label className="toggle">
               <input

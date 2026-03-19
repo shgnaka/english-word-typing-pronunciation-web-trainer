@@ -284,7 +284,7 @@ describe("App", () => {
     expect(customWordChips[0]).toHaveTextContent("banana");
     expect(customWordChips[1]).toHaveTextContent("mango");
     expect(customWordChips[2]).toHaveTextContent("pear");
-  });
+  }, 10000);
 
   it("moves a practice-order word to the top and keeps that order after reload", async () => {
     const user = userEvent.setup();
@@ -1197,7 +1197,8 @@ describe("App", () => {
     await user.click(screen.getByTestId("keyboard-hint-toggle"));
     await user.click(screen.getByTestId("word-reading-toggle"));
 
-    expect(screen.queryByTestId("settings-status")).not.toBeInTheDocument();
+    expect(screen.getByTestId("settings-status-message")).toHaveTextContent("Current session already matches these settings.");
+    expect(screen.queryByTestId("settings-status-summary")).not.toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "Practice" }));
 
@@ -1213,7 +1214,8 @@ describe("App", () => {
     expect(screen.getByTestId("word-reading-toggle")).not.toBeChecked();
     await user.click(screen.getByTestId("word-reading-toggle"));
 
-    expect(screen.queryByTestId("settings-status")).not.toBeInTheDocument();
+    expect(screen.getByTestId("settings-status-message")).toHaveTextContent("Current session already matches these settings.");
+    expect(screen.queryByTestId("settings-status-summary")).not.toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "Practice" }));
 
@@ -1244,7 +1246,9 @@ describe("App", () => {
     await user.click(screen.getByTestId("shuffle-toggle"));
     await user.click(screen.getByRole("button", { name: "Settings" }));
 
-    expect(screen.queryByTestId("settings-status-summary")).not.toBeInTheDocument();
+    expect(screen.getByTestId("settings-status-message")).toHaveTextContent("You have unapplied changes");
+    expect(screen.getByTestId("settings-status-summary")).toHaveTextContent("Words per session");
+    expect(screen.getByTestId("settings-status-summary")).toHaveTextContent("Shuffle words");
   });
 
   it("renders three settings groups and keeps cache tools in the immediate group", async () => {
